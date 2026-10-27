@@ -109,8 +109,6 @@ function FloatingChips({ onLike }) {
 
 /* ---------------- one reel slide ---------------- */
 function Reel({ t, keyword, stage, liked, likeCount, onLike, onCommentTap, onShare, isCurrent }) {
-  const kw = (keyword || "KEYWORD").toUpperCase();
-  const showComment = stage === "posted" || stage === "opening" || stage === "peek";
   return (
     <div className="relative h-full w-full shrink-0 overflow-hidden" style={{ background: t.base }}>
       <div className="absolute -left-16 -top-10 h-64 w-64 animate-blob1 rounded-full opacity-70 blur-2xl" style={{ background: t.blobs[0], animationPlayState: isCurrent ? "running" : "paused" }} />
@@ -154,28 +152,86 @@ function Reel({ t, keyword, stage, liked, likeCount, onLike, onCommentTap, onSha
         </div>
       </div>
 
-      {/* comment landing on the reel */}
-      {showComment && (
-        <div className="absolute inset-x-0 bottom-[104px] z-10 px-3">
-          <div className="flex animate-slideup items-center gap-2 rounded-2xl bg-white/95 px-3 py-2 shadow-chip">
-            <UserAvatar size="h-6 w-6" />
-            <p className="text-[12px]"><b>maya.creates</b> {kw.toLowerCase()} please! 🙌</p>
-            <span className="ml-auto text-[10px] text-slate-400">now</span>
-          </div>
-          {(stage === "posted" || stage === "opening") && (
-            <div className="mt-1.5 flex animate-slideup items-center gap-2 rounded-2xl bg-teal px-3 py-2 text-white shadow-chip [animation-delay:.3s]">
-              <Avatar size="h-6 w-6" />
-              <p className="text-[12px]"><b>your.brand</b> Checking your DMs 📩</p>
-              <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold">auto-reply</span>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
 
-/* ---------------- reels feed frame ---------------- */
+/* ---------------- comments bottom sheet (like real IG) ---------------- */
+function CommentsSheet({ kw, stage, onClose }) {
+  const open = stage === "peek" || stage === "typingCmt" || stage === "posted";
+  const typing = stage === "typingCmt";
+  const posted = stage === "posted" || stage === "opening";
+  return (
+    <div className={`absolute inset-0 z-30 transition-opacity duration-300 ${open ? "opacity-100" : "pointer-events-none opacity-0"}`}>
+      {/* dim scrim — tap to close */}
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      {/* sheet */}
+      <div className={`absolute inset-x-0 bottom-0 flex h-[68%] flex-col rounded-t-2xl bg-white transition-transform duration-300 [transition-timing-function:cubic-bezier(.3,.8,.3,1)] ${open ? "translate-y-0" : "translate-y-full"}`}>
+        <div className="mx-auto mt-2 h-1 w-9 rounded-full bg-slate-300" />
+        <div className="px-4 pb-1.5 pt-1 text-center text-[13px] font-extrabold">Comments</div>
+
+        <div className="flex-1 space-y-3 overflow-hidden px-4 py-2">
+          {/* pre-existing comments */}
+          <div className="flex items-start gap-2">
+            <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-rose-200 to-pink-400 text-[11px]">👩</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] leading-snug"><b>beauty.by.gig</b> First!! This reel is everything 🔥</p>
+              <p className="mt-0.5 text-[10px] text-slate-400">2d · 3 likes · Reply</p>
+            </div>
+            <span className="text-[10px] text-slate-400">♡</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-200 to-indigo-400 text-[11px]">🧑</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] leading-snug"><b>the.socialista</b> yaay so glad you liked it 🔥🔥</p>
+              <p className="mt-0.5 text-[10px] text-slate-400">1d · 1 like · Reply</p>
+            </div>
+            <span className="text-[10px] text-slate-400">♡</span>
+          </div>
+
+          {/* maya's comment appears here */}
+          {typing && (
+            <div className="flex items-center gap-2">
+              <UserAvatar size="h-7 w-7" />
+              <div className="flex gap-1 rounded-2xl bg-mist px-3 py-2.5">
+                <i className="h-1.5 w-1.5 animate-blink rounded-full bg-slate-400" />
+                <i className="h-1.5 w-1.5 animate-blink rounded-full bg-slate-400 [animation-delay:.18s]" />
+                <i className="h-1.5 w-1.5 animate-blink rounded-full bg-slate-400 [animation-delay:.36s]" />
+              </div>
+            </div>
+          )}
+          {posted && (
+            <div className="animate-slideup flex items-start gap-2">
+              <UserAvatar size="h-7 w-7" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] leading-snug"><b>maya.creates</b> {kw.toLowerCase()} please! 🙌</p>
+                <p className="mt-0.5 text-[10px] text-slate-400">now · Reply</p>
+              </div>
+              <span className="text-[10px] text-slate-400">♡</span>
+            </div>
+          )}
+          {posted && (
+            <div className="animate-slideup flex items-start gap-2 [animation-delay:.35s]">
+              <Avatar size="h-7 w-7" />
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] leading-snug"><b>your.brand</b> Checking your DMs 📩</p>
+                <p className="mt-0.5 text-[10px] text-slate-400">now · Reply</p>
+              </div>
+              <span className="rounded-full bg-teal-soft px-1.5 py-0.5 text-[9px] font-bold text-teal-dark">auto-reply</span>
+            </div>
+          )}
+        </div>
+
+        {/* composer */}
+        <div className="flex items-center gap-2 border-t border-line px-3 py-2">
+          <UserAvatar size="h-6 w-6" />
+          <span className="flex-1 text-[12px] text-slate-400">Add a comment…</span>
+          <span className="text-[13px]">❤️ 🙌 🔥 😍 😮</span>
+        </div>
+      </div>
+    </div>
+  );
+}/* ---------------- reels feed frame ---------------- */
 function ReelsFrame({ types, reel, keyword, stage, ...inter }) {
   return (
     <div className="relative h-full w-full bg-ink">
@@ -186,11 +242,6 @@ function ReelsFrame({ types, reel, keyword, stage, ...inter }) {
         <span className="text-lg text-white/90">📷</span>
         <span className="text-[15px] font-extrabold text-white drop-shadow">Reels</span>
         <span className="text-lg text-white/90">🔍</span>
-      </div>
-      <div className="absolute inset-x-3 top-[52px] z-20 flex gap-1">
-        {types.map((t, i) => (
-          <span key={t.id} className={`h-[3px] flex-1 rounded-full ${i === reel ? "bg-white" : "bg-white/30"}`} />
-        ))}
       </div>
 
       <div className="flex h-full flex-col transition-transform duration-[900ms] [transition-timing-function:cubic-bezier(.5,.05,.25,1)]"
@@ -208,6 +259,8 @@ function ReelsFrame({ types, reel, keyword, stage, ...inter }) {
           <div className="animate-pop rounded-full bg-white px-4 py-2 text-[12px] font-bold text-ink shadow-chip">Opening your DMs →</div>
         </div>
       )}
+
+      <CommentsSheet kw={keyword || "KEYWORD"} stage={stage} onClose={inter.onCommentTap} />
     </div>
   );
 }
@@ -330,8 +383,10 @@ function Hero() {
     setFrame("post"); setStage("idle"); setLiked(false);
     setType(TYPES[reel]);
     await wait(400);
-    setStage("posted");  await wait(1700);
-    setStage("opening"); await wait(750);
+    setStage("peek");      await wait(500);   // comments sheet slides up
+    setStage("typingCmt"); await wait(900);   // maya is typing...
+    setStage("posted");    await wait(1700);  // comment lands + auto-reply
+    setStage("opening");   await wait(750);   // sheet closes, DM overlay
     setFrame("dm");      setStage("typing");  await wait(1300);
     setStage("replied"); await wait(1400);
     setStage("yes");
