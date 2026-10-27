@@ -17,7 +17,7 @@ For creators/small brands who sell via comments; original product, not a DMFast 
 - Auth: hand-rolled (scrypt + cookie sessions). No external auth/payment libs.
 
 ## 3. FOLDER MAP
-- `server.js` — app entry: helmet CSP, raw-body capture, origin check, rate limiters, page routes, api mounts, /health, admin bootstrap, demo seed, token migration, graceful shutdown.
+- `server.js` — app entry: helmet CSP, raw-body capture, origin check, rate limiters, page routes, clean-URL 301s (`.html`/`/landing` -> canonical), api mounts, /health, admin bootstrap, demo seed, token migration, 404 handler (HTML page / JSON), graceful shutdown.
 - `src/config.js` — env -> config object; `metaConfigured` flag gates live vs dry-run.
 - `src/db.js` — opens SQLite at DATABASE_PATH (WAL, busy_timeout), creates schema, tiny ALTER forward-migrations; exports { db, dbPath }.
 - `src/crypto.js` — AES-256-GCM helpers (TOKEN_ENC_KEY, base64 32B). Used ONLY by store.js. Ciphertext format `v1:iv:tag:ct`; legacy plaintext detected + migrated.
@@ -33,7 +33,7 @@ For creators/small brands who sell via comments; original product, not a DMFast 
 - `src/routes/stats.js` — dashboard numbers (+ plan usage/limits), conversations, emails CSV, POST /delete-account (password-confirm, full erasure).
 - `src/routes/admin.js` — /api/admin/metrics, /users, PATCH user plan/status (admin only).
 - `src/routes/demo.js` — POST /api/demo: public landing/dashboard demo (synthetic comment through the same pipeline; rate-limited 20/min). Exists so the demo keeps working when /webhook enforces signatures.
-- `src/routes/track.js` — POST /track visit beacon (hashed UA, no cookies; rate-limited 60/min).
+- `src/routes/track.js` — POST /track visit beacon (hashed UA, no cookies; rate-limited 60/min). Normalises path (.html/aliases -> canonical) before storing.
 - `src/routes/meta.js` — POST /meta/data-deletion + /meta/deauthorize (signed_request HMAC verified).
 - `test/` — node:test suite (`npm test` -> `node --test "test/*.test.js"`). helpers.js points DATABASE_PATH at a temp DB + sets TOKEN_ENC_KEY before any require; files: crypto, store, auth, webhook (real HTTP against an in-test express app), actions (keyword match, buildDMMessage, parseSignedRequest). 57 tests, all green.
 - `src/styles/tailwind.css` — Tailwind v4 source (theme = DESIGN-BRIEF palette) -> build:css.
@@ -43,6 +43,7 @@ For creators/small brands who sell via comments; original product, not a DMFast 
 - `public/auth.html` — login/signup (path /login vs /signup switches mode).
 - `public/admin.html` — admin metrics at /admin (cards, 7d charts, funnel, users, events).
 - `public/privacy.html|terms.html|data-deletion.html` — legal pages at /privacy /terms /data-deletion.
+- `public/404.html` — branded not-found page rendered by the catch-all handler (status 404, noindex).
 - `public/assets/` — built app.css, landing.js, favicon.svg, og-image.png. `public/robots.txt`, `public/sitemap.xml`.
 - `Dockerfile`, `.dockerignore`, `fly.toml`, `DEPLOY.md` — Fly.io deployment (volume /data, health checks, non-root).
 - `DESIGN-BRIEF.md` — brand/design rules (the project's "DESIGN.md"). `UX-FEATURES.md` — reference notes from dmfast.app (behavior only).
@@ -127,7 +128,7 @@ DONE (tests): `npm test` wired to node:test — 57 tests covering crypto round-t
 1. Real Meta config pass: fill .env, test OAuth connect + live webhook against a test IG account; fix Graph version/endpoint details; confirm isFollower beta path.
 2. Deploy to Fly.io following DEPLOY.md; set secrets incl. TOKEN_ENC_KEY before first connect; verify volume + backups.
 3. Dashboard polish: show ?connect= / ?connect_error= flags, plan/upgrade page, billing.
-4. Optional: serve built assets with hashed filenames + long cache; error pages; OG image real design.
+4. Optional: serve built assets with hashed filenames + long cache; OG image real design. (Error pages: 404 done; could add a 500 error page.)
 
 ## 12. KNOWN ISSUES AND GOTCHAS
 - PowerShell blocks npm.ps1 (UnauthorizedAccess) -> always `cmd /c "npm install ..."`.
@@ -144,6 +145,8 @@ DONE (tests): `npm test` wired to node:test — 57 tests covering crypto round-t
 - node:sqlite `.get()` returns `undefined` (not null) when no row — store helpers that can miss must `|| null` (getRule/getUser*/getConversation/lastConversationForPsid do; tests assert this).
 - `node --test test/` fails on Windows (treated as a module path); use the npm script (`node --test "test/*.test.js"`).
 - Keyword matching uses `\W` boundaries: emoji/word-chars adjacent to the keyword block a match ("guide🙌" does NOT match "guide") — matches Meta comment reality closely enough.
+- Pages have canonical extensionless URLs; `.html` files are served only through static before the redirect map exists — keep CANONICAL_REDIRECTS in server.js in sync when adding pages (or the .html stays publicly reachable). New page files also need `npm run build:css` so Tailwind picks up their classes.
+- Browsers auto-request /favicon.ico (404s; only the SVG favicon is linked). Harmless, but adds a console error on every page — fix by adding a real .ico or a redirect if it ever matters.
 - Old gotchas fixed: relative requires from routes (use ../), demo rule duplication (seed once in server.js), reminder timers died on restart (now DB-scheduled).
 
 ## 13. RULES FOR THE AI
