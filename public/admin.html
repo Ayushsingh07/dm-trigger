@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — ReplyFlow</title>
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+<link rel="stylesheet" href="/assets/app.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  ::selection { background: #0d9488; color: #fff; }
+  .num { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body class="bg-mist text-ink font-sans antialiased">
+
+<header class="sticky top-0 z-40 border-b border-line/70 bg-white/80 backdrop-blur-xl">
+  <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+    <div class="flex items-center gap-2.5 text-[17px] font-extrabold tracking-tight">
+      <span class="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-teal to-teal-dark text-white shadow-soft">⚡</span>
+      ReplyFlow <span class="ml-1 rounded-full bg-ink px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">Admin</span>
+    </div>
+    <div class="flex items-center gap-3 text-[14px] font-semibold">
+      <a href="/app" class="hidden text-slateInk transition hover:text-ink sm:block">Dashboard</a>
+      <a href="/" class="hidden text-slateInk transition hover:text-ink sm:block">Site</a>
+      <span id="who" class="hidden text-slateInk sm:inline"></span>
+      <button id="refresh" class="rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-bold transition hover:border-teal active:scale-95">↻ Refresh</button>
+      <button id="signout" class="rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-bold text-white transition hover:bg-teal-dark active:scale-95">Sign out</button>
+    </div>
+  </div>
+</header>
+
+<main class="mx-auto max-w-6xl px-4 py-8">
+  <div id="gate" class="hidden rounded-2xl border border-line bg-white p-10 text-center shadow-soft">
+    <p class="text-4xl">🔒</p>
+    <h2 class="mt-3 text-xl font-extrabold">Admin access only</h2>
+    <p class="mt-1 text-[14px] text-slateInk">Sign in with an admin account to see launch metrics.</p>
+    <a href="/login" class="mt-5 inline-block rounded-full bg-teal px-5 py-2.5 text-[14px] font-bold text-white transition hover:bg-teal-dark">Sign in →</a>
+  </div>
+
+  <div id="dash" class="hidden space-y-8">
+    <!-- headline stats -->
+    <section id="cards" class="grid grid-cols-2 gap-4 lg:grid-cols-4"></section>
+
+    <!-- charts row -->
+    <section class="grid gap-4 lg:grid-cols-2">
+      <div class="rounded-2xl border border-line bg-white p-5 shadow-soft">
+        <div class="flex items-baseline justify-between">
+          <h3 class="text-[15px] font-extrabold">Visitors — last 7 days</h3>
+          <span id="visitsTotal" class="text-[12px] font-bold text-slate-400"></span>
+        </div>
+        <div id="visitsChart" class="mt-4"></div>
+      </div>
+      <div class="rounded-2xl border border-line bg-white p-5 shadow-soft">
+        <div class="flex items-baseline justify-between">
+          <h3 class="text-[15px] font-extrabold">Signups — last 7 days</h3>
+          <span id="signupsTotal" class="text-[12px] font-bold text-slate-400"></span>
+        </div>
+        <div id="signupsChart" class="mt-4"></div>
+      </div>
+    </section>
+
+    <!-- funnel + plans -->
+    <section class="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+      <div class="rounded-2xl border border-line bg-white p-5 shadow-soft">
+        <h3 class="text-[15px] font-extrabold">Activation funnel</h3>
+        <div id="funnel" class="mt-4 space-y-2.5"></div>
+      </div>
+      <div class="rounded-2xl border border-line bg-white p-5 shadow-soft">
+        <h3 class="text-[15px] font-extrabold">Plans</h3>
+        <div id="plans" class="mt-4 space-y-2.5"></div>
+        <h3 class="mt-6 text-[15px] font-extrabold">Top pages</h3>
+        <div id="paths" class="mt-3 space-y-1.5 text-[13px]"></div>
+      </div>
+    </section>
+
+    <!-- users table -->
+    <section class="rounded-2xl border border-line bg-white p-5 shadow-soft">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h3 class="text-[15px] font-extrabold">Users</h3>
+        <input id="userSearch" placeholder="Search email or name…"
+          class="w-56 rounded-full border border-line bg-mist px-4 py-2 text-[13px] outline-none transition focus:border-teal focus:bg-white focus:ring-4 focus:ring-teal/10" />
+      </div>
+      <div class="mt-4 overflow-x-auto">
+        <table class="w-full text-left text-[13px]">
+          <thead>
+            <tr class="border-b border-line text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+              <th class="pb-2 pr-4">Email</th><th class="pb-2 pr-4">Name</th><th class="pb-2 pr-4">Plan</th>
+              <th class="pb-2 pr-4">Status</th><th class="pb-2 pr-4">Joined</th><th class="pb-2 pr-4">Last seen</th><th class="pb-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- events -->
+    <section class="rounded-2xl border border-line bg-white p-5 shadow-soft">
+      <h3 class="text-[15px] font-extrabold">Recent activity</h3>
+      <div id="events" class="mt-4 space-y-2"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => (n ?? 0).toLocaleString();
+const dayLabel = (d) => new Date(d + "T00:00:00").toLocaleDateString(undefined, { weekday: "short" });
+const timeAgo = (iso) => {
+  if (!iso) return "—";
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 60) return "just now";
+  if (s < 3600) return Math.floor(s / 60) + "m ago";
+  if (s < 86400) return Math.floor(s / 3600) + "h ago";
+  return Math.floor(s / 86400) + "d ago";
+};
+
+async function load() {
+  const res = await fetch("/api/admin/metrics");
+  if (res.status === 401 || res.status === 403) { $("dash").classList.add("hidden"); $("gate").classList.remove("hidden"); return; }
+  const m = await res.json();
+  $("gate").classList.add("hidden");
+  $("dash").classList.remove("hidden");
+
+  // headline cards
+  const cards = [
+    { l: "Signups", v: m.totals.users, sub: `+${m.today.signups} today`, e: "👤" },
+    { l: "Visitors today", v: m.today.visits, sub: `${fmt(m.today.unique)} unique`, e: "👀" },
+    { l: "DMs sent", v: m.totals.conversations, sub: `${fmt(m.totals.replied)} engaged`, e: "📨" },
+    { l: "Emails captured", v: m.totals.emails, sub: `${fmt(m.totals.rules)} rules live`, e: "✉️" },
+  ];
+  $("cards").innerHTML = cards.map((c) => `
+    <div class="rounded-2xl border border-line bg-white p-5 shadow-soft transition hover:shadow-chip">
+      <div class="flex items-center justify-between text-[12px] font-bold uppercase tracking-wider text-slate-400">${c.l}<span class="text-base">${c.e}</span></div>
+      <div class="num mt-2 text-3xl font-extrabold">${fmt(c.v)}</div>
+      <div class="mt-1 text-[12px] font-semibold text-teal-dark">${c.sub}</div>
+    </div>`).join("");
+
+  // bar charts
+  const bars = (rows, key, color) => {
+    const days = [...Array(7)].map((_, i) => new Date(Date.now() - (6 - i) * 864e5).toISOString().slice(0, 10));
+    const map = Object.fromEntries(rows.map((r) => [r.d, r[key] || 0]));
+    const max = Math.max(1, ...days.map((d) => map[d] || 0));
+    return `<div class="flex h-32 items-end gap-2">${days.map((d) => {
+      const v = map[d] || 0;
+      return `<div class="flex flex-1 flex-col items-center gap-1.5">
+        <span class="num text-[11px] font-bold ${v ? "text-ink" : "text-slate-300"}">${v}</span>
+        <div class="w-full rounded-md ${color}" style="height:${Math.max(4, (v / max) * 96)}px; opacity:${v ? 1 : .25}"></div>
+        <span class="text-[10px] font-bold uppercase text-slate-400">${dayLabel(d)}</span>
+      </div>`;
+    }).join("")}</div>`;
+  };
+  $("visitsChart").innerHTML = bars(m.series.visits, "c", "bg-teal");
+  $("visitsTotal").textContent = `${fmt(m.totals.visits)} all-time`;
+  $("signupsChart").innerHTML = bars(m.series.signups, "c", "bg-amber");
+  $("signupsTotal").textContent = `${fmt(m.totals.users)} all-time`;
+
+  // funnel
+  const f = m.funnel;
+  const steps = [["Visited site", f.visited], ["Signed up", f.signedUp], ["Connected IG", f.connected], ["Created a rule", f.createdRule], ["Got a DM sent", f.sentDm], ["Email captured", f.collectedEmail]];
+  const maxF = Math.max(1, ...steps.map(([, v]) => v));
+  $("funnel").innerHTML = steps.map(([l, v]) => `
+    <div>
+      <div class="mb-1 flex justify-between text-[12px] font-bold"><span>${l}</span><span class="num text-slate-400">${fmt(v)} · ${Math.round((v / maxF) * 100)}%</span></div>
+      <div class="h-2.5 rounded-full bg-mist"><div class="h-2.5 rounded-full bg-gradient-to-r from-teal to-teal-dark" style="width:${Math.max(2, (v / maxF) * 100)}%"></div></div>
+    </div>`).join("");
+
+  // plans
+  const planColors = { free: "bg-slate-300", trial: "bg-amber", pro: "bg-teal" };
+  const totalU = Math.max(1, m.totals.users);
+  $("plans").innerHTML = (m.byPlan.length ? m.byPlan : [{ plan: "free", c: 0 }]).map((p) => `
+    <div class="flex items-center gap-3">
+      <span class="h-3 w-3 rounded-full ${planColors[p.plan] || "bg-slate-300"}"></span>
+      <span class="flex-1 text-[13px] font-bold capitalize">${p.plan}</span>
+      <span class="num text-[13px] font-bold text-slate-400">${fmt(p.c)}</span>
+      <span class="num w-10 text-right text-[12px] text-slate-400">${Math.round((p.c / totalU) * 100)}%</span>
+    </div>`).join("");
+
+  $("paths").innerHTML = (m.topPaths.length ? m.topPaths : []).map((p) =>
+    `<div class="flex justify-between"><span class="truncate font-mono text-[12px] text-slateInk">${p.path}</span><span class="num font-bold">${fmt(p.c)}</span></div>`
+  ).join("") || `<p class="text-[12px] text-slate-400">No visits yet.</p>`;
+
+  renderUsers(m.recentUsers);
+
+  const evIcon = { signup: "🎉", login: "🔑", connect: "🔗", connect_dry_run: "🧪", rule_created: "⚙️", demo_run: "▶️", email_collected: "✉️", admin_user_update: "🛠️" };
+  $("events").innerHTML = (m.recentEvents.length ? m.recentEvents : []).map((e) => `
+    <div class="flex items-center gap-3 rounded-xl border border-line bg-mist/50 px-3.5 py-2 text-[13px]">
+      <span>${evIcon[e.name] || "•"}</span>
+      <span class="font-bold capitalize">${e.name.replace(/_/g, " ")}</span>
+      <span class="text-slate-400">${e.email || ""}</span>
+      <span class="ml-auto text-[12px] text-slate-400">${timeAgo(e.created_at)}</span>
+    </div>`).join("") || `<p class="text-[13px] text-slate-400">Nothing yet — events will appear here as users arrive.</p>`;
+}
+
+function renderUsers(users) {
+  $("usersBody").innerHTML = (users.length ? users : []).map((u) => `
+    <tr class="border-b border-line/60 last:border-0">
+      <td class="py-2.5 pr-4 font-bold">${u.email}${u.role === "admin" ? ' <span class="ml-1 rounded bg-ink px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-white">admin</span>' : ""}</td>
+      <td class="py-2.5 pr-4 text-slateInk">${u.name || "—"}</td>
+      <td class="py-2.5 pr-4"><span class="rounded-full ${u.plan === "pro" ? "bg-teal-soft text-teal-dark" : "bg-mist text-slateInk"} px-2.5 py-1 text-[11px] font-extrabold capitalize">${u.plan}</span></td>
+      <td class="py-2.5 pr-4 text-slateInk capitalize">${u.status}</td>
+      <td class="py-2.5 pr-4 text-slate-400">${new Date(u.created_at).toLocaleDateString()}</td>
+      <td class="py-2.5 pr-4 text-slate-400">${timeAgo(u.last_seen_at)}</td>
+      <td class="py-2.5 space-x-1.5">
+        ${u.role !== "admin" ? `
+          ${u.plan !== "pro" ? `<button data-act="pro" data-id="${u.id}" class="rounded-full bg-teal px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-teal-dark">→ Pro</button>` : ""}
+          ${u.status === "canceled" ? `<button data-act="reactivate" data-id="${u.id}" class="rounded-full border border-line px-2.5 py-1 text-[11px] font-bold transition hover:border-teal">Reactivate</button>` : `<button data-act="cancel" data-id="${u.id}" class="rounded-full border border-line px-2.5 py-1 text-[11px] font-bold text-slate-500 transition hover:border-rose-300 hover:text-rose-500">Cancel</button>`}
+        ` : "—"}
+      </td>
+    </tr>`).join("") || `<tr><td colspan="7" class="py-6 text-center text-slate-400">No users yet.</td></tr>`;
+}
+
+$("usersBody").addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
+  const body = btn.dataset.act === "pro" ? { plan: "pro", status: "active" }
+    : btn.dataset.act === "cancel" ? { status: "canceled" }
+    : { status: "active" };
+  await fetch(`/api/admin/users/${btn.dataset.id}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+  });
+  load();
+});
+
+let searchTimer;
+$("userSearch").addEventListener("input", (e) => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(async () => {
+    const res = await fetch("/api/admin/users?q=" + encodeURIComponent(e.target.value));
+    if (res.ok) renderUsers((await res.json()).users);
+  }, 250);
+});
+
+$("refresh").addEventListener("click", load);
+$("signout").addEventListener("click", async () => { await fetch("/auth/logout", { method: "POST" }); location.href = "/"; });
+
+fetch("/auth/me").then((r) => r.json()).then((j) => {
+  if (j.user) $("who").textContent = j.user.email;
+  load();
+}).catch(() => load());
+
+setInterval(load, 30000); // auto-refresh every 30s
+</script>
+</body>
+</html>

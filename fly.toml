@@ -1,0 +1,40 @@
+# ReplyFlow — Fly.io deployment (single always-on machine + persistent volume).
+# See DEPLOY.md for the exact Windows commands.
+
+app = "replyflow"
+primary_region = "bom" # Mumbai
+
+[build]
+
+[env]
+  PORT = "3000"
+  DATABASE_PATH = "/data/replyflow.db"
+  BACKUP_DIR = "/data/backups"
+
+[mounts]
+  source = "data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 200
+    soft_limit = 150
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

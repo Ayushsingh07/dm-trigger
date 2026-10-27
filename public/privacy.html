@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Privacy Policy — ReplyFlow</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+<link rel="stylesheet" href="/assets/app.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body class="bg-mist text-ink font-sans antialiased">
+<header class="sticky top-0 z-40 border-b border-line/70 bg-white/80 backdrop-blur-xl">
+  <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
+    <a href="/" class="text-[15px] font-extrabold tracking-tight">⚡ ReplyFlow</a>
+    <nav class="flex gap-4 text-[13px] font-bold text-slateInk">
+      <a class="hover:text-teal" href="/terms">Terms</a>
+      <a class="hover:text-teal" href="/data-deletion">Data deletion</a>
+      <a class="rounded-full bg-ink px-4 py-1.5 text-white" href="/app">Dashboard</a>
+    </nav>
+  </div>
+</header>
+<main class="mx-auto max-w-3xl px-6 py-12">
+  <h1 class="text-3xl font-extrabold tracking-tight">Privacy Policy</h1>
+  <p class="mt-2 text-sm text-slateInk">Last updated: October 2026</p>
+
+  <div class="mt-8 space-y-6 text-[15px] leading-relaxed text-slateInk">
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">What we collect</h2>
+      <p class="mt-2">When you use ReplyFlow we store: your email address and a salted password hash (we never store your password itself), your Instagram account's public username, and an Instagram access token (encrypted at rest with AES-256-GCM). When your keyword rules run we store the commenter's public user ID, the comment ID, the text of any DM reply they send us, and any email address they voluntarily send in a DM.</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">Site analytics</h2>
+      <p class="mt-2">We run our own first-party visit counter on this website (page path, referrer, and a truncated SHA-256 hash of your user-agent). No cookies are set for analytics and no third-party analytics vendors are used.</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">How we use it</h2>
+      <p class="mt-2">Only to run the auto-reply you configured: matching comment keywords, sending the DM you wrote, and showing you dashboards of what happened. We do not sell data, and we do not use your comment or DM content to train anything.</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">Meta / Instagram data</h2>
+      <p class="mt-2">We access Instagram data through Meta's official Graph APIs with the permissions you grant during "Connect Instagram". You can revoke access at any time from your Instagram settings; Meta will notify us and we delete the stored token immediately.</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">Retention and deletion</h2>
+      <p class="mt-2">You can delete everything at any time with the "Delete my account" button in your dashboard — this erases your login, connected accounts, rules, conversations and emails. Commenters can request deletion of their data via the <a class="font-bold text-teal" href="/data-deletion">data deletion page</a>. Nightly database backups are rotated and expire within 7 days.</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">Security</h2>
+      <p class="mt-2">Traffic is served over HTTPS. Session cookies are HttpOnly, SameSite=Lax and Secure. Instagram tokens are encrypted at rest. Passwords are hashed with scrypt.</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">Contact</h2>
+      <p class="mt-2">Questions or deletion requests: email the address shown on the <a class="font-bold text-teal" href="/data-deletion">data deletion page</a>.</p>
+    </section>
+  </div>
+</main>
+</body>
+</html>

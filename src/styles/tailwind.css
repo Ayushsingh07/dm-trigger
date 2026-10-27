@@ -1,0 +1,63 @@
+/* ReplyFlow — Tailwind source (Tailwind CSS v4 CLI).
+   Replaces the runtime cdn.tailwindcss.com script with a compiled stylesheet.
+   Theme values mirror the tailwind.config previously inlined in each page. */
+@import "tailwindcss";
+
+@source "../public/*.html";
+@source "../src/landing.jsx";
+
+@theme {
+  /* palette (DESIGN-BRIEF.md) */
+  --color-mist: #f4f6fa;
+  --color-ink: #0c1524;
+  --color-slateInk: #3d4a5c;
+  --color-teal: #0d9488;
+  --color-teal-dark: #0f766e;
+  --color-teal-soft: #e6f4f2;
+  --color-amber: #f59e0b;
+  --color-line: #e3e8f0;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+
+  --shadow-soft: 0 1px 2px rgb(12 21 36 / 0.05), 0 8px 24px rgb(12 21 36 / 0.06);
+  --shadow-lift: 0 34px 70px rgb(12 21 36 / 0.30);
+  --shadow-chip: 0 10px 24px rgb(12 21 36 / 0.14);
+  --shadow-glow: 0 0 80px rgb(13 148 136 / 0.18);
+
+  --animate-pop: pop 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  --animate-bob: bob 3.4s ease-in-out infinite;
+  --animate-beat: beat 0.8s ease-in-out;
+  --animate-burst: burst 0.8s ease-out forwards;
+  --animate-slidein: slidein 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  --animate-slideup: slideup 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
+  --animate-kenburns: kenburns 7s ease-in-out infinite alternate;
+  --animate-marquee: marquee 9s linear infinite;
+  --animate-spin-slow: spin 4s linear infinite;
+  --animate-blob1: blob1 8s ease-in-out infinite alternate;
+  --animate-blob2: blob2 10s ease-in-out infinite alternate;
+  --animate-blob3: blob3 12s ease-in-out infinite alternate;
+  --animate-fadeup: fadeup 0.7s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+
+  @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: none; } }
+  @keyframes blink { 0%, 60%, 100% { opacity: 0.25; } 30% { opacity: 1; } }
+  @keyframes bob { 0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); } 50% { transform: translateY(-9px) rotate(var(--r, 0deg)); } }
+  @keyframes beat { 0%, 100% { transform: scale(1); } 25% { transform: scale(1.35); } 45% { transform: scale(1.05); } 65% { transform: scale(1.25); } }
+  @keyframes burst { 0% { opacity: 1; transform: scale(0.4); } 100% { opacity: 0; transform: scale(2.4) translateY(-26px); } }
+  @keyframes slidein { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: none; } }
+  @keyframes slideup { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+  @keyframes kenburns { 0% { transform: scale(1) translateY(0) rotate(-3deg); } 100% { transform: scale(1.22) translateY(-5%) rotate(3deg); } }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  @keyframes blob1 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(46px, 60px) scale(1.25); } }
+  @keyframes blob2 { 0% { transform: translate(0, 0) scale(1.1); } 100% { transform: translate(-56px, -40px) scale(0.9); } }
+  @keyframes blob3 { 0% { transform: translate(0, 0) scale(0.95); } 100% { transform: translate(40px, -56px) scale(1.2); } }
+  @keyframes fadeup { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+}
+
+/* page-level styles that were inline <style> blocks */
+html { scroll-behavior: smooth; }
+::selection { background: #0d9488; color: #fff; }
+.tilt { transform: perspective(1200px) rotateY(-6deg) rotateX(2deg); transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.3, 1); }
+.tilt:hover { transform: perspective(1200px) rotateY(-1deg) rotateX(0deg); }
+.reveal { opacity: 0; }
+.reveal.in { animation: fadeup 0.7s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
