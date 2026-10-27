@@ -89,6 +89,27 @@ app.get("/privacy", (_req, res) => res.sendFile(pub("privacy.html")));
 app.get("/terms", (_req, res) => res.sendFile(pub("terms.html")));
 app.get("/data-deletion", (_req, res) => res.sendFile(pub("data-deletion.html")));
 
+// Clean URLs. The .html files are an implementation detail; every page has a
+// canonical extensionless route. Redirect direct .html hits (and the old
+// /landing alias) so analytics and search engines only ever see one URL.
+const CANONICAL_REDIRECTS = {
+  "/landing": "/",
+  "/landing.html": "/",
+  "/index.html": "/app",
+  "/auth.html": "/login",
+  "/admin.html": "/admin",
+  "/privacy.html": "/privacy",
+  "/terms.html": "/terms",
+  "/data-deletion.html": "/data-deletion",
+  "/404.html": "/", // never served by URL — only rendered by the 404 handler
+};
+app.use((req, res, next) => {
+  if (req.method !== "GET") return next();
+  const target = CANONICAL_REDIRECTS[req.path];
+  if (target) return res.redirect(301, target);
+  next();
+});
+
 app.use(express.static(path.join(__dirname, "public"), { maxAge: "1h", index: false }));
 
 // ---------------------------------------------------------------- api
@@ -124,6 +145,14 @@ app.get("/api/status", (_req, res) => {
     redirectUri: config.metaRedirectUri || "(empty)",
     accountsConnected: store.listAccounts().length,
   });
+});
+
+// Anything not matched above: a real 404. Browsers get the branded page,
+// API/JSON clients get JSON. Never fall through to a bare "Cannot GET".
+app.use((req, res) => {
+  const wantsHtml = String(req.headers.accept || "").includes("text/html");
+  if (wantsHtml) return res.status(404).sendFile(pub("404.html"));
+  res.status(404).json({ error: "Not found" });
 });
 
 // ---------------------------------------------------------------- bootstrap
