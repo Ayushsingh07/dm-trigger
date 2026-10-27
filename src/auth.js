@@ -1,4 +1,4 @@
-// ReplyFlow — authentication: scrypt password hashing, cookie sessions,
+// ReplyLo — authentication: scrypt password hashing, cookie sessions,
 // and route middleware. No external auth deps.
 
 const crypto = require("crypto");

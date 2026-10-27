@@ -1,4 +1,4 @@
-// ReplyFlow — Meta webhook routes (verification + inbound events).
+// ReplyLo — Meta webhook routes (verification + inbound events).
 // Every POST is authenticated with X-Hub-Signature-256 (HMAC-SHA256 of the
 // raw body keyed with META_APP_SECRET) before anything is processed.
 const crypto = require("crypto");

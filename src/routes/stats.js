@@ -1,4 +1,4 @@
-// ReplyFlow — dashboard stats scoped to the signed-in user (or demo when out).
+// ReplyLo — dashboard stats scoped to the signed-in user (or demo when out).
 const express = require("express");
 const store = require("../store");
 const { attachUser, requireUser, verifyPassword, clearSessionCookie } = require("../auth");

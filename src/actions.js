@@ -1,4 +1,4 @@
-// ReplyFlow — the core pipeline: comment event -> keyword match -> private
+// ReplyLo — the core pipeline: comment event -> keyword match -> private
 // reply + DM -> conversation record (with a scheduled reminder_at).
 
 const store = require("./store");

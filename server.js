@@ -1,7 +1,7 @@
-// ReplyFlow — production server.
+// ReplyLo — production server.
 // Run: npm start   (or: node server.js)
 //
-// Persistence: SQLite at $DATABASE_PATH (default data/replyflow.db).
+// Persistence: SQLite at $DATABASE_PATH (default data/replylo.db).
 // Meta Graph calls run in DRY-RUN until .env is filled (see .env.example).
 
 const path = require("path");
@@ -199,7 +199,7 @@ if (mig.skipped) {
 }
 
 const server = app.listen(config.port, () => {
-  logger.info({ port: config.port }, "ReplyFlow listening");
+  logger.info({ port: config.port }, "ReplyLo listening");
   logger.info({ mode: config.metaConfigured ? "live" : "dry-run", encryptedTokens: encryptionAvailable() }, "startup");
   jobs.startJobs();
 });

@@ -1,17 +1,17 @@
-# PROJECT.md — ReplyFlow (workspace: dm-trigger)
+# PROJECT.md — ReplyLo (workspace: dm-trigger)
 
 > Memory file for AI sessions with no chat history. Read this FIRST.
 > Verified 2026-10-27 against the actual code. Anything unverified is marked.
 
 ## 1. WHAT THIS IS
-ReplyFlow is a SaaS that auto-replies to Instagram comment keywords (e.g. "GUIDE")
+ReplyLo is a SaaS that auto-replies to Instagram comment keywords (e.g. "GUIDE")
 with a public reply + a private DM containing the owner's message and up to 3 links.
 For creators/small brands who sell via comments; original product, not a DMFast copy.
 
 ## 2. TECH STACK
 - Backend: Node.js (v24 installed; needs >=22.5 for node:sqlite), Express ^5.3.0, dotenv ^18.0.9. CommonJS.
 - Deps: helmet (CSP/headers), express-rate-limit, pino (structured logs). React/react-dom are devDeps (bundled by esbuild).
-- Database: built-in `node:sqlite` (DatabaseSync) — file `$DATABASE_PATH` (default `data/replyflow.db`), WAL + busy_timeout=5000. No ORM, no migrations tool (tiny forward-migrations loop in db.js).
+- Database: built-in `node:sqlite` (DatabaseSync) — file `$DATABASE_PATH` (default `data/replylo.db`), WAL + busy_timeout=5000. No ORM, no migrations tool (tiny forward-migrations loop in db.js).
 - Frontend: build step now exists: Tailwind CLI v4 (`npm run build:css` -> public/assets/app.css) + esbuild (`npm run build:js` -> public/assets/landing.js from src/landing.jsx). landing.html = React 18 (bundled, no CDN); index/admin/auth pages use built app.css. Google Fonts still via CDN link.
 - Hosting: Fly.io (fly.toml + Dockerfile, single always-on shared-cpu-1x/256mb, volume at /data). See DEPLOY.md.
 - Auth: hand-rolled (scrypt + cookie sessions). No external auth/payment libs.
@@ -65,7 +65,7 @@ For creators/small brands who sell via comments; original product, not a DMFast 
 - GRAPH_API_BASE / GRAPH_API_BETA_BASE — Graph API URLs; empty => DRY-RUN everything.
 - PUBLIC_BASE_URL — public URL; when set, enables the cross-origin write check.
 - REMINDER_MINUTES — default reminder delay.
-- DATABASE_PATH — SQLite file (default data/replyflow.db; /data/replyflow.db on Fly).
+- DATABASE_PATH — SQLite file (default data/replylo.db; /data/replylo.db on Fly).
 - TOKEN_ENC_KEY — 32 bytes base64, AES-256-GCM key for access_token at rest.
   Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`.
   Set BEFORE first OAuth connect; changing it later makes stored tokens undecryptable.
@@ -145,6 +145,7 @@ DONE (tests): `npm test` wired to node:test — 57 tests covering crypto round-t
 - node:sqlite `.get()` returns `undefined` (not null) when no row — store helpers that can miss must `|| null` (getRule/getUser*/getConversation/lastConversationForPsid do; tests assert this).
 - `node --test test/` fails on Windows (treated as a module path); use the npm script (`node --test "test/*.test.js"`).
 - Keyword matching uses `\W` boundaries: emoji/word-chars adjacent to the keyword block a match ("guide🙌" does NOT match "guide") — matches Meta comment reality closely enough.
+- Landing hero: phone column has `md:mt-32` on its Reveal wrapper to bottom-align it with the control card (grid uses items-center, so margin-top shifts the phone down by only ~half the margin). Any NEW Tailwind class in src/landing.jsx needs `npm run build:css` too — if only build:js runs, the class ships in the JS but has no CSS and silently does nothing.
 - Pages have canonical extensionless URLs; `.html` files are served only through static before the redirect map exists — keep CANONICAL_REDIRECTS in server.js in sync when adding pages (or the .html stays publicly reachable). New page files also need `npm run build:css` so Tailwind picks up their classes.
 - Browsers auto-request /favicon.ico (404s; only the SVG favicon is linked). Harmless, but adds a console error on every page — fix by adding a real .ico or a redirect if it ever matters.
 - Old gotchas fixed: relative requires from routes (use ../), demo rule duplication (seed once in server.js), reminder timers died on restart (now DB-scheduled).

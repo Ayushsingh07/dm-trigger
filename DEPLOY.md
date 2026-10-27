@@ -1,8 +1,8 @@
-# Deploying ReplyFlow to Fly.io (Windows)
+# Deploying ReplyLo to Fly.io (Windows)
 
 One always-on `shared-cpu-1x / 256mb` machine in Mumbai (`bom`) with a 1 GB
 persistent volume mounted at `/data`. The SQLite DB lives at
-`/data/replyflow.db` (`DATABASE_PATH` is set in `fly.toml`), nightly backups go
+`/data/replylo.db` (`DATABASE_PATH` is set in `fly.toml`), nightly backups go
 to `/data/backups`.
 
 All commands below are **PowerShell** on Windows.
@@ -75,7 +75,7 @@ fly secrets set TOKEN_ENC_KEY="$key"
 ```
 
 Notes:
-- `DATABASE_PATH=/data/replyflow.db` and `BACKUP_DIR=/data/backups` are set in
+- `DATABASE_PATH=/data/replylo.db` and `BACKUP_DIR=/data/backups` are set in
   `fly.toml` `[env]` — no secret needed.
 - `NODE_ENV=production` is set by the Dockerfile, which turns on the `Secure`
   session cookie.
@@ -94,7 +94,7 @@ Then watch it boot:
 fly logs
 ```
 
-You should see `ReplyFlow listening`, the scheduled-jobs line, and
+You should see `ReplyLo listening`, the scheduled-jobs line, and
 `GET /health 200` checks. Verify from your shell:
 
 ```powershell
@@ -120,48 +120,48 @@ fly deploy --remote-build
 ## 7. Custom domain
 
 ```powershell
-fly certs add replyflow.example.com
+fly certs add replylo.example.com
 ```
 
 Then at your DNS provider create the record `fly certs` prints, usually:
 
 ```
-CNAME  replyflow.example.com  ->  <app-name>.fly.dev
+CNAME  replylo.example.com  ->  <app-name>.fly.dev
 ```
 
 Check status:
 
 ```powershell
-fly certs check replyflow.example.com
+fly certs check replylo.example.com
 ```
 
 Once issued, update the secrets to the new canonical origin (the CSRF origin
 check and OAuth redirect depend on them):
 
 ```powershell
-fly secrets set PUBLIC_BASE_URL="https://replyflow.example.com"
-fly secrets set META_REDIRECT_URI="https://replyflow.example.com/auth/callback"
+fly secrets set PUBLIC_BASE_URL="https://replylo.example.com"
+fly secrets set META_REDIRECT_URI="https://replylo.example.com/auth/callback"
 ```
 
 ## 8. Download a database backup
 
-The app runs `VACUUM INTO /data/backups/replyflow-<utc>.db` nightly (keeps 7).
+The app runs `VACUUM INTO /data/backups/replylo-<utc>.db` nightly (keeps 7).
 
 ```powershell
 # list backups
 fly ssh console -C /data/backups -c "ls -la"
 
 # copy the newest backup down
-fly ssh sftp get /data/backups/replyflow-2026-10-27T04-00-00.db .\replyflow.db
+fly ssh sftp get /data/backups/replylo-2026-10-27T04-00-00.db .\replylo.db
 
 # or grab the live DB (safe thanks to WAL; a consistent snapshot is the VACUUM INTO file above)
-fly ssh sftp get /data/replyflow.db .\replyflow-live.db
+fly ssh sftp get /data/replylo.db .\replylo-live.db
 ```
 
 Restore = upload a file to the volume and restart:
 
 ```powershell
-fly ssh sftp put /data/replyflow.db .\replyflow.db
+fly ssh sftp put /data/replylo.db .\replylo.db
 fly machine restart
 ```
 

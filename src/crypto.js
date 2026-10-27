@@ -1,4 +1,4 @@
-// ReplyFlow — encryption at rest for stored Meta access tokens.
+// ReplyLo — encryption at rest for stored Meta access tokens.
 // AES-256-GCM with a 32-byte key supplied as base64 in TOKEN_ENC_KEY.
 //
 // These helpers are used ONLY from src/store.js — nothing else in the app

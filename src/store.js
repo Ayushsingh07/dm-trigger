@@ -1,4 +1,4 @@
-// ReplyFlow — data store backed by SQLite (src/db.js).
+// ReplyLo — data store backed by SQLite (src/db.js).
 // Same helper API the rest of the app already used, now persistent.
 
 const crypto = require("crypto");

@@ -1,7 +1,7 @@
-# Design Brief — **ReplyFlow** (my product, same feature set & flow as UX-FEATURES.md)
+# Design Brief — **ReplyLo** (my product, same feature set & flow as UX-FEATURES.md)
 
 ## Brand
-- **Name:** ReplyFlow · **Mark:** ⚡ bolt in a rounded square · **Voice:** calm, direct, no hype
+- **Name:** ReplyLo · **Mark:** ⚡ bolt in a rounded square · **Voice:** calm, direct, no hype
 - **Tagline:** "Every keyword comment, answered in seconds."
 - **Copy rules:** short sentences, verbs first, no exclamation marks in CTAs, never imitate DMFast wording.
 

@@ -1,4 +1,4 @@
-// ReplyFlow — Meta Graph API client.
+// ReplyLo — Meta Graph API client.
 // When config.graphApiBase is empty (the current state), every call runs in
 // DRY-RUN mode: the request that WOULD be made is logged and a stub result is
 // returned, so the whole pipeline is testable without Meta credentials.

@@ -1,4 +1,4 @@
-// ReplyFlow — central configuration.
+// ReplyLo — central configuration.
 // All URLs/keys come from env vars. They are intentionally EMPTY by default:
 // the backend runs in DRY-RUN mode until you fill them in (see .env.example).
 

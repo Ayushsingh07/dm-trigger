@@ -3,168 +3,217 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ReplyFlow · Dashboard</title>
+<title>ReplyLo · Dashboard</title>
+<meta name="robots" content="noindex" />
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --bg:#f6f5f2; --card:#ffffff; --ink:#111110; --dim:#6f6f6a; --line:#e7e5e0;
-    --chip:#efede8; --acc:#111110; --ok:#1a9e5c; --warn:#b98900; --ring:rgba(17,17,16,.06);
+    --bg:#fdf9f4; --bg2:#fbf3ea;
+    --card:#ffffff; --ink:#3d2c22; --soft:#8a7466; --faint:#b7a495;
+    --line:#f2e7da; --line2:#eadbc9;
+    --peach:#fff1e6; --amber:#fff6e8; --mint:#e9f7ef; --rose:#fdeeee;
+    --acc:#ff6b4a; --acc2:#ff9a5a; --acc-ink:#c2410c; --acc-soft:#fff0e8;
+    --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+    --shadow:0 1px 2px rgba(120,72,40,.05), 0 10px 30px -14px rgba(120,72,40,.18);
+    --shadow-lg:0 2px 4px rgba(120,72,40,.06), 0 24px 50px -20px rgba(120,72,40,.25);
   }
   * { box-sizing:border-box; margin:0; }
   html { scroll-behavior:smooth; }
-  body { background:var(--bg); color:var(--ink);
-         font:15px/1.55 "Inter","Segoe UI",system-ui,sans-serif; -webkit-font-smoothing:antialiased; }
-  .wrap { max-width:980px; margin:0 auto; padding:0 20px 80px; }
+  body { background:
+           radial-gradient(900px 420px at 85% -80px, #ffe8d3 0%, rgba(255,232,211,0) 70%),
+           radial-gradient(700px 380px at -10% 120px, #ffeedd 0%, rgba(255,238,221,0) 65%),
+           var(--bg);
+         color:var(--ink); font:15px/1.55 "Inter","Segoe UI",system-ui,sans-serif;
+         -webkit-font-smoothing:antialiased; min-height:100vh; }
+  .wrap { max-width:1060px; margin:0 auto; padding:0 24px 90px; }
+  a { color:inherit; }
 
-  /* ---- pill nav ---- */
-  nav { position:sticky; top:12px; z-index:20; display:flex; align-items:center; justify-content:space-between;
-        background:var(--card); border:1px solid var(--line); border-radius:999px; padding:10px 12px 10px 18px;
-        margin:16px auto 0; max-width:940px; box-shadow:0 8px 30px var(--ring); }
-  .logo { display:flex; align-items:center; gap:10px; font-weight:800; font-size:17px; letter-spacing:-.02em; }
-  .logo .mark { width:28px; height:28px; border-radius:9px; background:var(--ink); color:#fff;
-                display:grid; place-items:center; font-size:15px; }
-  .nav-right { display:flex; align-items:center; gap:14px; }
+  /* ---------- top bar ---------- */
+  nav { position:sticky; top:12px; z-index:30; display:flex; align-items:center; justify-content:space-between;
+        background:rgba(255,255,255,.85); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+        border:1px solid var(--line); border-radius:999px; padding:9px 10px 9px 18px;
+        margin:18px auto 0; max-width:1020px; box-shadow:var(--shadow); }
+  .logo { display:flex; align-items:center; gap:10px; font-weight:800; font-size:16px; letter-spacing:-.02em; text-decoration:none; }
+  .logo .mark { width:28px; height:28px; border-radius:9px; background:linear-gradient(135deg,var(--acc),#ffb347);
+                color:#fff; display:grid; place-items:center; font-size:14px; box-shadow:0 4px 12px rgba(255,107,74,.35); }
+  .nav-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+
+  .badge { display:inline-flex; align-items:center; gap:7px; background:var(--peach); border:none;
+           border-radius:999px; padding:6px 13px; font-size:12px; font-weight:600; color:var(--soft); }
+  .badge .dot { width:7px; height:7px; border-radius:50%; background:var(--faint); }
+  .badge.warn { background:var(--amber); color:var(--warn); } .badge.warn .dot { background:var(--warn); }
+  .badge.live { background:var(--mint); color:var(--ok); } .badge.live .dot { background:var(--ok); }
+  .badge.user { background:transparent; padding:6px 4px; }
+  .badge.user .avatar { width:26px; height:26px; border-radius:50%; background:linear-gradient(135deg,#ffd9c2,#ffb347);
+                        color:#7c2d12; display:grid; place-items:center; font-size:12px; font-weight:800; flex:none; }
+
   .pill { display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer; text-decoration:none;
-          border-radius:999px; padding:10px 18px; font-weight:700; font-size:14px; }
-  .pill.dark { background:var(--ink); color:#fff; } .pill.dark:hover { opacity:.85; }
-  .pill.light { background:#fff; color:var(--ink); border:1px solid var(--line); } .pill.light:hover { background:var(--chip); }
+          border-radius:999px; padding:9px 18px; font-weight:700; font-size:13.5px; font-family:inherit;
+          transition:transform .15s, box-shadow .15s, background .15s; }
+  .pill.dark { background:linear-gradient(135deg,var(--acc),var(--acc2)); color:#fff; box-shadow:0 6px 18px -6px rgba(255,107,74,.55); }
+  .pill.dark:hover { transform:translateY(-1px); box-shadow:0 10px 24px -8px rgba(255,107,74,.6); }
+  .pill.light { background:#fff; color:var(--ink); border:1px solid var(--line2); }
+  .pill.light:hover { background:var(--peach); border-color:#f5d5bd; }
+  .pill.ghost { background:transparent; color:var(--faint); font-weight:600; }
+  .pill.ghost:hover { color:var(--bad); background:var(--rose); }
 
-  .badge { display:inline-flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--line);
-           border-radius:999px; padding:7px 16px; font-size:13px; font-weight:600; color:var(--dim); }
-  .badge .dot { width:8px; height:8px; border-radius:50%; background:var(--ok); }
-  .badge.warn { color:var(--warn); } .badge.warn .dot { background:var(--warn); }
-  .badge.live { color:var(--ok); } .badge.live .dot { background:var(--ok); }
+  /* ---------- greeting ---------- */
+  .greet { padding:44px 0 8px; }
+  .greet h1 { font-size:clamp(28px,3.6vw,38px); letter-spacing:-.03em; font-weight:800; line-height:1.1; }
+  .greet p { color:var(--soft); margin-top:8px; font-size:15px; }
 
-  /* ---- hero ---- */
-  .hero { display:grid; grid-template-columns:1.05fr .95fr; gap:44px; align-items:center;
-          text-align:left; padding:48px 0 36px; }
-  @media (max-width:860px) { .hero { grid-template-columns:1fr; text-align:center; } }
-  h1 { font-size:clamp(36px,5vw,54px); line-height:1.05; letter-spacing:-.03em; font-weight:800; margin:20px 0 16px; }
-  h1 em { font-style:italic; font-weight:700; }
-  .sub { color:var(--dim); font-size:17px; max-width:520px; margin:0 0 8px; }
-  @media (max-width:860px) { .sub { margin:0 auto 8px; } }
-  .sub code { background:var(--chip); border-radius:7px; padding:2px 9px; font-weight:700; color:var(--ink); font-size:15px; }
-  .trust { color:var(--dim); font-size:13px; margin-top:16px; }
+  /* ---------- stats ---------- */
+  .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:26px 0 34px; }
+  @media (max-width:820px) { .grid { grid-template-columns:repeat(2,1fr); } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:20px; padding:20px 22px;
+          box-shadow:var(--shadow); transition:transform .18s, box-shadow .18s; }
+  .card:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+  .card .ic { width:34px; height:34px; border-radius:11px; display:grid; place-items:center; font-size:16px; margin-bottom:12px; }
+  .card .num { font-size:32px; font-weight:800; letter-spacing:-.03em; transition:transform .2s; }
+  .card .num.bump { transform:scale(1.15); }
+  .card .lbl { color:var(--soft); font-size:13px; font-weight:500; margin-top:2px; }
 
-  /* ---- interactive demo controls ---- */
-  .demo-controls { margin-top:22px; display:flex; flex-direction:column; gap:12px; text-align:left; }
+  /* ---------- two-column layout ---------- */
+  .cols { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+  .cols > section { min-width:0; }
+  .tablewrap { overflow-x:auto; margin:14px -6px 0; padding:0 6px; }
+  .tablewrap table { margin-top:0; }
+  @media (max-width:900px) { .cols { grid-template-columns:1fr; } }
+  section { margin-bottom:20px; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:22px; padding:22px; box-shadow:var(--shadow); }
+  .panel h2 { font-size:16px; font-weight:800; letter-spacing:-.01em; }
+  .panel .sub { color:var(--soft); font-size:13px; margin-top:3px; }
+  .panel-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+
+  table { width:100%; border-collapse:collapse; font-size:13.5px; margin-top:14px; }
+  th, td { text-align:left; padding:11px 8px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  tr:last-child td { border-bottom:none; }
+  th { color:var(--faint); font-weight:600; font-size:11.5px; }
+  .kw { background:var(--acc-soft); color:var(--acc-ink); padding:4px 11px; border-radius:8px; font-weight:700; font-size:12px; }
+  .st { font-size:11.5px; font-weight:700; padding:4px 11px; border-radius:999px; background:var(--peach); color:var(--soft); }
+  .st.sent { background:var(--mint); color:var(--ok); }
+  .st.reminded { background:var(--amber); color:var(--warn); }
+  .st.failed { background:var(--rose); color:var(--bad); }
+  .dim { color:var(--soft); }
+  .del { background:none; border:none; color:var(--faint); cursor:pointer; font-size:14px; padding:5px 9px; border-radius:9px; }
+  .del:hover { background:var(--rose); color:var(--bad); }
+
+  /* ---------- forms ---------- */
+  form { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+  input.field { font:inherit; font-size:14px; border-radius:13px; border:1px solid var(--line2); padding:11px 14px;
+          background:var(--bg2); color:var(--ink); flex:1; min-width:130px; outline:none; transition:border-color .15s, box-shadow .15s; }
+  input.field:focus { border-color:#f8b48f; box-shadow:0 0 0 3px rgba(255,107,74,.12); background:#fff; }
+  .hint { color:var(--faint); font-size:12.5px; margin-top:12px; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  code.inline { background:var(--peach); border-radius:6px; padding:1px 7px; font-size:12.5px; color:var(--acc-ink); }
+
+  /* ---------- demo hero ---------- */
+  .demo { display:grid; grid-template-columns:1.05fr .95fr; gap:40px; align-items:center; }
+  @media (max-width:880px) { .demo { grid-template-columns:1fr; } }
+  .demo h2 { font-size:clamp(22px,3vw,28px); letter-spacing:-.02em; font-weight:800; line-height:1.15; }
+  .demo h2 em { font-style:normal; background:linear-gradient(120deg,var(--acc),#f59e0b); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .demo .sub { color:var(--soft); font-size:14.5px; margin-top:8px; max-width:440px; }
+  .demo-controls { margin-top:20px; display:flex; flex-direction:column; gap:12px; }
   .chips { display:flex; gap:8px; flex-wrap:wrap; }
-  .chip-btn { border:1px solid var(--line); background:var(--card); border-radius:999px; padding:7px 14px;
-              font:inherit; font-size:13px; font-weight:700; cursor:pointer; color:var(--dim); }
+  .chip-btn { border:1px solid var(--line2); background:#fff; border-radius:999px; padding:7px 14px;
+              font:inherit; font-size:12.5px; font-weight:600; cursor:pointer; color:var(--soft); transition:all .15s; }
+  .chip-btn:hover { border-color:#f5d5bd; background:var(--peach); }
   .chip-btn.on { background:var(--ink); color:#fff; border-color:var(--ink); }
   .ctl { display:flex; gap:10px; flex-wrap:wrap; }
-  .ctl label { flex:1; min-width:150px; display:flex; flex-direction:column; gap:4px;
-               font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:var(--dim); }
-  .ctl input { font:inherit; text-transform:none; letter-spacing:0; border:1px solid var(--line); border-radius:11px;
-               padding:9px 13px; background:var(--card); color:var(--ink); outline:none; width:100%; }
-  .ctl input:focus { border-color:var(--ink); }
+  .ctl label { flex:1; min-width:150px; display:flex; flex-direction:column; gap:5px;
+               font-size:12px; font-weight:600; color:var(--soft); }
+  .ctl input { font:inherit; font-size:14px; border:1px solid var(--line2); border-radius:12px;
+               padding:9px 13px; background:var(--bg2); color:var(--ink); outline:none; width:100%; }
+  .ctl input:focus { border-color:#f8b48f; box-shadow:0 0 0 3px rgba(255,107,74,.12); background:#fff; }
 
-  /* ---- phone mockup ---- */
+  /* ---------- phone mockup ---------- */
   .phone-zone { position:relative; display:flex; justify-content:center; }
-  .phone { width:300px; background:#fff; border:10px solid #14140f; border-radius:46px;
-           box-shadow:0 34px 70px rgba(17,17,16,.22); overflow:hidden; position:relative; }
+  .phone { width:290px; background:#fff; border:9px solid #2b1d15; border-radius:44px;
+           box-shadow:0 30px 60px -18px rgba(120,72,40,.35); overflow:hidden; position:relative; }
   .notch { position:absolute; top:10px; left:50%; transform:translateX(-50%);
-           width:92px; height:22px; background:#14140f; border-radius:999px; z-index:5; }
+           width:88px; height:21px; background:#2b1d15; border-radius:999px; z-index:5; }
   .p-status { display:flex; justify-content:space-between; padding:13px 20px 6px; font-size:12px; font-weight:700; }
   .p-head { display:flex; align-items:center; gap:9px; padding:8px 15px 10px; border-bottom:1px solid var(--line); }
   .p-avatar { width:30px; height:30px; border-radius:50%; flex:none;
               background:conic-gradient(from 210deg,#f9ce34,#ee2a7b,#6228d7,#f9ce34); }
-  .p-user { font-weight:800; font-size:13px; } .p-sub { color:var(--dim); font-size:11px; }
-  .p-media { height:150px; display:grid; place-items:center; font-size:44px;
+  .p-user { font-weight:800; font-size:13px; } .p-sub { color:var(--soft); font-size:11px; }
+  .p-media { height:140px; display:grid; place-items:center; font-size:42px;
              background:linear-gradient(135deg,#ffe9d2,#f7c9a4 55%,#eaa97f); transition:background .4s; }
-  .p-actions { display:flex; gap:15px; padding:10px 15px 2px; font-size:18px; }
-  .p-likes { font-weight:800; font-size:13px; padding:5px 15px 1px; }
-  .p-caption { font-size:13px; padding:2px 15px 10px; color:#3c3c37; }
+  .p-actions { display:flex; gap:15px; padding:10px 15px 2px; font-size:17px; }
+  .p-likes { font-weight:700; font-size:12.5px; padding:5px 15px 1px; }
+  .p-caption { font-size:12.5px; padding:2px 15px 10px; color:#5d4a3e; }
   .p-caption b { color:var(--ink); }
-  .p-comments { padding:0 15px 14px; display:flex; flex-direction:column; gap:9px; min-height:120px; }
-  .p-comment { font-size:13px; }
+  .p-comments { padding:0 15px 14px; display:flex; flex-direction:column; gap:9px; min-height:118px; }
+  .p-comment { font-size:12.5px; }
   .p-comment b { margin-right:5px; }
-  .p-comment .meta { display:block; color:var(--dim); font-size:11px; margin-top:2px; }
-  .p-reply { background:var(--chip); border-radius:13px; padding:9px 11px; }
-  .p-reply .tag { display:block; font-size:10px; font-weight:800; color:var(--dim);
+  .p-comment .meta { display:block; color:var(--faint); font-size:11px; margin-top:2px; }
+  .p-reply { background:var(--peach); border-radius:13px; padding:9px 11px; }
+  .p-reply .tag { display:block; font-size:10px; font-weight:800; color:var(--acc-ink);
                   text-transform:uppercase; letter-spacing:.07em; margin-bottom:2px; }
 
-  /* animation states */
   .pop { animation:pop .45s cubic-bezier(.2,.9,.3,1.2) both; }
   @keyframes pop { from { opacity:0; transform:translateY(12px) scale(.96); } to { opacity:1; transform:none; } }
-  .typing { display:inline-flex; gap:4px; padding:8px 12px; background:var(--chip); border-radius:13px; }
-  .typing i { width:6px; height:6px; border-radius:50%; background:var(--dim); animation:blink 1s infinite; }
+  .typing { display:inline-flex; gap:4px; padding:8px 12px; background:var(--peach); border-radius:13px; }
+  .typing i { width:6px; height:6px; border-radius:50%; background:var(--acc2); animation:blink 1s infinite; }
   .typing i:nth-child(2) { animation-delay:.18s; } .typing i:nth-child(3) { animation-delay:.36s; }
   @keyframes blink { 0%,60%,100% { opacity:.25; } 30% { opacity:1; } }
 
-  /* DM toast */
-  .dm-toast { position:absolute; top:52px; left:50%; transform:translate(-50%,-140%); width:250px;
+  .dm-toast { position:absolute; top:52px; left:50%; transform:translate(-50%,-140%); width:240px;
               background:#fff; border:1px solid var(--line); border-radius:16px; padding:11px 13px;
-              box-shadow:0 18px 44px rgba(17,17,16,.28); z-index:8; opacity:0; transition:transform .5s cubic-bezier(.2,.9,.3,1.1), opacity .3s; }
+              box-shadow:0 18px 44px rgba(120,72,40,.3); z-index:8; opacity:0; transition:transform .5s cubic-bezier(.2,.9,.3,1.1), opacity .3s; }
   .dm-toast.show { transform:translate(-50%,0); opacity:1; }
-  .dm-toast .t { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:800; color:var(--dim);
+  .dm-toast .t { display:flex; align-items:center; gap:8px; font-size:10.5px; font-weight:800; color:var(--soft);
                  text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px; }
-  .dm-toast .t .ic { width:18px; height:18px; border-radius:6px; background:#6c5ce7; color:#fff;
+  .dm-toast .t .ic { width:18px; height:18px; border-radius:6px; background:linear-gradient(135deg,#ee2a7b,#6228d7); color:#fff;
                     display:grid; place-items:center; font-size:10px; }
-  .dm-toast .msg { font-size:13px; }
-  .dm-toast .btn { margin-top:8px; display:inline-block; background:#6c5ce7; color:#fff; font-size:12px;
-                   font-weight:800; border-radius:999px; padding:5px 13px; }
+  .dm-toast .msg { font-size:12.5px; }
+  .dm-toast .btn { margin-top:8px; display:inline-block; background:linear-gradient(135deg,var(--acc),var(--acc2)); color:#fff;
+                   font-size:11.5px; font-weight:800; border-radius:999px; padding:5px 13px; }
 
   .float-chip { position:absolute; bottom:44px; left:-14px; background:#fff; border:1px solid var(--line);
-                border-radius:999px; padding:9px 15px; font-size:12px; font-weight:700;
-                box-shadow:0 12px 28px var(--ring); animation:bob 3.2s ease-in-out infinite; }
+                border-radius:999px; padding:9px 15px; font-size:12px; font-weight:600; color:var(--soft);
+                box-shadow:var(--shadow); animation:bob 3.2s ease-in-out infinite; }
   .float-chip.right { left:auto; right:-12px; bottom:10px; animation-delay:1.4s; }
-  .float-chip b { font-size:13px; }
+  .float-chip b { font-size:13px; color:var(--ink); }
   @keyframes bob { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-7px); } }
 
-  /* ---- stat cards ---- */
-  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; margin:36px 0 44px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px 22px;
-          box-shadow:0 4px 20px var(--ring); }
-  .card .num { font-size:34px; font-weight:800; letter-spacing:-.02em; transition:transform .2s; }
-  .card .num.bump { transform:scale(1.18); }
-  .card .lbl { color:var(--dim); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; margin-top:2px; }
-
-  /* ---- sections ---- */
-  section { margin-bottom:40px; }
-  .kicker { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); margin-bottom:12px; }
-  .panel { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; box-shadow:0 4px 20px var(--ring); }
-  table { width:100%; border-collapse:collapse; font-size:14px; margin-top:14px; }
-  th, td { text-align:left; padding:10px 10px; border-bottom:1px solid var(--line); vertical-align:middle; }
-  tr:last-child td { border-bottom:none; }
-  th { color:var(--dim); font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.07em; }
-  .kw { background:var(--chip); padding:3px 10px; border-radius:8px; font-weight:800; font-size:12px; letter-spacing:.02em; }
-  .st { font-size:12px; font-weight:700; padding:3px 11px; border-radius:999px; background:var(--chip); color:var(--dim); }
-  .st.sent { background:#e8f6ee; color:var(--ok); }
-
-  /* ---- forms ---- */
-  form { display:flex; gap:10px; flex-wrap:wrap; }
-  input.field { font:inherit; border-radius:12px; border:1px solid var(--line); padding:11px 14px;
-          background:var(--bg); color:var(--ink); flex:1; min-width:140px; outline:none; }
-  input.field:focus { border-color:var(--ink); }
-  .hint { color:var(--dim); font-size:13px; margin-top:10px; }
-  .del { background:none; border:none; color:#c0392b; cursor:pointer; font-size:15px; padding:4px 8px; border-radius:8px; }
-  .del:hover { background:#fdecea; }
-  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-  code.inline { background:var(--chip); border-radius:6px; padding:1px 7px; font-size:13px; }
+  @media (max-width:880px) { .phone-zone { display:none; } }
 </style>
 </head>
 <body>
 
 <nav>
-  <div class="logo"><span class="mark">⚡</span> replyflow</div>
+  <a class="logo" href="/"><span class="mark">⚡</span> ReplyLo</a>
   <div class="nav-right">
     <span id="modeBadge" class="badge warn"><span class="dot"></span>…</span>
-    <a class="pill dark" href="/auth/connect">Connect Instagram →</a>
-    <span id="whoBadge" class="badge" style="display:none"></span>
-    <span id="planBadge" class="badge" style="display:none" title="Plan usage this month"></span>
-    <button id="deleteAccountBtn" class="pill" style="display:none;color:#c0392b" onclick="deleteMyAccount()">Delete my account</button>
-    <button id="signoutBtn" class="pill" style="display:none" onclick="fetch('/auth/logout',{method:'POST'}).then(()=>location.href='/')">Sign out</button>
+    <a class="pill dark" href="/auth/connect">Connect Instagram</a>
+    <span id="whoBadge" class="badge user" style="display:none"></span>
+    <button id="signoutBtn" class="pill ghost" style="display:none" onclick="fetch('/auth/logout',{method:'POST'}).then(()=>location.href='/')">Sign out</button>
+    <button id="deleteAccountBtn" class="pill ghost" style="display:none" onclick="deleteMyAccount()">Delete</button>
   </div>
 </nav>
 
 <div class="wrap">
-  <div class="hero">
-    <div class="hero-copy">
-      <span class="badge"><span class="dot"></span> Try it — no sign-up needed</span>
-      <h1>Build your first<br><em>auto-reply here.</em></h1>
-      <p class="sub">Change the words below and watch the phone. When someone comments your keyword, ReplyFlow replies under the comment and sends the DM.</p>
 
+  <div class="greet">
+    <h1 id="greetTitle">Welcome back 👋</h1>
+    <p>Your Instagram keyword replies — live in one place. <span id="planBadge" class="badge" style="display:none;vertical-align:2px" title="Plan usage this month"></span></p>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="ic" style="background:var(--peach)">👋</div><div class="num" id="sReached">0</div><div class="lbl">People reached</div></div>
+    <div class="card"><div class="ic" style="background:var(--mint)">📩</div><div class="num" id="sSent">0</div><div class="lbl">DMs sent</div></div>
+    <div class="card"><div class="ic" style="background:var(--amber)">🖱️</div><div class="num" id="sClicks">0</div><div class="lbl">Link clicks · <span id="sRate">0%</span></div></div>
+    <div class="card"><div class="ic" style="background:#efe9ff">✉️</div><div class="num" id="sEmails">0</div><div class="lbl">Emails collected</div></div>
+  </div>
+
+  <div class="panel demo" style="margin-bottom:34px">
+    <div>
+      <h2>Try it — <em>type a keyword,</em> watch the DM land.</h2>
+      <p class="sub">This is exactly what your followers experience: comment → instant reply → DM.</p>
       <div class="demo-controls">
         <div class="chips" id="typeChips">
           <button class="chip-btn on" data-emoji="🧁" data-niche="Creator">🎨 Creator</button>
@@ -174,18 +223,15 @@
           <button class="chip-btn" data-emoji="💇" data-niche="Salon">💇 Salon</button>
         </div>
         <div class="ctl">
-          <label>The word they comment <input id="cKeyword" value="GUIDE" maxlength="14" /></label>
+          <label>Keyword they comment <input id="cKeyword" value="GUIDE" maxlength="14" /></label>
           <label>Their comment <input id="cComment" value="GUIDE please! 🙌" maxlength="40" /></label>
         </div>
         <div class="ctl">
           <label style="flex:2">The DM they get <input id="cDm" value="Hey! 👋 Here's the free guide you asked for." maxlength="60" /></label>
         </div>
-        <div>
-          <button class="pill dark" id="runDemo" onclick="runDemo()">▶ Run the demo</button>
-        </div>
+        <div><button class="pill dark" id="runDemo" onclick="runDemo()">▶ Run the demo</button></div>
       </div>
     </div>
-
     <div class="phone-zone">
       <div class="phone">
         <div class="notch"></div>
@@ -212,50 +258,49 @@
     </div>
   </div>
 
-  <div class="grid">
-    <div class="card"><div class="num" id="sReached">0</div><div class="lbl">People reached</div></div>
-    <div class="card"><div class="num" id="sSent">0</div><div class="lbl">DMs sent</div></div>
-    <div class="card"><div class="num" id="sClicks">0</div><div class="lbl">Clicked · <span id="sRate">0%</span></div></div>
-    <div class="card"><div class="num" id="sEmails">0</div><div class="lbl">Emails collected</div></div>
+  <div class="cols">
+    <section>
+      <div class="panel">
+        <h2>Auto-reply rules</h2>
+        <div class="sub">Comment keyword → reply + DM</div>
+        <form id="ruleForm">
+          <input class="field" id="fAccount" placeholder="Account id (any for demo)" value="demo" />
+          <input class="field" id="fKeyword" placeholder="Keyword e.g. GUIDE" required />
+          <input class="field" id="fLink" placeholder="Link URL (optional)" />
+          <button class="pill dark" type="submit">Add rule</button>
+        </form>
+        <div class="tablewrap">
+        <table>
+          <thead><tr><th>Keyword</th><th>DM text</th><th></th></tr></thead>
+          <tbody id="rulesBody"></tbody>
+        </table>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="panel">
+        <div class="panel-head"><h2>Conversations</h2><button class="pill light" onclick="refresh()">Refresh</button></div>
+        <div class="sub">Latest keyword commenters</div>
+        <div class="tablewrap">
+        <table>
+          <thead><tr><th>When</th><th>Keyword</th><th>Commenter</th><th>Status</th></tr></thead>
+          <tbody id="convBody"></tbody>
+        </table>
+        </div>
+      </div>
+    </section>
   </div>
 
   <section>
-    <div class="kicker">Auto-reply rules</div>
     <div class="panel">
-      <form id="ruleForm">
-        <input class="field" id="fAccount" placeholder="Account id (any for demo)" value="demo" />
-        <input class="field" id="fKeyword" placeholder="Keyword e.g. GUIDE" required />
-        <input class="field" id="fLink" placeholder="Link URL (optional)" />
-        <button class="pill dark" type="submit">+ Add rule</button>
-      </form>
-      <div class="hint">Demo rules (GUIDE, PRICE) exist until you connect a real account.</div>
-      <table>
-        <thead><tr><th>Keyword</th><th>Account</th><th>DM text</th><th>Links</th><th></th></tr></thead>
-        <tbody id="rulesBody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section>
-    <div class="kicker">Conversations</div>
-    <div class="panel">
-      <table>
-        <thead><tr><th>When</th><th>Keyword</th><th>Commenter</th><th>Status</th></tr></thead>
-        <tbody id="convBody"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section>
-    <div class="kicker">Send a real webhook · dev tool</div>
-    <div class="panel">
-      <div class="row">
+      <h2>Simulate a comment</h2>
+      <div class="sub">Runs the real webhook pipeline — watch the server log.</div>
+      <div class="row" style="margin-top:14px">
         <input class="field" id="simText" value="GUIDE please! 🙌" />
         <input class="field" id="simUser" value="maya.creates" style="max-width:170px" />
-        <button class="pill dark" onclick="simulate()">Send fake comment →</button>
-        <button class="pill light" onclick="refresh()">Refresh</button>
+        <button class="pill dark" onclick="simulate()">Send comment →</button>
       </div>
-      <div class="hint">Posts a Meta-shaped webhook event to <code class="inline">/webhook</code> so you can watch the pipeline run in the server log.</div>
     </div>
   </section>
 </div>
@@ -287,39 +332,33 @@ async function runDemo() {
   const comment = $("cComment").value || `${keyword} please! 🙌`;
   const dmText = $("cDm").value || "Here's the link you asked for.";
 
-  // reset phone
   $("pComments").innerHTML = `<div class="p-comment"><b>jordan.eats</b>ooh need this 😍<span class="meta">2h · Reply</span></div>`;
   $("dmToast").classList.remove("show");
 
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  // 1. the comment appears
   const c = document.createElement("div");
   c.className = "p-comment pop";
   c.innerHTML = `<b>maya.creates</b>${esc(comment)}<span class="meta">now · Reply</span>`;
   $("pComments").appendChild(c);
   await wait(900);
 
-  // 2. typing indicator
   const t = document.createElement("div");
   t.className = "typing pop"; t.innerHTML = "<i></i><i></i><i></i>";
   $("pComments").appendChild(t);
   await wait(1200);
   t.remove();
 
-  // 3. the auto-reply lands
   const r = document.createElement("div");
   r.className = "p-reply pop";
   r.innerHTML = `<span class="tag">your.brand · Author · auto-reply</span>DM sent! Check your inbox 📩<span class="meta">now · Reply</span>`;
   $("pComments").appendChild(r);
   await wait(500);
 
-  // 4. the DM toast slides down
   $("dmToastMsg").textContent = dmText;
   $("dmToastBtn").textContent = "Get the " + keyword.toLowerCase();
   $("dmToast").classList.add("show");
 
-  // 5. fire the real webhook so the dashboard updates too
   await postWebhook(comment, "maya.creates");
   await wait(700);
   refresh();
@@ -333,9 +372,12 @@ fetch("/auth/me").then(r => r.json()).then(j => {
   if (!j.user) { location.href = "/login?next=" + encodeURIComponent(location.pathname); return; }
   const who = document.getElementById("whoBadge");
   who.style.display = "";
-  who.innerHTML = `${j.user.email}${j.user.role === "admin" ? " · <a href='/admin' style='font-weight:800'>Admin</a>" : ""}`;
+  const initial = j.user.email[0].toUpperCase();
+  who.innerHTML = `<span class="avatar">${esc(initial)}</span>${esc(j.user.email.split("@")[0])}${j.user.role === "admin" ? " · <a href='/admin' style='font-weight:800'>Admin</a>" : ""}`;
   document.getElementById("signoutBtn").style.display = "";
   document.getElementById("deleteAccountBtn").style.display = "";
+  const h = new Date().getHours();
+  $("greetTitle").textContent = (h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening") + " 👋";
 }).catch(() => {});
 
 async function deleteMyAccount() {
@@ -360,7 +402,7 @@ async function refresh() {
   const badge = $("modeBadge");
   const live = status.mode === "live";
   badge.className = "badge " + (live ? "live" : "warn");
-  badge.innerHTML = `<span class="dot"></span>${live ? "LIVE" : "DRY-RUN"}`;
+  badge.innerHTML = `<span class="dot"></span>${live ? "Live" : "Dry-run"}`;
 
   bumpIfChanged("sReached", stats.reached);
   bumpIfChanged("sSent", stats.sent);
@@ -368,13 +410,12 @@ async function refresh() {
   $("sRate").textContent = stats.clickRate + "%";
   bumpIfChanged("sEmails", stats.emails);
 
-  // plan usage vs. limits (from /api/stats -> store.planUsage)
   const pb = $("planBadge");
   if (stats.plan) {
     const u = stats.plan.usage, l = stats.plan.limits;
     pb.style.display = "";
     pb.className = "badge" + (stats.plan.trialExpired ? " warn" : "");
-    pb.textContent = `${stats.plan.plan}: ${u.rules}/${l.rules} rules · ${u.accounts}/${l.accounts} accounts · ${u.conversationsThisMonth}/${l.conversationsThisMonth} DMs`;
+    pb.textContent = `${stats.plan.plan} · ${u.rules}/${l.rules} rules · ${u.conversationsThisMonth}/${l.conversationsPerMonth} DMs`;
   } else {
     pb.style.display = "none";
   }
@@ -382,16 +423,14 @@ async function refresh() {
   $("rulesBody").innerHTML = rules.rules.map(r => `
     <tr>
       <td><span class="kw">${esc(r.keyword)}</span></td>
-      <td>${esc(r.accountId)}</td>
-      <td style="max-width:300px;color:var(--dim)">${esc(r.dmText)}</td>
-      <td>${(r.links || []).length}</td>
-      <td>${r.id.startsWith("demo_") ? "" : `<button class="del" onclick="delRule('${esc(r.id)}')">✕</button>`}</td>
-    </tr>`).join("") || `<tr><td colspan="5" class="hint">No rules yet.</td></tr>`;
+      <td class="dim" style="max-width:220px">${esc(r.dmText)}</td>
+      <td style="text-align:right">${r.id.startsWith("demo_") ? "" : `<button class="del" onclick="delRule('${esc(r.id)}')">✕</button>`}</td>
+    </tr>`).join("") || `<tr><td colspan="3" class="hint">No rules yet — add one above.</td></tr>`;
 
   const kwOf = Object.fromEntries(rules.rules.map(r => [r.id, r.keyword]));
   $("convBody").innerHTML = [...convs.conversations].reverse().map(c => `
     <tr>
-      <td>${new Date(c.sentAt).toLocaleTimeString()}</td>
+      <td class="dim">${new Date(c.sentAt).toLocaleTimeString()}</td>
       <td><span class="kw">${esc(kwOf[c.ruleId] || c.ruleId)}</span></td>
       <td>${esc(c.psid)}</td>
       <td><span class="st ${esc(c.status)}">${esc(c.status)}</span></td>
@@ -420,7 +459,6 @@ $("ruleForm").addEventListener("submit", async (e) => {
 async function delRule(id) { await fetch("/api/rules/" + id, { method: "DELETE" }); refresh(); }
 
 async function postWebhook(text, username) {
-  // public demo endpoint (same pipeline as /webhook, no Meta signature needed)
   await fetch("/api/demo", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text, username }),

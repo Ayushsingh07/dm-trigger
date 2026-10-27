@@ -1,4 +1,4 @@
-// ReplyFlow — structured logging (pino). One logger for the whole app.
+// ReplyLo — structured logging (pino). One logger for the whole app.
 // Secrets are redacted by the serializer, so it is safe to log request bodies.
 const pino = require("pino");
 

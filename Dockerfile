@@ -1,12 +1,12 @@
-# ReplyFlow — single always-on instance with a persistent volume at /data.
-# Build: docker build -t replyflow .
-# Run:   docker run -p 3000:3000 -v replyflow-data:/data -e DATABASE_PATH=/data/replyflow.db replyflow
+# ReplyLo — single always-on instance with a persistent volume at /data.
+# Build: docker build -t replylo .
+# Run:   docker run -p 3000:3000 -v replylo-data:/data -e DATABASE_PATH=/data/replylo.db replylo
 
 FROM node:24-slim
 
 ENV NODE_ENV=production \
     PORT=3000 \
-    DATABASE_PATH=/data/replyflow.db
+    DATABASE_PATH=/data/replylo.db
 
 WORKDIR /app
 
@@ -20,10 +20,10 @@ COPY src ./src
 COPY public ./public
 
 # Non-root user; /data is the mount point for the persistent volume.
-RUN useradd --system --create-home --uid 10001 replyflow \
+RUN useradd --system --create-home --uid 10001 replylo \
  && mkdir -p /data \
- && chown -R replyflow:replyflow /app /data
-USER replyflow
+ && chown -R replylo:replylo /app /data
+USER replylo
 
 EXPOSE 3000
 

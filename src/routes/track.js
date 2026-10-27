@@ -1,4 +1,4 @@
-// ReplyFlow — lightweight first-party analytics (no cookies, no PII).
+// ReplyLo — lightweight first-party analytics (no cookies, no PII).
 // The landing page pings /track on load; we store a hashed UA for uniques.
 const express = require("express");
 const store = require("../store");

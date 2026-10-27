@@ -1,4 +1,4 @@
-// ReplyFlow — background jobs. All timers are .unref()'d so they never keep
+// ReplyLo — background jobs. All timers are .unref()'d so they never keep
 // the process alive on their own (graceful shutdown still works).
 //
 //  - reminders   every 30s : due reminder_at rows (status "sent", <24h window)
@@ -70,14 +70,14 @@ async function refreshStaleTokens() {
 // ---------------------------------------------------------------- nightly backup
 function runBackup() {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const target = path.join(backupDir, `replyflow-${stamp}.db`);
+  const target = path.join(backupDir, `replylo-${stamp}.db`);
   try {
     fs.mkdirSync(backupDir, { recursive: true });
     db.exec(`VACUUM INTO '${target.replace(/'/g, "''")}'`);
     logger.info({ target }, "[backup] written");
     // prune to the newest BACKUP_KEEP files
     const files = fs.readdirSync(backupDir)
-      .filter((f) => f.startsWith("replyflow-") && f.endsWith(".db"))
+      .filter((f) => f.startsWith("replylo-") && f.endsWith(".db"))
       .map((f) => path.join(backupDir, f))
       .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
     for (const old of files.slice(BACKUP_KEEP)) {

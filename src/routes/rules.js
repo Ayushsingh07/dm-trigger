@@ -1,4 +1,4 @@
-// ReplyFlow — keyword auto-reply rules CRUD, scoped to the signed-in user.
+// ReplyLo — keyword auto-reply rules CRUD, scoped to the signed-in user.
 const express = require("express");
 const store = require("../store");
 const { attachUser, requireUser } = require("../auth");

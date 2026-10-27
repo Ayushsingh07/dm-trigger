@@ -1,4 +1,4 @@
-// ReplyFlow — app auth (signup/login/logout/me) + Meta OAuth connect flow.
+// ReplyLo — app auth (signup/login/logout/me) + Meta OAuth connect flow.
 // App sessions are first-party (cookie + SQLite); Meta OAuth runs behind login.
 const express = require("express");
 const store = require("../store");
@@ -17,7 +17,7 @@ const MIN_PASSWORD_LEN = 10;
 
 // Fixed dummy hash so a login for an unknown email still costs one scrypt
 // run — the response time doesn't leak whether the account exists.
-const DUMMY_HASH = hashPassword("replyflow-timing-pad-0000");
+const DUMMY_HASH = hashPassword("replylo-timing-pad-0000");
 
 // POST /auth/signup { email, password, name? }
 router.post("/signup", (req, res) => {

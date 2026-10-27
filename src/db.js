@@ -1,13 +1,13 @@
-// ReplyFlow — SQLite persistence (built into Node 22.5+, no deps).
-// File: $DATABASE_PATH (default data/replyflow.db), auto-created. WAL mode.
+// ReplyLo — SQLite persistence (built into Node 22.5+, no deps).
+// File: $DATABASE_PATH (default data/replylo.db), auto-created. WAL mode.
 
 const fs = require("fs");
 const path = require("path");
 const { DatabaseSync } = require("node:sqlite");
 const logger = require("./logger");
 
-// On a persistent-disk host (Fly volume) DATABASE_PATH points at /data/replyflow.db.
-const dbPath = path.resolve(__dirname, "..", process.env.DATABASE_PATH || path.join("data", "replyflow.db"));
+// On a persistent-disk host (Fly volume) DATABASE_PATH points at /data/replylo.db.
+const dbPath = path.resolve(__dirname, "..", process.env.DATABASE_PATH || path.join("data", "replylo.db"));
 const dataDir = path.dirname(dbPath);
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 

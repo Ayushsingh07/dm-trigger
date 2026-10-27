@@ -1,4 +1,4 @@
-// ReplyFlow — admin API: launch metrics, users, events. Admin role only.
+// ReplyLo — admin API: launch metrics, users, events. Admin role only.
 const express = require("express");
 const store = require("../store");
 const { attachUser, requireAdmin } = require("../auth");

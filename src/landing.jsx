@@ -48,7 +48,7 @@ function Nav() {
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         <a href="#" className="flex items-center gap-2.5 text-[17px] font-extrabold tracking-tight">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-teal to-teal-dark text-white shadow-soft">⚡</span>
-          ReplyFlow
+          ReplyLo
         </a>
         <nav className="hidden items-center gap-7 text-[14px] font-semibold text-slateInk md:flex">
           <a href="#how" className="transition hover:text-ink">How it works</a>
@@ -364,7 +364,7 @@ function Hero() {
           </Reveal>
           <Reveal delay={160}>
             <p className="mt-5 max-w-md text-[17px] leading-relaxed text-slateInk">
-              ReplyFlow watches your posts, catches the keyword, and opens the DM — with your
+              ReplyLo watches your posts, catches the keyword, and opens the DM — with your
               message, your links, your tone. Try the live phone →
             </p>
           </Reveal>
@@ -418,7 +418,7 @@ function Hero() {
           </Reveal>
         </div>
 
-        <Reveal delay={200}><Phone type={type} keyword={keyword} dmText={dmText} stage={stage} frame={frame}
+        <Reveal delay={200} className="md:mt-32"><Phone type={type} keyword={keyword} dmText={dmText} stage={stage} frame={frame}
           liked={liked} likeCount={likeCount} reel={reel} onLike={onLike} onCommentTap={onCommentTap} onShare={onShare} /></Reveal>
       </div>
     </section>
@@ -442,7 +442,7 @@ function Logos() {
 function HowItWorks() {
   const steps = [
     { n: "01", e: "💬", t: "They comment a keyword", d: "GUIDE, PRICE, MENU — any word that means \"send it to me\". Whole-word matching, no false hits." },
-    { n: "02", e: "⚡", t: "ReplyFlow opens the DM", d: "A compliant private reply + DM within Meta's rules, in under two seconds, 24/7." },
+    { n: "02", e: "⚡", t: "ReplyLo opens the DM", d: "A compliant private reply + DM within Meta's rules, in under two seconds, 24/7." },
     { n: "03", e: "📈", t: "You get the lead", d: "Your message, your links, their email when they reply. Everything lands in your dashboard." },
   ];
   return (
@@ -475,7 +475,7 @@ function Features() {
     { e: "🔔", t: "Comment → DM in ~2s", d: "Webhook-driven, not polled. The moment the keyword lands, the DM goes out." },
     { e: "🧠", t: "Whole-word matching", d: "\"GUIDE\" matches \"guide please!\" but never \"guilt\". Per-post scopes and follower-only rules." },
     { e: "🔗", t: "Buttons & links", d: "Up to 3 tap-through buttons per DM — shop, booking, lead magnet, anything." },
-    { e: "✉️", t: "Email capture", d: "ReplyFlow listens in the thread and saves emails when they reply, inside the 24-hour window." },
+    { e: "✉️", t: "Email capture", d: "ReplyLo listens in the thread and saves emails when they reply, inside the 24-hour window." },
     { e: "🛡️", t: "Official APIs only", d: "Meta Graph API, private replies, messaging-window rules. Your account stays safe." },
     { e: "📊", t: "One honest dashboard", d: "Matches, DMs sent, replies, clicks, emails — per rule, exportable as CSV." },
   ];
@@ -524,7 +524,7 @@ function CtaFooter() {
       </section>
       <footer className="border-t border-line bg-white">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-[13px] text-slate-400 sm:flex-row">
-          <span className="flex items-center gap-2 font-extrabold text-ink"><span className="grid h-6 w-6 place-items-center rounded-lg bg-teal text-[11px] text-white">⚡</span>ReplyFlow</span>
+          <span className="flex items-center gap-2 font-extrabold text-ink"><span className="grid h-6 w-6 place-items-center rounded-lg bg-teal text-[11px] text-white">⚡</span>ReplyLo</span>
           <span>Built on Meta's official APIs · not affiliated with Instagram</span>
           <a href="/app" className="font-semibold text-slateInk transition hover:text-ink">Dashboard →</a>
         </div>

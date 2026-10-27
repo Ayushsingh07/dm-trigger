@@ -1,14 +1,14 @@
-# ReplyFlow — Fly.io deployment (single always-on machine + persistent volume).
+# ReplyLo — Fly.io deployment (single always-on machine + persistent volume).
 # See DEPLOY.md for the exact Windows commands.
 
-app = "replyflow"
+app = "replylo"
 primary_region = "bom" # Mumbai
 
 [build]
 
 [env]
   PORT = "3000"
-  DATABASE_PATH = "/data/replyflow.db"
+  DATABASE_PATH = "/data/replylo.db"
   BACKUP_DIR = "/data/backups"
 
 [mounts]

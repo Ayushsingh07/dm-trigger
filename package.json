@@ -1,7 +1,7 @@
 {
   "name": "dm-trigger",
   "version": "1.0.0",
-  "description": "ReplyFlow — Instagram keyword comment auto-reply SaaS",
+  "description": "ReplyLo — Instagram keyword comment auto-reply SaaS",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

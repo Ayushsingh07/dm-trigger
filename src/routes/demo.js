@@ -1,4 +1,4 @@
-// ReplyFlow — public landing-page demo.
+// ReplyLo — public landing-page demo.
 // The demo is NOT a real Meta webhook: it has no app signature. It runs the
 // same pipeline (match -> reply -> DM -> conversation) through a dedicated
 // endpoint so it keeps working even when META_APP_SECRET is set and the real

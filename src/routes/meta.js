@@ -1,4 +1,4 @@
-// ReplyFlow — Meta platform callbacks: data deletion + deauthorize.
+// ReplyLo — Meta platform callbacks: data deletion + deauthorize.
 // Both arrive as POST with an `signed_request` form field; the payload is
 // only trusted when its HMAC matches META_APP_SECRET (see meta.parseSignedRequest).
 const express = require("express");
