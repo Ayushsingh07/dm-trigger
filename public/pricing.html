@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pricing — ReplyLo</title>
+<meta name="description" content="Simple prepaid pricing for ReplyLo. Pick replies per post, keep your Instagram auto-replies running for 30 days. No auto-renewal." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="ReplyLo — Pricing" />
+<meta property="og:description" content="Prepaid passes from ₹199/month. Replies per post, 15 posts per period, top-ups when a post goes viral." />
+<link rel="canonical" href="https://replylo.fly.dev/pricing" />
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+<link rel="stylesheet" href="/assets/app.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body class="bg-mist text-ink font-sans antialiased">
+<header class="sticky top-0 z-40 border-b border-line/70 bg-white/80 backdrop-blur-xl">
+  <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+    <a href="/" class="text-[15px] font-extrabold tracking-tight">⚡ ReplyLo</a>
+    <nav class="flex gap-4 text-[13px] font-bold text-slateInk">
+      <a class="hover:text-teal" href="/#how">How it works</a>
+      <a class="text-teal" href="/pricing">Pricing</a>
+      <a class="hover:text-teal" href="/terms">Terms</a>
+      <a class="rounded-full bg-ink px-4 py-1.5 text-white" href="/app">Dashboard</a>
+    </nav>
+  </div>
+</header>
+
+<main class="mx-auto max-w-5xl px-6 py-14">
+  <div class="text-center">
+    <h1 class="text-4xl font-extrabold tracking-tight">Simple prepaid pricing</h1>
+    <p class="mx-auto mt-3 max-w-xl text-[15px] text-slateInk">
+      Buy a pass, pick your replies-per-post allowance, run for 30 days.
+      No subscriptions, no auto-renewal — you top up when you need to.
+    </p>
+  </div>
+
+  <!-- plans (prices mirror src/pricing.js — keep in sync) -->
+  <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <!-- free -->
+    <div class="rounded-2xl border border-line bg-white p-6 shadow-soft">
+      <div class="text-[13px] font-extrabold uppercase tracking-wide text-slateInk">Free</div>
+      <div class="mt-3 text-4xl font-extrabold">₹0</div>
+      <div class="mt-1 text-[12.5px] text-slateInk">forever</div>
+      <ul class="mt-5 space-y-2 text-[13.5px] text-slateInk">
+        <li><b class="text-ink">20</b> replies per post</li>
+        <li><b class="text-ink">2</b> posts per 30 days</li>
+        <li>1 Instagram account</li>
+      </ul>
+      <a href="/signup" class="mt-6 block rounded-full border border-line bg-mist px-4 py-2.5 text-center text-[13px] font-bold hover:border-teal hover:text-teal">Start free</a>
+    </div>
+
+    <!-- starter -->
+    <div class="rounded-2xl border border-line bg-white p-6 shadow-soft">
+      <div class="text-[13px] font-extrabold uppercase tracking-wide text-slateInk">Starter</div>
+      <div class="mt-3 text-4xl font-extrabold">₹199</div>
+      <div class="mt-1 text-[12.5px] text-slateInk">per 30 days</div>
+      <ul class="mt-5 space-y-2 text-[13.5px] text-slateInk">
+        <li><b class="text-ink">50</b> replies per post</li>
+        <li><b class="text-ink">15</b> posts per 30 days</li>
+        <li>Top-ups anytime</li>
+      </ul>
+      <a href="/app" class="mt-6 block rounded-full border border-line bg-mist px-4 py-2.5 text-center text-[13px] font-bold hover:border-teal hover:text-teal">Choose Starter</a>
+    </div>
+
+    <!-- growth (highlighted) -->
+    <div class="relative rounded-2xl border-2 border-teal bg-white p-6 shadow-lift">
+      <div class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-teal px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white">Most popular</div>
+      <div class="text-[13px] font-extrabold uppercase tracking-wide text-teal">Growth</div>
+      <div class="mt-3 text-4xl font-extrabold">₹349</div>
+      <div class="mt-1 text-[12.5px] text-slateInk">per 30 days</div>
+      <ul class="mt-5 space-y-2 text-[13.5px] text-slateInk">
+        <li><b class="text-ink">100</b> replies per post</li>
+        <li><b class="text-ink">15</b> posts per 30 days</li>
+        <li>Trials use these limits</li>
+      </ul>
+      <a href="/app" class="mt-6 block rounded-full bg-teal px-4 py-2.5 text-center text-[13px] font-bold text-white hover:bg-teal-dark">Choose Growth</a>
+    </div>
+
+    <!-- pro -->
+    <div class="rounded-2xl border border-line bg-white p-6 shadow-soft">
+      <div class="text-[13px] font-extrabold uppercase tracking-wide text-slateInk">Pro</div>
+      <div class="mt-3 text-4xl font-extrabold">₹699</div>
+      <div class="mt-1 text-[12.5px] text-slateInk">per 30 days</div>
+      <ul class="mt-5 space-y-2 text-[13.5px] text-slateInk">
+        <li><b class="text-ink">250</b> replies per post</li>
+        <li><b class="text-ink">15</b> posts per 30 days</li>
+        <li>Best for viral accounts</li>
+      </ul>
+      <a href="/app" class="mt-6 block rounded-full border border-line bg-mist px-4 py-2.5 text-center text-[13px] font-bold hover:border-teal hover:text-teal">Choose Pro</a>
+    </div>
+  </div>
+
+  <!-- top-up -->
+  <div class="mt-6 rounded-2xl border border-line bg-teal-soft p-6 sm:flex sm:items-center sm:justify-between">
+    <div>
+      <div class="text-[15px] font-extrabold">Post went viral?</div>
+      <p class="mt-1 text-[13.5px] text-slateInk">Add <b>100 extra replies</b> to any single post for <b>₹49</b>. Only that post's cap goes up — nothing else changes.</p>
+    </div>
+    <a href="/app" class="mt-4 inline-block shrink-0 rounded-full bg-ink px-5 py-2.5 text-[13px] font-bold text-white sm:mt-0">Add replies</a>
+  </div>
+
+  <!-- how counting works -->
+  <div class="mt-12 rounded-2xl border border-line bg-white p-8 shadow-soft">
+    <h2 class="text-xl font-extrabold tracking-tight">How counting works</h2>
+    <div class="mt-4 grid gap-6 text-[14px] leading-relaxed text-slateInk sm:grid-cols-3">
+      <div>
+        <div class="text-[13px] font-extrabold text-ink">1 · Per post</div>
+        <p class="mt-1">Each post you run gets its own reply allowance (e.g. 100 on Growth). When one post's replies hit its cap, only that post pauses — your other posts keep replying.</p>
+      </div>
+      <div>
+        <div class="text-[13px] font-extrabold text-ink">2 · Per 30-day period</div>
+        <p class="mt-1">A pass covers up to 15 different posts in a 30-day period. Counters reset when your period renews, so a post that used everything gets a fresh allowance.</p>
+      </div>
+      <div>
+        <div class="text-[13px] font-extrabold text-ink">3 · Failures aren't charged</div>
+        <p class="mt-1">If a reply can't be delivered, the unit is refunded automatically. You only pay for replies that actually reach the commenter.</p>
+      </div>
+    </div>
+    <p class="mt-6 text-[13px] text-slateInk">All prices in INR, inclusive of applicable taxes. Passes never auto-renew — see <a class="font-bold text-teal" href="/terms">our terms</a>.</p>
+  </div>
+</main>
+
+<footer class="border-t border-line/70 py-8">
+  <div class="mx-auto flex max-w-5xl items-center justify-between px-6 text-[12.5px] font-semibold text-slateInk">
+    <span>© 2026 ReplyLo</span>
+    <span class="flex gap-4">
+      <a class="hover:text-teal" href="/privacy">Privacy</a>
+      <a class="hover:text-teal" href="/terms">Terms</a>
+      <a class="hover:text-teal" href="/data-deletion">Data deletion</a>
+    </span>
+  </div>
+</footer>
+</body>
+</html>

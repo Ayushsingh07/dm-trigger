@@ -116,12 +116,48 @@ CREATE INDEX IF NOT EXISTS idx_rules_account ON rules(account_id);
 -- Meta retries must never produce a second DM for the same comment.
 -- (NULL comment_id is allowed multiple times in SQLite, so demo rows are fine.)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_conv_comment ON conversations(comment_id) WHERE comment_id IS NOT NULL;
+
+-- Per-post reply quota. One row per (user, post, billing period).
+-- 'used' counts replies actually sent; 'extra_replies' is bought top-up.
+CREATE TABLE IF NOT EXISTS post_usage (
+  id            TEXT PRIMARY KEY,
+  user_id       TEXT NOT NULL,
+  post_id       TEXT NOT NULL,
+  period_start  TEXT NOT NULL,
+  used          INTEGER NOT NULL DEFAULT 0,
+  extra_replies INTEGER NOT NULL DEFAULT 0,
+  created_at    TEXT NOT NULL,
+  UNIQUE(user_id, post_id, period_start)
+);
+
+-- Checkout attempts and their outcome. Money is stored in paise, integer only.
+CREATE TABLE IF NOT EXISTS purchases (
+  id                  TEXT PRIMARY KEY,
+  user_id             TEXT NOT NULL,
+  razorpay_order_id   TEXT NOT NULL UNIQUE,
+  razorpay_payment_id TEXT UNIQUE,
+  kind                TEXT NOT NULL CHECK (kind IN ('pass','topup')),
+  plan                TEXT,
+  post_id             TEXT,
+  amount_paise        INTEGER NOT NULL,
+  status              TEXT NOT NULL DEFAULT 'created' CHECK (status IN ('created','paid','failed')),
+  created_at          TEXT NOT NULL,
+  paid_at             TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_post_usage_user ON post_usage(user_id, period_start);
+CREATE INDEX IF NOT EXISTS idx_purchases_user  ON purchases(user_id, status);
 `);
 
 // Tiny forward-migrations for databases created by older versions.
 for (const stmt of [
   "ALTER TABLE conversations ADD COLUMN reminder_at TEXT",
   "ALTER TABLE accounts ADD COLUMN token_issued_at TEXT",
+  // prepaid pass + per-post quota
+  "ALTER TABLE users ADD COLUMN pass_plan TEXT",
+  "ALTER TABLE users ADD COLUMN pass_started_at TEXT",
+  "ALTER TABLE users ADD COLUMN pass_expires_at TEXT",
+  "ALTER TABLE conversations ADD COLUMN post_id TEXT",
 ]) {
   try { db.exec(stmt); } catch { /* column already exists */ }
 }

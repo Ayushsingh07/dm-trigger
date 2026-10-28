@@ -70,6 +70,9 @@ app.use((req, res, next) => {
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: true, legacyHeaders: false,
   trustProxy: 1,
+  // GET /auth/me is a harmless "who am I" read that the billing UI polls after
+  // a payment (2s x 15); it must not eat the login/signup brute-force budget.
+  skip: (req) => req.method === "GET" && req.path === "/me",
   message: { error: "Too many attempts — try again in a few minutes" },
 });
 const trackLimiter = rateLimit({
@@ -87,6 +90,7 @@ app.get("/signup", (_req, res) => res.sendFile(pub("auth.html")));
 app.get("/admin", (_req, res) => res.sendFile(pub("admin.html")));
 app.get("/privacy", (_req, res) => res.sendFile(pub("privacy.html")));
 app.get("/terms", (_req, res) => res.sendFile(pub("terms.html")));
+app.get("/pricing", (_req, res) => res.sendFile(pub("pricing.html")));
 app.get("/data-deletion", (_req, res) => res.sendFile(pub("data-deletion.html")));
 
 // Clean URLs. The .html files are an implementation detail; every page has a
@@ -100,6 +104,7 @@ const CANONICAL_REDIRECTS = {
   "/admin.html": "/admin",
   "/privacy.html": "/privacy",
   "/terms.html": "/terms",
+  "/pricing.html": "/pricing",
   "/data-deletion.html": "/data-deletion",
   "/404.html": "/", // never served by URL — only rendered by the 404 handler
 };
@@ -113,9 +118,12 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, "public"), { maxAge: "1h", index: false }));
 
 // ---------------------------------------------------------------- api
+const billingRoutes = require("./src/routes/billing");
 app.use("/webhook", require("./src/routes/webhook")); // Meta verification + events (signed)
+app.use("/billing/webhook", billingRoutes.webhookRouter); // payment provider callbacks (signed)
 app.use("/auth", authLimiter, require("./src/routes/auth"));   // signup/login + Meta OAuth
 app.use("/meta", require("./src/routes/meta"));                 // data-deletion / deauthorize
+app.use("/api/billing", billingRoutes);                         // plans, orders, mock-pay
 app.use("/api/demo", rateLimit({ // public landing demo (no Meta signature possible)
   windowMs: 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false, trustProxy: 1,
   message: { error: "Demo is busy — try again in a minute" },
