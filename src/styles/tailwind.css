@@ -5,6 +5,7 @@
 
 @source "../public/*.html";
 @source "../src/landing.jsx";
+@source "../src/visuals.jsx";
 
 @theme {
   /* palette (DESIGN-BRIEF.md) */
@@ -33,6 +34,7 @@
   --animate-slideup: slideup 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
   --animate-kenburns: kenburns 7s ease-in-out infinite alternate;
   --animate-marquee: marquee 9s linear infinite;
+  --animate-marquee-slow: marquee 30s linear infinite;
   --animate-spin-slow: spin 4s linear infinite;
   --animate-blob1: blob1 8s ease-in-out infinite alternate;
   --animate-blob2: blob2 10s ease-in-out infinite alternate;
@@ -61,3 +63,44 @@ html { scroll-behavior: smooth; }
 .tilt:hover { transform: perspective(1200px) rotateY(-1deg) rotateX(0deg); }
 .reveal { opacity: 0; }
 .reveal.in { animation: fadeup 0.7s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+
+/* ---- src/visuals.jsx helpers ---- */
+.v-marquee { animation: marquee 30s linear infinite; }
+/* CommentToDM loop: appear with a pop, hold, then fade out (9s cycle).
+   Keyframes live here (not in @theme) because CommentToDM references them
+   from inline styles, and Tailwind only emits @theme keyframes used by
+   --animate-* utilities. */
+/* CommentToDM: one 9s master cycle, infinite. Each step's in/out window is
+   expressed as % of 9s so all three loop together and never end hidden. */
+@keyframes v-step-1 {
+  0%, 3.3%  { opacity: 0; transform: translateY(10px) scale(0.97); }
+  9%, 32%   { opacity: 1; transform: none; }
+  38%, 100% { opacity: 0; transform: translateY(-6px); }
+}
+@keyframes v-step-2 {
+  0%, 33.3% { opacity: 0; transform: translateY(10px) scale(0.97); }
+  39%, 62%  { opacity: 1; transform: none; }
+  68%, 100% { opacity: 0; transform: translateY(-6px); }
+}
+@keyframes v-step-3 {
+  0%, 62%   { opacity: 0; transform: translateY(10px) scale(0.97); }
+  68%, 95%  { opacity: 1; transform: none; }
+  100%      { opacity: 0; transform: translateY(-6px); }
+}
+.v-bar { transform-origin: bottom; animation: bar-grow 0.7s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.v-caret { display: inline-block; width: 2px; height: 0.9em; margin-left: 2px; vertical-align: -2px; background: #0d9488; animation: caret-blink 1s infinite; }
+@keyframes bar-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+@keyframes fade-up { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
+.v-fade-up { animation: fade-up 0.5s ease-out both; }
+@keyframes caret-blink { 0%, 60%, 100% { opacity: 1; } 30% { opacity: 0; } }
+
+/* Reduced motion: stop loops, show final states (CommentToDM keeps all steps visible) */
+@media (prefers-reduced-motion: reduce) {
+  .v-marquee { animation: none; }
+  .v-bar { animation: none; }
+  .v-caret { animation: none; opacity: 0; }
+  .v-step { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .v-fade-up { animation: none !important; }
+  .reveal { opacity: 1; }
+  .reveal.in { animation: none; }
+}

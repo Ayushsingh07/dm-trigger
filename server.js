@@ -117,6 +117,9 @@ app.use((req, res, next) => {
   next();
 });
 
+/* Landing photos: cached a full day (no immutable — files get replaced under
+   the same name). Everything else under /public stays at 1h. */
+app.use("/assets/img", express.static(path.join(__dirname, "public", "assets", "img"), { maxAge: "1d" }));
 app.use(express.static(path.join(__dirname, "public"), { maxAge: "1h", index: false }));
 
 // ---------------------------------------------------------------- api

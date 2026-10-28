@@ -1,5 +1,6 @@
 import React from "react";
 import * as ReactDOM from "react-dom/client";
+import { ImageSlot, AvatarStack, CommentToDM, KeywordChips, MessageEditor, ResultsBars, KeywordMarquee, MockConnected, MockPickPost, MockReplyEditor, MockEveryComment, MockResults, ChatMock, Bubble, LinkCard } from "./visuals";
 
 const { useState, useRef, useEffect } = React;
 
@@ -52,6 +53,8 @@ function Nav() {
         </a>
         <nav className="hidden items-center gap-7 text-[14px] font-semibold text-slateInk md:flex">
           <a href="#how" className="transition hover:text-ink">How it works</a>
+          <a href="#setup" className="transition hover:text-ink">Setup</a>
+          <a href="#who" className="transition hover:text-ink">Who it's for</a>
           <a href="#features" className="transition hover:text-ink">Features</a>
           <a href="#demo" className="transition hover:text-ink">Live demo</a>
         </nav>
@@ -419,8 +422,7 @@ function Hero() {
           </Reveal>
           <Reveal delay={160}>
             <p className="mt-5 max-w-md text-[17px] leading-relaxed text-slateInk">
-              ReplyLo watches your posts, catches the keyword, and opens the DM — with your
-              message, your links, your tone. Try the live phone →
+              ReplyLo watches your posts and opens the DM — with your message, in seconds.
             </p>
           </Reveal>
 
@@ -461,11 +463,7 @@ function Hero() {
           {/* social proof */}
           <Reveal delay={320}>
             <div className="mt-7 flex items-center gap-3">
-              <div className="flex -space-x-2">
-                {["🧑‍🍳", "👨‍🎨", "👩‍💼", "🧔"].map((e, i) => (
-                  <span key={i} className="grid h-8 w-8 place-items-center rounded-full bg-white text-sm ring-2 ring-mist shadow-soft">{e}</span>
-                ))}
-              </div>
+              <AvatarStack />
               <p className="text-[13px] font-medium text-slateInk">
                 <b className="text-ink">★★★★★</b> loved by 2,400+ creators &amp; small brands
               </p>
@@ -473,8 +471,19 @@ function Hero() {
           </Reveal>
         </div>
 
-        <Reveal delay={200} className="md:mt-32"><Phone type={type} keyword={keyword} dmText={dmText} stage={stage} frame={frame}
-          liked={liked} likeCount={likeCount} reel={reel} onLike={onLike} onCommentTap={onCommentTap} onShare={onShare} /></Reveal>
+        <Reveal delay={200} className="md:mt-32">
+          <div className="relative mx-auto w-fit">
+            {/* photo collage behind the phone (files land in public/assets/img/) */}
+            <ImageSlot src="/assets/img/hero-boutique.jpg" ratio="4/5" w={220} eager fallback="heroA"
+              alt="Saree boutique owner checking her phone in her shop"
+              className="absolute -left-16 top-8 hidden w-40 rotate-[-4deg] lg:block" />
+            <ImageSlot src="/assets/img/hero-kitchen.jpg" ratio="4/5" w={220} eager fallback="heroB"
+              alt="Cloud-kitchen cook plating an order in warm window light"
+              className="absolute -right-14 bottom-14 hidden w-36 rotate-[3deg] lg:block" />
+            <Phone type={type} keyword={keyword} dmText={dmText} stage={stage} frame={frame}
+              liked={liked} likeCount={likeCount} reel={reel} onLike={onLike} onCommentTap={onCommentTap} onShare={onShare} />
+          </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -496,9 +505,9 @@ function Logos() {
 /* ---------------- how it works ---------------- */
 function HowItWorks() {
   const steps = [
-    { n: "01", e: "💬", t: "They comment a keyword", d: "GUIDE, PRICE, MENU — any word that means \"send it to me\". Whole-word matching, no false hits." },
-    { n: "02", e: "⚡", t: "ReplyLo opens the DM", d: "A compliant private reply + DM within Meta's rules, in under two seconds, 24/7." },
-    { n: "03", e: "📈", t: "You get the lead", d: "Your message, your links, their email when they reply. Everything lands in your dashboard." },
+    { n: "01", t: "They comment a keyword", d: "Whole-word matching — \"GUIDE\" hits, \"guilt\" doesn't.", ui: <KeywordChips /> },
+    { n: "02", t: "ReplyLo opens the DM", d: "Compliant reply + DM in under two seconds, 24/7.", ui: <MessageEditor text="Here's the guide you asked for 👇" /> },
+    { n: "03", t: "You get the lead", d: "Replies, clicks and emails land in your dashboard.", ui: <ResultsBars bars={[35, 55, 48, 85]} /> },
   ];
   return (
     <section id="how" className="mx-auto max-w-6xl px-4 py-20">
@@ -506,19 +515,251 @@ function HowItWorks() {
         <p className="text-center text-[13px] font-extrabold uppercase tracking-[0.2em] text-teal-dark">How it works</p>
         <h2 className="mt-3 text-center text-4xl font-extrabold tracking-tight">Three steps. Zero typing.</h2>
       </Reveal>
-      <div className="mt-12 grid gap-5 md:grid-cols-3">
+
+      {/* animated comment -> reply -> DM loop */}
+      <Reveal delay={100}>
+        <div className="mx-auto mt-10 flex max-w-3xl flex-col items-center rounded-3xl border border-line bg-mist/70 px-6 py-8">
+          <CommentToDM />
+          <p className="mt-5 text-[13px] font-semibold text-slate-400">Comment → reply → DM. Watch it loop.</p>
+        </div>
+      </Reveal>
+
+      <div className="mt-10 grid gap-5 md:grid-cols-3">
         {steps.map((s, i) => (
           <Reveal key={s.n} delay={i * 120}>
-            <div className="group h-full rounded-2xl border border-line bg-white p-6 shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-chip">
+            <div className="group relative flex h-full flex-col rounded-2xl border border-line bg-white p-6 shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-chip">
+              {i < steps.length - 1 && (
+                <span className="absolute -right-[26px] top-1/2 hidden w-6 border-t-2 border-dashed border-slate-300 md:block" aria-hidden="true">
+                  <span className="absolute -right-1 -top-[5px] text-[10px] text-slate-300">▸</span>
+                </span>
+              )}
               <div className="flex items-center justify-between">
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-teal-soft text-xl">{s.e}</span>
                 <span className="text-[13px] font-extrabold text-slate-300 transition group-hover:text-teal">{s.n}</span>
               </div>
+              <div className="mt-4 min-h-[64px]">{s.ui}</div>
               <h3 className="mt-4 text-[17px] font-extrabold">{s.t}</h3>
-              <p className="mt-2 text-[14px] leading-relaxed text-slateInk">{s.d}</p>
+              <p className="mt-1.5 text-[14px] leading-relaxed text-slateInk">{s.d}</p>
             </div>
           </Reveal>
         ))}
+      </div>
+
+      {/* keyword marquee */}
+      <Reveal delay={120}>
+        <div className="mt-10">
+          <KeywordMarquee />
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
+/* ---------------- setup tutorial (scroll-driven stepper) ---------------- */
+function Tutorial() {
+  const steps = [
+    { t: "Connect Instagram or Facebook", d: "A business or creator account through Meta's own login. We never see your password.", mock: <MockConnected /> },
+    { t: "Pick a post and a word", d: "One post, a few, or every post. Anyone who comments GUIDE gets it.", mock: <MockPickPost /> },
+    { t: "Write the reply, add your link", d: "The DM text and one tap-through button — shop, booking, lead magnet.", mock: <MockReplyEditor /> },
+    { t: "Every comment gets the DM", d: "Whole-word matching: \"GUIDE\" hits, \"guilt\" doesn't. Reply + DM in ~2s.", mock: <MockEveryComment /> },
+    { t: "See what it brings in", d: "Matches, DMs, replies, emails — one honest dashboard, exportable.", mock: <MockResults /> },
+  ];
+  const [active, setActive] = useState(0);
+  const trackRef = useRef(null);
+
+  /* Scroll-driven: each segment is 80vh tall; whichever segment covers the
+     viewport middle sets the active step. No timers, so it works with
+     prefers-reduced-motion too (only the fade is disabled there). */
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const isDesktop = () => window.matchMedia("(min-width: 1024px)").matches;
+    let raf = 0;
+    let timer = 0;
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const mid = window.innerHeight * 0.5;
+        const segs = el.querySelectorAll("[data-seg]");
+        let best = 0, bestDist = Infinity;
+        segs.forEach((s, i) => {
+          const r = s.getBoundingClientRect();
+          const c = r.top + r.height / 2;
+          const d = Math.abs(c - mid);
+          if (r.top < mid && r.bottom > mid && d < bestDist) { best = i; bestDist = d; }
+        });
+        setActive((a) => (a === best ? a : best));
+      });
+    };
+
+    /* mobile has no scroll segments (too jumpy on touch) -> auto-advance */
+    const startTimer = () => {
+      if (timer || isDesktop()) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      timer = setInterval(() => setActive((a) => (a + 1) % steps.length), 4200);
+    };
+    const stopTimer = () => { if (timer) { clearInterval(timer); timer = 0; } };
+
+    const sync = () => { if (isDesktop()) { stopTimer(); onScroll(); } else startTimer(); };
+    sync();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", sync);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      stopTimer();
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", sync);
+    };
+  }, [steps.length]);
+
+  const jump = (i) => {
+    const seg = trackRef.current?.querySelector(`[data-seg="${i}"]`);
+    if (seg) seg.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  return (
+    <section id="setup" className="border-t border-line bg-white">
+      <div className="mx-auto max-w-6xl px-4 pt-20">
+        <Reveal>
+          <p className="text-center text-[13px] font-extrabold uppercase tracking-[0.2em] text-teal-dark">Setup</p>
+          <h2 className="mt-3 text-center text-4xl font-extrabold tracking-tight">Live in five minutes. Five steps.</h2>
+          <p className="mt-3 text-center text-[14px] font-semibold text-slate-400">Scroll to walk through them ↓</p>
+        </Reveal>
+      </div>
+
+      <div ref={trackRef} className="relative mx-auto max-w-6xl px-4 pb-20">
+        {/* desktop: each column = a viewport-height sticky box + an identical
+            segment track, so both columns are the same height and pin in sync */}
+        <div className="hidden lg:grid lg:grid-cols-2 lg:gap-10">
+          {/* left: step list, centered in a viewport-height sticky box */}
+          <div>
+            <div className="lg:sticky lg:top-0 lg:h-screen">
+              <ol className="flex h-full flex-col justify-center">
+                {steps.map((s, i) => {
+                  const on = i === active;
+                  return (
+                    <li key={s.t}>
+                      <button
+                        type="button"
+                        onClick={() => jump(i)}
+                        aria-current={on}
+                        className={`flex w-full items-start gap-4 border-l-2 py-3 pl-4 text-left transition ${on ? "border-ink" : "border-line hover:border-slate-300"}`}
+                      >
+                        <span className={`w-7 shrink-0 pt-0.5 text-[13px] font-extrabold transition ${on ? "text-ink" : "text-slate-300"}`}>{String(i + 1).padStart(2, "0")}</span>
+                        <span className="min-w-0">
+                          <span className={`block text-[17px] font-extrabold leading-snug transition sm:text-[19px] ${on ? "text-ink" : "text-slate-300"}`}>{s.t}</span>
+                          {on && <span className="mt-1.5 block max-w-md text-[14px] leading-relaxed text-slateInk">{s.d}</span>}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </div>
+            {/* scroll length (segments measured in the right column) */}
+            <div className="pointer-events-none" aria-hidden="true">
+              {steps.map((s, i) => (
+                <div key={s.t} className="h-screen" />
+              ))}
+            </div>
+          </div>
+          {/* right: mock panel, centered in an identical sticky box so they stay aligned */}
+          <div>
+            <div className="lg:sticky lg:top-0 lg:h-screen">
+              <div className="flex h-full items-center justify-center">
+                <div className="flex min-h-[340px] w-full max-w-[440px] items-center justify-center overflow-hidden rounded-3xl bg-linear-to-br from-amber/10 via-teal/5 to-violet-400/10 p-6 shadow-soft">
+                  <div key={active} className="v-fade-up flex w-full flex-col items-center">{steps[active].mock}</div>
+                </div>
+              </div>
+            </div>
+            {/* invisible scroll segments that drive `active` */}
+            <div className="pointer-events-none" aria-hidden="true">
+              {steps.map((s, i) => (
+                <div key={s.t} data-seg={i} className="h-[80vh]" />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* mobile: panel + compact active card (auto-advances; no scroll-jacking on touch) */}
+        <div className="flex flex-col gap-5 lg:hidden">
+          <div className="relative mx-auto flex min-h-[300px] w-full max-w-[440px] items-center justify-center overflow-hidden rounded-3xl bg-linear-to-br from-amber/10 via-teal/5 to-violet-400/10 p-5">
+            <div key={active} className="v-fade-up flex flex-col items-center">{steps[active].mock}</div>
+          </div>
+          <div className="w-full">
+            <div className="flex items-center gap-2">
+              {steps.map((s, i) => (
+                <button key={s.t} type="button" aria-label={`Step ${i + 1}: ${s.t}`} onClick={() => jump(i)}
+                  className={`h-1.5 rounded-full transition-all ${i === active ? "w-8 bg-ink" : "w-4 bg-line"}`} />
+              ))}
+            </div>
+            <div className="mt-3 text-[13px] font-extrabold text-ink">{String(active + 1).padStart(2, "0")} · {steps[active].t}</div>
+            <p className="mt-1 text-[13.5px] leading-relaxed text-slateInk">{steps[active].d}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- who it's for ---------------- */
+function UseCases() {
+  const personas = [
+    { name: "Saree boutique", img: "/assets/img/boutique-owner.jpg", fb: "boutique", alt: "Saree boutique owner in her shop holding a phone", kw: "PRICE", q: "price?", line: "Which colour? It's on its way 💫" },
+    { name: "Cloud kitchen", img: "/assets/img/cloud-kitchen.jpg", fb: "kitchen", alt: "Cloud-kitchen cook holding a phone near the pass", kw: "MENU", q: "menu 🍜", line: "New menu, sent 🍜" },
+    { name: "Home tutor", img: "/assets/img/home-tutor.jpg", fb: "tutor", alt: "Home tutor at a desk holding a phone", kw: "CLASS", q: "class?", line: "Free demo slot? Booked ✅" },
+    { name: "Mehndi artist", img: "/assets/img/mehndi-artist.jpg", fb: "mehndi", alt: "Mehndi artist holding a phone in her studio", kw: "DESIGN", q: "design pls", line: "Here's the design you asked for 🌿" },
+  ];
+  const [sel, setSel] = React.useState(0);
+  const p = personas[sel];
+  return (
+    <section id="who" className="border-t border-line bg-mist/50">
+      <div className="mx-auto max-w-4xl px-4 py-20">
+        <Reveal>
+          <p className="text-center text-[13px] font-extrabold uppercase tracking-[0.2em] text-teal-dark">Who it's for</p>
+          <h2 className="mt-3 text-center text-4xl font-extrabold tracking-tight">Pick a business. See it work.</h2>
+        </Reveal>
+        <Reveal delay={100}>
+          <div className="mt-10 overflow-hidden rounded-3xl border border-line bg-white shadow-chip">
+            <div className="grid sm:grid-cols-[240px_1fr]">
+              {/* small photo that swaps with the persona */}
+              <div key={sel} className="v-fade-up relative h-52 sm:h-auto">
+                <ImageSlot src={p.img} alt={p.alt} w={480} bare fill fallback={p.fb} className="absolute inset-0 h-full w-full" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t from-ink/70 to-transparent" />
+                <span className="absolute bottom-3 left-3 rounded-full bg-amber px-2.5 py-1 text-[10px] font-extrabold tracking-wide text-ink">{p.kw}</span>
+              </div>
+              {/* the DM that gets sent */}
+              <div key={`t${sel}`} className="v-fade-up flex flex-col justify-center gap-2.5 p-6 sm:p-8">
+                <p className="text-[13px] font-extrabold uppercase tracking-[0.14em] text-slate-400">{p.name}</p>
+                <div className="flex flex-col gap-2.5">
+                  <Bubble>{p.q}</Bubble>
+                  <Bubble me>{p.line}</Bubble>
+                </div>
+                <p className="mt-1 text-[13px] font-semibold text-teal-dark">
+                  One comment. One instant reply. {p.name === "Cloud kitchen" ? "Every order starts in the comments." : "No app to open, no reply to miss."}
+                </p>
+              </div>
+            </div>
+            {/* persona tabs */}
+            <div className="flex flex-wrap gap-2 border-t border-line bg-mist/60 px-4 py-3.5" role="tablist" aria-label="Choose a business type">
+              {personas.map((x, i) => (
+                <button
+                  key={x.name}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === sel}
+                  onClick={() => setSel(i)}
+                  className={`rounded-full px-3.5 py-1.5 text-[12.5px] font-bold transition ${
+                    i === sel ? "bg-teal text-white shadow-soft" : "bg-white text-slate-500 ring-1 ring-line hover:text-teal-dark"
+                  }`}
+                >
+                  {x.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
@@ -527,15 +768,33 @@ function HowItWorks() {
 /* ---------------- features ---------------- */
 function Features() {
   const items = [
-    { e: "🔔", t: "Comment → DM in ~2s", d: "Webhook-driven, not polled. The moment the keyword lands, the DM goes out." },
-    { e: "🧠", t: "Whole-word matching", d: "\"GUIDE\" matches \"guide please!\" but never \"guilt\". Per-post scopes and follower-only rules." },
-    { e: "🔗", t: "Buttons & links", d: "Up to 3 tap-through buttons per DM — shop, booking, lead magnet, anything." },
-    { e: "✉️", t: "Email capture", d: "ReplyLo listens in the thread and saves emails when they reply, inside the 24-hour window." },
-    { e: "🛡️", t: "Official APIs only", d: "Meta Graph API, private replies, messaging-window rules. Your account stays safe." },
-    { e: "📊", t: "One honest dashboard", d: "Matches, DMs sent, replies, clicks, emails — per rule, exportable as CSV." },
+    {
+      t: "Comment → DM", d: "A public reply so everyone sees you answer, plus up to 3 buttons in a private DM.",
+      mock: <><Bubble>GUIDE please! 🙌</Bubble><Bubble me>Sent it to your DMs! 💌</Bubble><LinkCard title="Your free guide ✨" cta="Get the guide" /></>,
+    },
+    {
+      t: "Whole-word matching", d: "\"GUIDE\" matches \"guide please!\" — never \"guilt\". Per-post scopes too.",
+      mock: <><Bubble>guide please! 🙌</Bubble><Bubble me>Sent you a DM 📩</Bubble><Bubble>feeling guilty lol</Bubble><div className="ml-auto rounded-full bg-white px-3 py-1.5 text-[11.5px] font-bold text-slate-400 shadow-soft">ignored — no match</div></>,
+    },
+    {
+      t: "Buttons & links", d: "Up to 3 tap-through buttons per DM — shop, booking, lead magnet, anything.",
+      mock: <><Bubble me>What's the best way to book? 👇</Bubble><LinkCard title="Book a slot" cta="Open calendar" /><LinkCard title="Price list" cta="See prices" /></>,
+    },
+    {
+      t: "Followers only", d: "Optionally gate the DM behind a follow — turns viewers into audience.",
+      mock: <><Bubble me>Almost there! Follow us, then tap below 👇</Bubble><div className="ml-auto rounded-full bg-white px-3 py-1.5 text-[12px] font-bold text-sky-600 shadow-soft">I followed ✅</div></>,
+    },
+    {
+      t: "Email capture", d: "ReplyLo listens in the thread and saves emails when they reply, inside the 24-hour window.",
+      mock: <><Bubble me>What's the best email to send it to?</Bubble><Bubble>maya@gmail.com</Bubble><LinkCard title="On its way ✨" cta="Open now" /></>,
+    },
+    {
+      t: "One honest dashboard", d: "Matches, DMs sent, replies, clicks, emails — per rule, exportable as CSV.",
+      mock: <><div className="grid grid-cols-3 gap-2"><div className="rounded-xl bg-white px-2 py-2 text-center shadow-soft"><div className="text-[16px] font-extrabold text-teal-dark">128</div><div className="text-[10px] font-bold text-slate-400">Matches</div></div><div className="rounded-xl bg-white px-2 py-2 text-center shadow-soft"><div className="text-[16px] font-extrabold text-teal-dark">121</div><div className="text-[10px] font-bold text-slate-400">DMs</div></div><div className="rounded-xl bg-white px-2 py-2 text-center shadow-soft"><div className="text-[16px] font-extrabold text-teal-dark">34</div><div className="text-[10px] font-bold text-slate-400">Emails</div></div></div><ResultsBars bars={[35, 55, 48, 85]} /></>,
+    },
   ];
   return (
-    <section id="features" className="border-t border-line bg-white">
+    <section id="features" className="border-t border-line bg-mist/50">
       <div className="mx-auto max-w-6xl px-4 py-20">
         <Reveal>
           <p className="text-center text-[13px] font-extrabold uppercase tracking-[0.2em] text-teal-dark">Features</p>
@@ -544,10 +803,10 @@ function Features() {
         <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((f, i) => (
             <Reveal key={f.t} delay={(i % 3) * 100}>
-              <div className="group h-full rounded-2xl border border-line bg-mist/60 p-6 transition duration-300 hover:border-teal/40 hover:bg-white hover:shadow-chip">
-                <span className="text-2xl">{f.e}</span>
-                <h3 className="mt-3 text-[16px] font-extrabold">{f.t}</h3>
-                <p className="mt-1.5 text-[14px] leading-relaxed text-slateInk">{f.d}</p>
+              <div className="flex h-full flex-col rounded-2xl border border-line bg-white p-4 shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-chip">
+                <ChatMock>{f.mock}</ChatMock>
+                <h3 className="mt-4 px-1 text-[16px] font-extrabold">{f.t}</h3>
+                <p className="mt-1.5 px-1 pb-1 text-[13.5px] leading-relaxed text-slateInk">{f.d}</p>
               </div>
             </Reveal>
           ))}
@@ -564,6 +823,11 @@ function CtaFooter() {
       <section className="mx-auto max-w-6xl px-4 py-20">
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl bg-ink px-6 py-14 text-center text-white shadow-lift">
+            {/* photo background (falls back to the gradient blobs if missing) */}
+            <img src="/assets/img/cta-workspace.jpg" alt="" aria-hidden="true" width="928" height="522"
+              loading="lazy" decoding="async" onError={(e) => { e.currentTarget.style.display = "none"; }}
+              className="absolute inset-0 h-full w-full object-cover opacity-40" />
+            <div className="pointer-events-none absolute inset-0 bg-linear-to-t from-ink via-ink/70 to-ink/40" />
             <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-teal/30 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-amber/20 blur-3xl" />
             <h2 className="relative text-4xl font-extrabold tracking-tight">Your next customer is<br />one comment away.</h2>
@@ -603,6 +867,8 @@ function App() {
         <Hero />
         <Logos />
         <HowItWorks />
+        <Tutorial />
+        <UseCases />
         <Features />
         <CtaFooter />
       </main>
