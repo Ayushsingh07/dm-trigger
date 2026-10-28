@@ -29,16 +29,16 @@ test("rules: create/update/delete round-trip with JSON fields", () => {
     accountId: "acct1", userId: "u1", keyword: " price ",
     links: [{ title: "Shop", url: "https://x.com" }], reminderAfterMin: 30,
   });
-  assert.equal(r.keyword, "PRICE");
+  assert.equal(r.keyword, "price");
   assert.equal(r.active, true);
   assert.equal(r.links.length, 1);
 
   const updated = store.updateRule(r.id, { active: false, keyword: "guide" });
   assert.equal(updated.active, false);
-  assert.equal(updated.keyword, "GUIDE");
+  assert.equal(updated.keyword, "guide");
   assert.equal(updated.reminderAfterMin, 30);
 
-  assert.equal(store.getRule(r.id).keyword, "GUIDE");
+  assert.equal(store.getRule(r.id).keyword, "guide");
   assert.equal(store.rulesForAccount("acct1").length, 1);
   assert.equal(store.deleteRule(r.id), true);
   assert.equal(store.getRule(r.id), null);

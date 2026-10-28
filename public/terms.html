@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Terms of Service — ReplyLo</title>
+<title>{{t:terms.title}} — ReplyLo</title>
 <meta name="robots" content="noindex" />
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
 <link rel="stylesheet" href="/assets/app.css" />
@@ -13,41 +13,74 @@
 <header class="sticky top-0 z-40 border-b border-line/70 bg-white/80 backdrop-blur-xl">
   <div class="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
     <a href="/" class="text-[15px] font-extrabold tracking-tight">⚡ ReplyLo</a>
-    <nav class="flex gap-4 text-[13px] font-bold text-slateInk">
-      <a class="hover:text-teal" href="/privacy">Privacy</a>
-      <a class="hover:text-teal" href="/data-deletion">Data deletion</a>
-      <a class="rounded-full bg-ink px-4 py-1.5 text-white" href="/app">Dashboard</a>
+    <nav class="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] font-bold text-slateInk">
+      <a class="hover:text-teal" href="/privacy">{{t:common.privacy}}</a>
+      <a class="hover:text-teal" href="/data-deletion">{{t:common.dataDeletion}}</a>
+      <span data-lang-switcher class="rounded-full border border-line bg-white px-3 py-1.5 text-[13px] font-bold text-slateInk"></span>
+      <a class="rounded-full bg-ink px-4 py-1.5 text-white whitespace-normal" href="/app">{{t:common.dashboard}}</a>
     </nav>
   </div>
 </header>
 <main class="mx-auto max-w-3xl px-6 py-12">
-  <h1 class="text-3xl font-extrabold tracking-tight">Terms of Service</h1>
-  <p class="mt-2 text-sm text-slateInk">Last updated: October 2026</p>
+  <h1 class="text-3xl font-extrabold tracking-tight">{{t:terms.title}}</h1>
+  <p class="mt-2 text-sm text-slateInk">{{t:common.lastUpdated|date=October 2026}}</p>
 
   <div class="mt-8 space-y-6 text-[15px] leading-relaxed text-slateInk">
     <section>
-      <h2 class="text-lg font-extrabold text-ink">The service</h2>
-      <p class="mt-2">ReplyLo automates replies to Instagram comments and sends direct messages on your behalf, using Meta's official APIs and the permissions you grant. We provide the software "as is" and aim for high availability but do not guarantee uninterrupted service.</p>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.service}}</h2>
+      <p class="mt-2">{{t:terms.serviceBody}}</p>
     </section>
     <section>
-      <h2 class="text-lg font-extrabold text-ink">Your responsibilities</h2>
-      <p class="mt-2">You must follow the Instagram Platform Terms and Community Guidelines with the content you automate. Do not use ReplyLo for spam, scams, or messaging people who did not request it. You are responsible for the DM text and links you configure. Accounts that abuse Meta's messaging limits may be suspended by Meta or by us.</p>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.responsibilities}}</h2>
+      <p class="mt-2">{{t:terms.respBody}}</p>
     </section>
     <section>
-      <h2 class="text-lg font-extrabold text-ink">Plans and limits</h2>
-      <p class="mt-2">Free plans include 1 connected account, 3 keyword rules and 100 automated conversations per calendar month. Trial and paid plans include higher limits as shown in your dashboard. Limits may change with notice for new subscribers; existing subscribers keep their limits for the current billing period.</p>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.plans}}</h2>
+      <p class="mt-2">{{t:terms.plansBody}}</p>
     </section>
     <section>
-      <h2 class="text-lg font-extrabold text-ink">Availability and Meta changes</h2>
-      <p class="mt-2">ReplyLo depends on Meta's APIs. Rate limits, permission reviews, or API changes on Meta's side can affect delivery. Where Meta blocks a message, we cannot force it through.</p>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.refunds}}</h2>
+      <p class="mt-2">{{t:terms.refundsPre}} <b>{{t:terms.refundsBold}}</b> {{t:terms.refundsPost}}</p>
     </section>
     <section>
-      <h2 class="text-lg font-extrabold text-ink">Termination</h2>
-      <p class="mt-2">You can delete your account and all associated data at any time from the dashboard. We may suspend accounts that violate these terms or Meta's platform policies.</p>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.availability}}</h2>
+      <p class="mt-2">{{t:terms.availBody}}</p>
     </section>
     <section>
-      <h2 class="text-lg font-extrabold text-ink">Liability</h2>
-      <p class="mt-2">To the maximum extent permitted by law, our total liability is limited to the amount you paid us in the 12 months before the claim, and we are not liable for lost profits or for actions taken by Meta on your account.</p>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.termination}}</h2>
+      <p class="mt-2">{{t:terms.termBody}}</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.liability}}</h2>
+      <p class="mt-2">{{t:terms.liabilityBody}}</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.controller}}</h2>
+      <p class="mt-2">{{t:terms.controllerBody}}</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.dataStored}}</h2>
+      <p class="mt-2">{{t:terms.dataStoredBody}}</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.processors}}</h2>
+      <p class="mt-2">{{t:terms.processorsBody}}</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.storage}}</h2>
+      <p class="mt-2">{{t:terms.storageBody}}</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.rights}}</h2>
+      <p class="mt-2">{{t:terms.rightsBody}}</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.retention}}</h2>
+      <p class="mt-2">{{t:terms.retentionBody}}</p>
+    </section>
+    <section>
+      <h2 class="text-lg font-extrabold text-ink">{{t:terms.binding}}</h2>
+      <p class="mt-2">{{t:terms.bindingBody}}</p>
     </section>
   </div>
 </main>

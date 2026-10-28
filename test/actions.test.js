@@ -27,10 +27,45 @@ test("keyword match: no partial-word matches", () => {
   assert.equal(commentMatchesKeyword("guider", "guide"), false);
   assert.equal(commentMatchesKeyword("overpriced", "price"), false);
   assert.equal(commentMatchesKeyword("aguide", "guide"), false);
-  assert.equal(commentMatchesKeyword("guidez", "guide"), false, "emoji is a word char: no boundary");
+  assert.equal(commentMatchesKeyword("guidez", "guide"), false);
   assert.equal(commentMatchesKeyword("", "guide"), false);
   assert.equal(commentMatchesKeyword("guide", ""), false, "empty keyword never matches");
   assert.equal(commentMatchesKeyword(null, "guide"), false);
+});
+
+test("keyword match: emoji directly adjacent still matches", () => {
+  // \p{L}\p{N} boundaries: emoji is neither a letter nor a number.
+  assert.equal(commentMatchesKeyword("guide🙌", "GUIDE"), true);
+  assert.equal(commentMatchesKeyword("🙌guide🙌", "guide"), true);
+  assert.equal(commentMatchesKeyword("guide please! 🙌", "GUIDE"), true);
+});
+
+test("keyword match: accents folded both directions", () => {
+  assert.equal(commentMatchesKeyword("send the menu pls", "MENÚ"), true);
+  assert.equal(commentMatchesKeyword("send the menú pls", "MENU"), true);
+  assert.equal(commentMatchesKeyword("quero o preco", "PREÇO"), true);
+  assert.equal(commentMatchesKeyword("o preço por favor", "PRECO"), true);
+});
+
+test("keyword match: Devanagari matches exactly (matras not stripped first)", () => {
+  assert.equal(commentMatchesKeyword("मुझे मेनू भेजो 🙌", "मेनू"), true);
+  assert.equal(commentMatchesKeyword("मेनू", "मेनू"), true);
+  assert.equal(commentMatchesKeyword("मेनूूू", "मेनू"), true, "accent-fold pass");
+});
+
+test("keyword match: Japanese substring mode + full-width folding", () => {
+  // kana keyword -> substring match (no spaces in Japanese)
+  assert.equal(commentMatchesKeyword("レシピを教えてください", "レシピ"), true);
+  assert.equal(commentMatchesKeyword("ガイド", "ガイド"), true);
+  assert.equal(commentMatchesKeyword("みんガイドさん", "ガイド"), true, "substring mode ignores boundaries");
+  // full-width Latin folds to ASCII and uses Latin boundaries
+  assert.equal(commentMatchesKeyword("ＧＵＩＤＥ please", "guide"), true);
+  assert.equal(commentMatchesKeyword("please ＧＵＩＤＥ!", "GUIDE"), true);
+  assert.equal(commentMatchesKeyword("guider", "ＧＵＩＤＥ"), false);
+});
+
+test("keyword match: Thai substring mode", () => {
+  assert.equal(commentMatchesKeyword("สวัสดีครับขอคู่มือ", "คู่มือ"), true);
 });
 
 test("keyword match: regex metacharacters are escaped", () => {

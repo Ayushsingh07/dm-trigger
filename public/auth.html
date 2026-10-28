@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Sign in — ReplyLo</title>
+<title>{{t:auth.signinTitle|brand=ReplyLo}}</title>
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
 <link rel="stylesheet" href="/assets/app.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -23,43 +23,47 @@
     </a>
 
     <div class="rounded-2xl border border-line bg-white p-7 shadow-soft">
-      <h1 id="title" class="text-[22px] font-extrabold tracking-tight">Welcome back</h1>
-      <p id="subtitle" class="mt-1 text-[14px] text-slateInk">Sign in to your dashboard.</p>
+      <h1 id="title" class="text-[22px] font-extrabold tracking-tight">{{t:auth.welcomeBack}}</h1>
+      <p id="subtitle" class="mt-1 text-[14px] text-slateInk">{{t:auth.signinSub}}</p>
 
       <form id="form" class="mt-6 grid gap-3.5" novalidate>
         <label id="nameField" class="hidden flex-col gap-1.5">
-          <span class="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">Name</span>
-          <input name="name" autocomplete="name" class="rounded-xl border border-line bg-mist px-3.5 py-2.5 text-[15px] outline-none transition focus:border-teal focus:bg-white focus:ring-4 focus:ring-teal/10" placeholder="Alex Rivera" />
+          <span class="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">{{t:auth.name}}</span>
+          <input name="name" autocomplete="name" class="rounded-xl border border-line bg-mist px-3.5 py-2.5 text-[15px] outline-none transition focus:border-teal focus:bg-white focus:ring-4 focus:ring-teal/10" placeholder="{{t:auth.namePlaceholder}}" />
         </label>
         <label class="flex flex-col gap-1.5">
-          <span class="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">Email</span>
-          <input name="email" type="email" autocomplete="email" required class="rounded-xl border border-line bg-mist px-3.5 py-2.5 text-[15px] outline-none transition focus:border-teal focus:bg-white focus:ring-4 focus:ring-teal/10" placeholder="you@brand.com" />
+          <span class="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">{{t:auth.email}}</span>
+          <input name="email" type="email" autocomplete="email" required class="rounded-xl border border-line bg-mist px-3.5 py-2.5 text-[15px] outline-none transition focus:border-teal focus:bg-white focus:ring-4 focus:ring-teal/10" placeholder="{{t:auth.emailPlaceholder}}" />
         </label>
         <label class="flex flex-col gap-1.5">
-          <span class="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">Password</span>
-          <input name="password" type="password" autocomplete="current-password" required minlength="10" class="rounded-xl border border-line bg-mist px-3.5 py-2.5 text-[15px] outline-none transition focus:border-teal focus:bg-white focus:ring-4 focus:ring-teal/10" placeholder="At least 10 characters" />
+          <span class="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">{{t:auth.password}}</span>
+          <input name="password" type="password" autocomplete="current-password" required minlength="10" class="rounded-xl border border-line bg-mist px-3.5 py-2.5 text-[15px] outline-none transition focus:border-teal focus:bg-white focus:ring-4 focus:ring-teal/10" placeholder="{{t:auth.passwordPlaceholder}}" />
         </label>
 
         <p id="error" class="hidden rounded-lg bg-rose-50 px-3 py-2 text-[13px] font-semibold text-rose-600"></p>
 
         <button id="submit" type="submit" class="mt-1 rounded-full bg-teal px-5 py-3 text-[15px] font-bold text-white shadow-soft transition hover:bg-teal-dark hover:shadow-chip active:scale-[.98] disabled:opacity-60">
-          Sign in
+          {{t:auth.signin}}
         </button>
       </form>
 
       <p class="mt-5 text-center text-[13px] text-slateInk">
-        <span id="swapQ">New here?</span>
-        <a id="swapLink" href="/signup" class="font-bold text-teal-dark hover:underline">Create an account</a>
+        <span id="swapQ">{{t:auth.newHere}}</span>
+        <a id="swapLink" href="/signup" class="font-bold text-teal-dark hover:underline">{{t:auth.createAccount}}</a>
       </p>
     </div>
 
     <p class="mt-6 text-center text-[12px] text-slate-400">
-      <a href="/" class="font-semibold hover:text-ink">← Back to the live demo</a>
+      <a href="/" class="font-semibold hover:text-ink">{{t:auth.backDemo}}</a>
     </p>
+    <div class="mt-4 flex justify-center">
+      <span data-lang-switcher="rounded-full border border-line bg-white px-3 py-1.5 text-[13px] font-bold text-slateInk"></span>
+    </div>
   </div>
 </div>
 
 <script>
+const T = (k, v) => (window.I18N ? window.I18N.t(k, v) : k);
 const form = document.getElementById("form");
 const errorEl = document.getElementById("error");
 const submitBtn = document.getElementById("submit");
@@ -73,13 +77,14 @@ const mode = () => (location.pathname === "/signup" ? "signup" : "login");
 
 function render() {
   const signup = mode() === "signup";
-  title.textContent = signup ? "Create your account" : "Welcome back";
-  subtitle.textContent = signup ? "Free to start — no card needed." : "Sign in to your dashboard.";
+  document.title = T(signup ? "auth.signupTitle" : "auth.signinTitle", { brand: "ReplyLo" });
+  title.textContent = T(signup ? "auth.signupHeading" : "auth.welcomeBack");
+  subtitle.textContent = T(signup ? "auth.signupSub" : "auth.signinSub");
   nameField.classList.toggle("hidden", !signup);
   nameField.classList.toggle("flex", signup);
-  submitBtn.textContent = signup ? "Create account" : "Sign in";
-  swapQ.textContent = signup ? "Already have an account?" : "New here?";
-  swapLink.textContent = signup ? "Sign in" : "Create an account";
+  submitBtn.textContent = T(signup ? "auth.signup" : "auth.signin");
+  swapQ.textContent = T(signup ? "auth.haveAccount" : "auth.newHere");
+  swapLink.textContent = T(signup ? "auth.signin" : "auth.createAccount");
   swapLink.href = signup ? "/login" : "/signup";
   hideError();
 }
@@ -95,7 +100,7 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
   hideError();
   submitBtn.disabled = true;
-  submitBtn.textContent = "Working…";
+  submitBtn.textContent = T("auth.working");
   const data = Object.fromEntries(new FormData(form).entries());
   try {
     const res = await fetch(`/auth/${mode()}`, {
@@ -105,16 +110,16 @@ form.addEventListener("submit", async (e) => {
     });
     const json = await res.json().catch(() => ({}));
     if (!res.ok) {
-      showError(json.error || "Something went wrong. Try again.");
+      showError(json.error || T("auth.genericError"));
       submitBtn.disabled = false;
-      submitBtn.textContent = mode() === "signup" ? "Create account" : "Sign in";
+      submitBtn.textContent = mode() === "signup" ? T("auth.signup") : T("auth.signin");
       return;
     }
     location.href = json.role === "admin" ? "/admin" : "/app";
   } catch {
-    showError("Network error — is the server running?");
+    showError(T("auth.networkError"));
     submitBtn.disabled = false;
-    submitBtn.textContent = mode() === "signup" ? "Create account" : "Sign in";
+    submitBtn.textContent = mode() === "signup" ? T("auth.signup") : T("auth.signin");
   }
 });
 

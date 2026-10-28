@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ReplyLo · Dashboard</title>
+<title>{{t:app.title}}</title>
 <meta name="robots" content="noindex" />
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -28,6 +28,9 @@
            var(--bg);
          color:var(--ink); font:15px/1.55 "Inter","Segoe UI",system-ui,sans-serif;
          -webkit-font-smoothing:antialiased; min-height:100vh; }
+  /* i18n: script-specific fallbacks (Noto webfonts are linked per page) */
+  html[lang="ja"] body { font-family:"Inter","Noto Sans JP","Hiragino Kaku Gothic ProN",Meiryo,system-ui,sans-serif; }
+  html[lang="hi"] body { font-family:"Inter","Noto Sans Devanagari","Nirmala UI",system-ui,sans-serif; }
   .wrap { max-width:1060px; margin:0 auto; padding:0 24px 90px; }
   a { color:inherit; }
 
@@ -89,7 +92,7 @@
   .panel-head { display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
 
   table { width:100%; border-collapse:collapse; font-size:13.5px; margin-top:14px; }
-  th, td { text-align:left; padding:11px 8px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  th, td { text-align:start; padding:11px 8px; border-bottom:1px solid var(--line); vertical-align:middle; }
   tr:last-child td { border-bottom:none; }
   th { color:var(--faint); font-weight:600; font-size:11.5px; }
   .kw { background:var(--acc-soft); color:var(--acc-ink); padding:4px 11px; border-radius:8px; font-weight:700; font-size:12px; }
@@ -148,7 +151,7 @@
   .p-caption b { color:var(--ink); }
   .p-comments { padding:0 15px 14px; display:flex; flex-direction:column; gap:9px; min-height:118px; }
   .p-comment { font-size:12.5px; }
-  .p-comment b { margin-right:5px; }
+  .p-comment b { margin-inline-end:5px; }
   .p-comment .meta { display:block; color:var(--faint); font-size:11px; margin-top:2px; }
   .p-reply { background:var(--peach); border-radius:13px; padding:9px 11px; }
   .p-reply .tag { display:block; font-size:10px; font-weight:800; color:var(--acc-ink);
@@ -189,89 +192,90 @@
   <a class="logo" href="/"><span class="mark">⚡</span> ReplyLo</a>
   <div class="nav-right">
     <span id="modeBadge" class="badge warn"><span class="dot"></span>…</span>
-    <a class="pill dark" href="/auth/connect">Connect Instagram</a>
+    <a class="pill dark" href="/auth/connect">{{t:app.connectIg}}</a>
     <span id="whoBadge" class="badge user" style="display:none"></span>
-    <button id="signoutBtn" class="pill ghost" style="display:none" onclick="fetch('/auth/logout',{method:'POST'}).then(()=>location.href='/')">Sign out</button>
-    <button id="deleteAccountBtn" class="pill ghost" style="display:none" onclick="deleteMyAccount()">Delete</button>
+    <span data-lang-switcher="pill light"></span>
+    <button id="signoutBtn" class="pill ghost" style="display:none" onclick="fetch('/auth/logout',{method:'POST'}).then(()=>location.href='/')">{{t:app.signout}}</button>
+    <button id="deleteAccountBtn" class="pill ghost" style="display:none" onclick="deleteMyAccount()">{{t:app.delete}}</button>
   </div>
 </nav>
 
 <div class="wrap">
 
   <div class="greet">
-    <h1 id="greetTitle">Welcome back 👋</h1>
-    <p>Your Instagram keyword replies — live in one place. <span id="planBadge" class="badge" style="display:none;vertical-align:2px" title="Plan usage this month"></span></p>
+    <h1 id="greetTitle">{{t:app.greetDefault}}</h1>
+    <p>{{t:app.greetSub}}</p>
   </div>
 
   <div class="grid">
-    <div class="card"><div class="ic" style="background:var(--peach)">👋</div><div class="num" id="sReached">0</div><div class="lbl">People reached</div></div>
-    <div class="card"><div class="ic" style="background:var(--mint)">📩</div><div class="num" id="sSent">0</div><div class="lbl">DMs sent</div></div>
-    <div class="card"><div class="ic" style="background:var(--amber)">🖱️</div><div class="num" id="sClicks">0</div><div class="lbl">Link clicks · <span id="sRate">0%</span></div></div>
-    <div class="card"><div class="ic" style="background:#efe9ff">✉️</div><div class="num" id="sEmails">0</div><div class="lbl">Emails collected</div></div>
+    <div class="card"><div class="ic" style="background:var(--peach)">👋</div><div class="num" id="sReached">0</div><div class="lbl">{{t:app.reached}}</div></div>
+    <div class="card"><div class="ic" style="background:var(--mint)">📩</div><div class="num" id="sSent">0</div><div class="lbl">{{t:app.sent}}</div></div>
+    <div class="card"><div class="ic" style="background:var(--amber)">🖱️</div><div class="num" id="sClicks">0</div><div class="lbl">{{t:app.clicks}} · <span id="sRate">0%</span></div></div>
+    <div class="card"><div class="ic" style="background:#efe9ff">✉️</div><div class="num" id="sEmails">0</div><div class="lbl">{{t:app.emails}}</div></div>
   </div>
 
   <div class="panel demo" style="margin-bottom:34px">
     <div>
-      <h2>Try it — <em>type a keyword,</em> watch the DM land.</h2>
-      <p class="sub">This is exactly what your followers experience: comment → instant reply → DM.</p>
+      <h2>{{t:app.demoTitle1}} <em>{{t:app.demoTitle2}}</em> {{t:app.demoTitle3}}</h2>
+      <p class="sub">{{t:app.demoSub}}</p>
       <div class="demo-controls">
         <div class="chips" id="typeChips">
-          <button class="chip-btn on" data-emoji="🧁" data-niche="Creator">🎨 Creator</button>
-          <button class="chip-btn" data-emoji="🛍️" data-niche="Shop">🛍️ Shop</button>
-          <button class="chip-btn" data-emoji="🧠" data-niche="Coach">🧠 Coach</button>
-          <button class="chip-btn" data-emoji="🍝" data-niche="Restaurant">🍝 Restaurant</button>
-          <button class="chip-btn" data-emoji="💇" data-niche="Salon">💇 Salon</button>
+          <button class="chip-btn on" data-emoji="🧁" data-niche="Creator">{{t:app.typeCreator}}</button>
+          <button class="chip-btn" data-emoji="🛍️" data-niche="Shop">{{t:app.typeShop}}</button>
+          <button class="chip-btn" data-emoji="🧠" data-niche="Coach">{{t:app.typeCoach}}</button>
+          <button class="chip-btn" data-emoji="🍝" data-niche="Restaurant">{{t:app.typeRestaurant}}</button>
+          <button class="chip-btn" data-emoji="💇" data-niche="Salon">{{t:app.typeSalon}}</button>
         </div>
         <div class="ctl">
-          <label>Keyword they comment <input id="cKeyword" value="GUIDE" maxlength="14" /></label>
-          <label>Their comment <input id="cComment" value="GUIDE please! 🙌" maxlength="40" /></label>
+          <label>{{t:app.keywordLabel}} <input id="cKeyword" value="GUIDE" maxlength="14" /></label>
+          <label>{{t:app.commentLabel}} <input id="cComment" value="GUIDE please! 🙌" maxlength="40" /></label>
         </div>
         <div class="ctl">
-          <label style="flex:2">The DM they get <input id="cDm" value="Hey! 👋 Here's the free guide you asked for." maxlength="60" /></label>
+          <label style="flex:2">{{t:app.dmLabel}} <input id="cDm" value="Hey! 👋 Here's the free guide you asked for." maxlength="60" /></label>
         </div>
-        <div><button class="pill dark" id="runDemo" onclick="runDemo()">▶ Run the demo</button></div>
+        <div><button class="pill dark" id="runDemo" onclick="runDemo()">{{t:app.runDemo}}</button></div>
       </div>
     </div>
     <div class="phone-zone">
       <div class="phone">
         <div class="notch"></div>
         <div class="dm-toast" id="dmToast">
-          <div class="t"><span class="ic">✉</span> your.brand · Instagram DM</div>
+          <div class="t"><span class="ic">✉</span> {{t:app.dmToastHead}}</div>
           <div class="msg" id="dmToastMsg"></div>
-          <span class="btn" id="dmToastBtn">Get the guide</span>
+          <span class="btn" id="dmToastBtn">{{t:app.getThe}} guide</span>
         </div>
         <div class="p-status"><span>9:41</span><span>📶 🔋</span></div>
         <div class="p-head">
           <div class="p-avatar"></div>
-          <div><div class="p-user">your.brand</div><div class="p-sub" id="pNiche">Instagram · creator account</div></div>
+          <div><div class="p-user">your.brand</div><div class="p-sub" id="pNiche">{{t:app.nicheSub|niche=creator}}</div></div>
         </div>
         <div class="p-media" id="pMedia">🧁</div>
         <div class="p-actions"><span>♡</span><span>💬</span><span>↗</span></div>
-        <div class="p-likes">1,204 likes</div>
-        <div class="p-caption"><b>your.brand</b> Want it free? Comment <b id="pKeyword">GUIDE</b> 👇</div>
+        <div class="p-likes">{{t:app.likes|count=1,204}}</div>
+        <div class="p-caption"><b>your.brand</b> {{t:app.captionPre}} <b id="pKeyword">GUIDE</b> {{t:app.captionPost}}</div>
         <div class="p-comments" id="pComments">
-          <div class="p-comment"><b>jordan.eats</b>ooh need this 😍<span class="meta">2h · Reply</span></div>
+          <div class="p-comment"><b>jordan.eats</b>ooh need this 😍<span class="meta">{{t:app.comment2h}}</span></div>
         </div>
       </div>
-      <div class="float-chip"><b>2s</b> comment → DM</div>
-      <div class="float-chip right"><b>24/7</b> always on</div>
+      <div class="float-chip"><b>2s</b> {{t:app.chipSpeed}}</div>
+      <div class="float-chip right"><b>24/7</b> {{t:app.chipAlways}}</div>
     </div>
   </div>
 
   <div class="cols">
     <section>
       <div class="panel">
-        <h2>Auto-reply rules</h2>
-        <div class="sub">Comment keyword → reply + DM</div>
+        <h2>{{t:app.rulesTitle}}</h2>
+        <div class="sub">{{t:app.rulesSub}}</div>
         <form id="ruleForm">
-          <input class="field" id="fAccount" placeholder="Account id (any for demo)" value="demo" />
-          <input class="field" id="fKeyword" placeholder="Keyword e.g. GUIDE" required />
-          <input class="field" id="fLink" placeholder="Link URL (optional)" />
-          <button class="pill dark" type="submit">Add rule</button>
+          <input class="field" id="fAccount" placeholder="{{t:app.accountPlaceholder}}" value="demo" />
+          <input class="field" id="fKeyword" placeholder="{{t:app.keywordPlaceholder}}" required />
+          <input class="field" id="fLink" placeholder="{{t:app.linkPlaceholder}}" />
+          <button class="pill dark" type="submit">{{t:app.addRule}}</button>
         </form>
         <div class="tablewrap">
         <table>
-          <thead><tr><th>Keyword</th><th>DM text</th><th></th></tr></thead>
+          <thead><tr><th>{{t:app.thKeyword}}</th><th>{{t:app.thDmText}}</th><th></th></tr></thead>
           <tbody id="rulesBody"></tbody>
         </table>
         </div>
@@ -280,11 +284,11 @@
 
     <section>
       <div class="panel">
-        <div class="panel-head"><h2>Conversations</h2><button class="pill light" onclick="refresh()">Refresh</button></div>
-        <div class="sub">Latest keyword commenters</div>
+        <div class="panel-head"><h2>{{t:app.convTitle}}</h2><button class="pill light" onclick="refresh()">{{t:app.refresh}}</button></div>
+        <div class="sub">{{t:app.convSub}}</div>
         <div class="tablewrap">
         <table>
-          <thead><tr><th>When</th><th>Keyword</th><th>Commenter</th><th>Status</th></tr></thead>
+          <thead><tr><th>{{t:app.thWhen}}</th><th>{{t:app.thKeyword}}</th><th>{{t:app.thCommenter}}</th><th>{{t:app.thStatus}}</th></tr></thead>
           <tbody id="convBody"></tbody>
         </table>
         </div>
@@ -293,19 +297,31 @@
   </div>
 
   <section>
+    <div class="panel" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <h2>{{t:app.billingTitle}}</h2>
+        <div class="sub" id="billingSub">{{t:app.billingLoading}}</div>
+      </div>
+      <a class="pill dark" href="/billing">{{t:app.billingCta}}</a>
+    </div>
+  </section>
+
+  <section>
     <div class="panel">
-      <h2>Simulate a comment</h2>
-      <div class="sub">Runs the real webhook pipeline — watch the server log.</div>
+      <h2>{{t:app.simTitle}}</h2>
+      <div class="sub">{{t:app.simSub}}</div>
       <div class="row" style="margin-top:14px">
         <input class="field" id="simText" value="GUIDE please! 🙌" />
         <input class="field" id="simUser" value="maya.creates" style="max-width:170px" />
-        <button class="pill dark" onclick="simulate()">Send comment →</button>
+        <button class="pill dark" onclick="simulate()">{{t:app.simSend}}</button>
       </div>
     </div>
   </section>
 </div>
 
 <script>
+const T = (k, v) => (window.I18N ? window.I18N.t(k, v) : k);
+const TP = (k, c, v) => (window.I18N ? window.I18N.tplural(k, c, Object.assign({ count: c }, v)) : k);
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 
@@ -315,7 +331,8 @@ document.querySelectorAll("#typeChips .chip-btn").forEach((btn) => {
     document.querySelectorAll("#typeChips .chip-btn").forEach((b) => b.classList.remove("on"));
     btn.classList.add("on");
     $("pMedia").textContent = btn.dataset.emoji;
-    $("pNiche").textContent = `Instagram · ${btn.dataset.niche.toLowerCase()} account`;
+    const nicheLabel = btn.textContent.trim().replace(/^[^\s]+\s+/, "");
+    $("pNiche").textContent = T("app.nicheSub", { niche: nicheLabel.toLowerCase() });
   });
 });
 $("cKeyword").addEventListener("input", () => { $("pKeyword").textContent = $("cKeyword").value.toUpperCase() || "KEYWORD"; });
@@ -332,14 +349,14 @@ async function runDemo() {
   const comment = $("cComment").value || `${keyword} please! 🙌`;
   const dmText = $("cDm").value || "Here's the link you asked for.";
 
-  $("pComments").innerHTML = `<div class="p-comment"><b>jordan.eats</b>ooh need this 😍<span class="meta">2h · Reply</span></div>`;
+  $("pComments").innerHTML = `<div class="p-comment"><b>jordan.eats</b>ooh need this 😍<span class="meta">${T("app.comment2h")}</span></div>`;
   $("dmToast").classList.remove("show");
 
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
   const c = document.createElement("div");
   c.className = "p-comment pop";
-  c.innerHTML = `<b>maya.creates</b>${esc(comment)}<span class="meta">now · Reply</span>`;
+  c.innerHTML = `<b>maya.creates</b>${esc(comment)}<span class="meta">${T("app.commentNow")}</span>`;
   $("pComments").appendChild(c);
   await wait(900);
 
@@ -351,12 +368,12 @@ async function runDemo() {
 
   const r = document.createElement("div");
   r.className = "p-reply pop";
-  r.innerHTML = `<span class="tag">your.brand · Author · auto-reply</span>DM sent! Check your inbox 📩<span class="meta">now · Reply</span>`;
+  r.innerHTML = `<span class="tag">${T("app.autoTag")}</span>${T("app.demoReply")}<span class="meta">${T("app.commentNow")}</span>`;
   $("pComments").appendChild(r);
   await wait(500);
 
   $("dmToastMsg").textContent = dmText;
-  $("dmToastBtn").textContent = "Get the " + keyword.toLowerCase();
+  $("dmToastBtn").textContent = T("app.getThe") + " " + keyword.toLowerCase();
   $("dmToast").classList.add("show");
 
   await postWebhook(comment, "maya.creates");
@@ -373,15 +390,15 @@ fetch("/auth/me").then(r => r.json()).then(j => {
   const who = document.getElementById("whoBadge");
   who.style.display = "";
   const initial = j.user.email[0].toUpperCase();
-  who.innerHTML = `<span class="avatar">${esc(initial)}</span>${esc(j.user.email.split("@")[0])}${j.user.role === "admin" ? " · <a href='/admin' style='font-weight:800'>Admin</a>" : ""}`;
+  who.innerHTML = `<span class="avatar">${esc(initial)}</span>${esc(j.user.email.split("@")[0])}${j.user.role === "admin" ? " · <a href='/admin' style='font-weight:800'>${T("admin.badge")}</a>" : ""}`;
   document.getElementById("signoutBtn").style.display = "";
   document.getElementById("deleteAccountBtn").style.display = "";
   const h = new Date().getHours();
-  $("greetTitle").textContent = (h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening") + " 👋";
+  $("greetTitle").textContent = T(h < 12 ? "app.greetMorning" : h < 17 ? "app.greetAfternoon" : "app.greetEvening") + " 👋";
 }).catch(() => {});
 
 async function deleteMyAccount() {
-  const pw = prompt("This permanently deletes your account, rules, accounts and data.\nEnter your password to confirm:");
+  const pw = prompt(T("app.deleteConfirm"));
   if (!pw) return;
   const res = await fetch("/api/stats/delete-account", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw }),
@@ -402,7 +419,7 @@ async function refresh() {
   const badge = $("modeBadge");
   const live = status.mode === "live";
   badge.className = "badge " + (live ? "live" : "warn");
-  badge.innerHTML = `<span class="dot"></span>${live ? "Live" : "Dry-run"}`;
+  badge.innerHTML = `<span class="dot"></span>${live ? T("app.modeLive") : T("app.modeDryRun")}`;
 
   bumpIfChanged("sReached", stats.reached);
   bumpIfChanged("sSent", stats.sent);
@@ -410,31 +427,21 @@ async function refresh() {
   $("sRate").textContent = stats.clickRate + "%";
   bumpIfChanged("sEmails", stats.emails);
 
-  const pb = $("planBadge");
-  if (stats.plan) {
-    const u = stats.plan.usage, l = stats.plan.limits;
-    pb.style.display = "";
-    pb.className = "badge" + (stats.plan.trialExpired ? " warn" : "");
-    pb.textContent = `${stats.plan.plan} · ${u.rules}/${l.rules} rules · ${u.conversationsThisMonth}/${l.conversationsPerMonth} DMs`;
-  } else {
-    pb.style.display = "none";
-  }
-
   $("rulesBody").innerHTML = rules.rules.map(r => `
     <tr>
       <td><span class="kw">${esc(r.keyword)}</span></td>
       <td class="dim" style="max-width:220px">${esc(r.dmText)}</td>
-      <td style="text-align:right">${r.id.startsWith("demo_") ? "" : `<button class="del" onclick="delRule('${esc(r.id)}')">✕</button>`}</td>
-    </tr>`).join("") || `<tr><td colspan="3" class="hint">No rules yet — add one above.</td></tr>`;
+      <td style="text-align:end">${r.id.startsWith("demo_") ? "" : `<button class="del" onclick="delRule('${esc(r.id)}')">✕</button>`}</td>
+    </tr>`).join("") || `<tr><td colspan="3" class="hint">${T("app.noRules")}</td></tr>`;
 
   const kwOf = Object.fromEntries(rules.rules.map(r => [r.id, r.keyword]));
   $("convBody").innerHTML = [...convs.conversations].reverse().map(c => `
     <tr>
-      <td class="dim">${new Date(c.sentAt).toLocaleTimeString()}</td>
+      <td class="dim">${window.I18N ? I18N.time(c.sentAt) : new Date(c.sentAt).toLocaleTimeString()}</td>
       <td><span class="kw">${esc(kwOf[c.ruleId] || c.ruleId)}</span></td>
       <td>${esc(c.psid)}</td>
       <td><span class="st ${esc(c.status)}">${esc(c.status)}</span></td>
-    </tr>`).join("") || `<tr><td colspan="4" class="hint">Nothing yet — run the demo above.</td></tr>`;
+    </tr>`).join("") || `<tr><td colspan="4" class="hint">${T("app.noConvs")}</td></tr>`;
 }
 
 function bumpIfChanged(id, val) {
@@ -448,7 +455,7 @@ function bumpIfChanged(id, val) {
 $("ruleForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const body = { accountId: $("fAccount").value || "demo", keyword: $("fKeyword").value };
-  if ($("fLink").value) body.links = [{ title: "Open link", url: $("fLink").value }];
+  if ($("fLink").value) body.links = [{ title: T("app.openLink"), url: $("fLink").value }];
   const res = await fetch("/api/rules", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
   });
@@ -470,8 +477,23 @@ async function simulate() {
   setTimeout(refresh, 400);
 }
 
+/* ---------------- billing (summary only; full page at /billing) ---------------- */
+async function refreshBillingSummary() {
+  try {
+    const usage = await fetch("/api/billing/usage").then(r => r.json());
+    const plan = (usage.plan || "free") === "trial" ? T("app.planTrial") : (usage.plan || "free").toUpperCase();
+    let line = T("app.planLine", { plan, used: usage.postsUsed, total: usage.postsAllowed, replies: usage.repliesPerPost });
+    if (usage.daysLeft != null) line += ` · ${TP("app.daysLeft", usage.daysLeft)}`;
+    $("billingSub").textContent = line;
+  } catch {
+    $("billingSub").textContent = T("app.planUnavailable");
+  }
+}
+
 refresh();
 setInterval(refresh, 5000);
+refreshBillingSummary();
+setInterval(refreshBillingSummary, 30000);
 </script>
 </body>
 </html>

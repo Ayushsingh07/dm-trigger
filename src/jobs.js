@@ -89,6 +89,25 @@ function runBackup() {
   }
 }
 
+// ---------------------------------------------------------------- pass expiry
+// Daily: downgrade expired passes to free, and record a "pass_expiring" event
+// three days before expiry (once per user per day) for the dashboard banner.
+const PASS_WARN_DAYS = 3;
+function runPassExpiry() {
+  const downgraded = store.downgradeExpiredPasses();
+  for (const u of downgraded) {
+    store.trackEvent("pass_expired", u.id, { plan: u.pass_plan, expires_at: u.pass_expires_at });
+    logger.info({ user: u.id, plan: u.pass_plan }, "[pass-expiry] downgraded to free");
+  }
+  for (const u of store.passesExpiringWithin(PASS_WARN_DAYS)) {
+    if (store.hasEventToday("pass_expiring", u.id)) continue;
+    const daysLeft = Math.max(0, Math.ceil((new Date(u.pass_expires_at).getTime() - Date.now()) / 864e5));
+    store.trackEvent("pass_expiring", u.id, { plan: u.pass_plan, days_left: daysLeft });
+    logger.info({ user: u.id, daysLeft }, "[pass-expiry] expiring soon");
+  }
+  return { downgraded: downgraded.length };
+}
+
 // ---------------------------------------------------------------- scheduling
 // "Run every N ms, and also fire once shortly after boot if the time-of-day
 // target was already passed" — simple daily cadence without cron deps.
@@ -124,8 +143,9 @@ function startJobs() {
   scheduleDaily(3, refreshStaleTokens, "token-refresh");
   scheduleDaily(4, runBackup, "sqlite-backup");
   scheduleDaily(5, () => store.purgeExpiredSessions(), "session-purge");
+  scheduleDaily(6, runPassExpiry, "pass-expiry");
 
-  logger.info("[jobs] reminder scheduler every 30s; daily: token-refresh 03:00Z, backup 04:00Z, purge 05:00Z");
+  logger.info("[jobs] reminder scheduler every 30s; daily: token-refresh 03:00Z, backup 04:00Z, purge 05:00Z, pass-expiry 06:00Z");
 }
 
 function stopJobs() {
@@ -133,4 +153,4 @@ function stopJobs() {
   timers.length = 0;
 }
 
-module.exports = { startJobs, stopJobs, runDueReminders, refreshStaleTokens, runBackup };
+module.exports = { startJobs, stopJobs, runDueReminders, refreshStaleTokens, runBackup, runPassExpiry };

@@ -61,10 +61,16 @@ router.post("/logout", (req, res) => {
 router.get("/me", (req, res) => {
   const u = req.user;
   if (!u) return res.json({ user: null });
+  // Pass + extra replies are included so the billing UI can poll this single
+  // endpoint after a payment until the entitlement changes.
+  const summary = store.getUsageSummary(u.id);
   res.json({
     user: {
       id: u.id, email: u.email, name: u.name, role: u.role,
       plan: u.plan, status: u.status, trialEndsAt: u.trial_ends_at,
+      passPlan: u.pass_plan ?? null, passExpiresAt: u.pass_expires_at ?? null,
+      effectivePlan: store.getPeriod(u).plan,
+      extraReplies: summary.extraReplies,
     },
   });
 });

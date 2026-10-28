@@ -9,6 +9,7 @@
     "build:js": "esbuild src/landing.jsx --bundle --minify --target=es2020 --jsx=automatic --define:process.env.NODE_ENV='\"production\"' --outfile=public/assets/landing.js",
     "build": "npm run build:css && npm run build:js",
     "watch": "tailwindcss -i src/styles/tailwind.css -o public/assets/app.css --watch",
+    "check:locales": "node scripts/check-locales.js",
     "test": "node --test \"test/*.test.js\""
   },
   "keywords": [],

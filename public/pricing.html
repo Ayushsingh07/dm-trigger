@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{t:pricing.meta.title}}</title>
+<meta name="description" content="{{t:pricing.meta.description}}" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="{{t:pricing.meta.title}}" />
+<meta property="og:description" content="{{t:pricing.meta.description}}" />
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+<link rel="stylesheet" href="/assets/app.css" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+</head>
+<body class="bg-mist text-ink font-sans antialiased">
+<header class="sticky top-0 z-40 border-b border-line/70 bg-white/80 backdrop-blur-xl">
+  <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+    <a href="/" class="text-[15px] font-extrabold tracking-tight">⚡ ReplyLo</a>
+    <nav class="flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] font-bold text-slateInk">
+      <a class="hover:text-teal" href="/#how">How it works</a>
+      <a class="text-teal" href="/pricing">Pricing</a>
+      <a class="hover:text-teal" href="/terms">Terms</a>
+      <span data-lang-switcher class="rounded-full border border-line bg-white px-3 py-1.5 text-[13px] font-bold text-slateInk"></span>
+      <a class="rounded-full bg-ink px-4 py-1.5 text-white whitespace-normal" href="/app">Dashboard</a>
+    </nav>
+  </div>
+</header>
+
+<main class="mx-auto max-w-5xl px-6 py-14">
+  <div class="text-center">
+    <h1 class="text-4xl font-extrabold tracking-tight">{{t:pricing.title}}</h1>
+    <p class="mx-auto mt-3 max-w-xl text-[15px] text-slateInk">
+      {{t:pricing.sub}}
+    </p>
+    <div class="mt-5 flex justify-center">
+      <select id="pricingCurrency" aria-label="Currency" style="display:none" class="rounded-full border border-line bg-white px-4 py-2 text-[13px] font-bold text-slateInk"></select>
+    </div>
+  </div>
+
+  <!-- plans (prices mirror src/pricing.js — keep in sync) -->
+  <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <!-- free -->
+    <div class="rounded-2xl border border-line bg-white p-6 shadow-soft">
+      <div class="text-[13px] font-extrabold uppercase tracking-wide text-slateInk">Free</div>
+      <div class="mt-3 text-4xl font-extrabold" data-plan-price="free">{{money:0}}</div>
+      <div class="mt-1 text-[12.5px] text-slateInk">{{t:pricing.forever}}</div>
+      <ul class="mt-5 space-y-2 text-[13.5px] text-slateInk">
+        <li><b class="text-ink">{{t:pricing.repliesPerPost|count=20}}</b></li>
+        <li><b class="text-ink">{{t:pricing.postsPer30|count=2}}</b></li>
+        <li>{{t:pricing.oneAccount}}</li>
+      </ul>
+      <a href="/signup" class="mt-6 block rounded-full border border-line bg-mist px-4 py-2.5 text-center text-[13px] font-bold hover:border-teal hover:text-teal">{{t:pricing.startFree}}</a>
+    </div>
+
+    <!-- starter -->
+    <div class="rounded-2xl border border-line bg-white p-6 shadow-soft">
+      <div class="text-[13px] font-extrabold uppercase tracking-wide text-slateInk">Starter</div>
+      <div class="mt-3 text-4xl font-extrabold" data-plan-price="starter">{{money:199}}</div>
+      <div class="mt-1 text-[12.5px] text-slateInk">{{t:pricing.per30}}</div>
+      <ul class="mt-5 space-y-2 text-[13.5px] text-slateInk">
+        <li><b class="text-ink">{{t:pricing.repliesPerPost|count=50}}</b></li>
+        <li><b class="text-ink">{{t:pricing.postsPer30|count=15}}</b></li>
+        <li>{{t:pricing.topUps}}</li>
+      </ul>
+      <a href="/app" class="mt-6 block rounded-full border border-line bg-mist px-4 py-2.5 text-center text-[13px] font-bold hover:border-teal hover:text-teal">{{t:pricing.choose|plan=Starter}}</a>
+    </div>
+
+    <!-- growth (highlighted) -->
+    <div class="relative rounded-2xl border-2 border-teal bg-white p-6 shadow-lift">
+      <div class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-teal px-3 py-1 text-[11px] font-extrabold uppercase tracking-wide text-white">{{t:pricing.mostPopular}}</div>
+      <div class="text-[13px] font-extrabold uppercase tracking-wide text-teal">Growth</div>
+      <div class="mt-3 text-4xl font-extrabold" data-plan-price="growth">{{money:349}}</div>
+      <div class="mt-1 text-[12.5px] text-slateInk">{{t:pricing.per30}}</div>
+      <ul class="mt-5 space-y-2 text-[13.5px] text-slateInk">
+        <li><b class="text-ink">{{t:pricing.repliesPerPost|count=100}}</b></li>
+        <li><b class="text-ink">{{t:pricing.postsPer30|count=15}}</b></li>
+        <li>{{t:pricing.trialLimits}}</li>
+      </ul>
+      <a href="/app" class="mt-6 block rounded-full bg-teal px-4 py-2.5 text-center text-[13px] font-bold text-white hover:bg-teal-dark">{{t:pricing.choose|plan=Growth}}</a>
+    </div>
+
+    <!-- pro -->
+    <div class="rounded-2xl border border-line bg-white p-6 shadow-soft">
+      <div class="text-[13px] font-extrabold uppercase tracking-wide text-slateInk">Pro</div>
+      <div class="mt-3 text-4xl font-extrabold" data-plan-price="pro">{{money:699}}</div>
+      <div class="mt-1 text-[12.5px] text-slateInk">{{t:pricing.per30}}</div>
+      <ul class="mt-5 space-y-2 text-[13.5px] text-slateInk">
+        <li><b class="text-ink">{{t:pricing.repliesPerPost|count=250}}</b></li>
+        <li><b class="text-ink">{{t:pricing.postsPer30|count=15}}</b></li>
+        <li>{{t:pricing.viralFor}}</li>
+      </ul>
+      <a href="/app" class="mt-6 block rounded-full border border-line bg-mist px-4 py-2.5 text-center text-[13px] font-bold hover:border-teal hover:text-teal">{{t:pricing.choose|plan=Pro}}</a>
+    </div>
+  </div>
+
+  <!-- top-up -->
+  <div class="mt-6 rounded-2xl border border-line bg-teal-soft p-6 sm:flex sm:items-center sm:justify-between">
+    <div>
+      <div class="text-[15px] font-extrabold">{{t:pricing.viralTitle}}</div>
+      <p class="mt-1 text-[13.5px] text-slateInk" id="viralBody">{{t:pricing.viralBody|replies=100|price={{money:49}}}}</p>
+    </div>
+    <a href="/app" class="mt-4 inline-block shrink-0 rounded-full bg-ink px-5 py-2.5 text-[13px] font-bold text-white sm:mt-0">{{t:pricing.addReplies}}</a>
+  </div>
+
+  <!-- how counting works -->
+  <div class="mt-12 rounded-2xl border border-line bg-white p-8 shadow-soft">
+    <h2 class="text-xl font-extrabold tracking-tight">{{t:pricing.countingTitle}}</h2>
+    <div class="mt-4 grid gap-6 text-[14px] leading-relaxed text-slateInk sm:grid-cols-3">
+      <div>
+        <div class="text-[13px] font-extrabold text-ink">{{t:pricing.count1Title}}</div>
+        <p class="mt-1">{{t:pricing.count1}}</p>
+      </div>
+      <div>
+        <div class="text-[13px] font-extrabold text-ink">{{t:pricing.count2Title}}</div>
+        <p class="mt-1">{{t:pricing.count2}}</p>
+      </div>
+      <div>
+        <div class="text-[13px] font-extrabold text-ink">{{t:pricing.count3Title}}</div>
+        <p class="mt-1">{{t:pricing.count3}}</p>
+      </div>
+    </div>
+    <p class="mt-6 text-[13px] text-slateInk">{{t:pricing.pricesNote}} <a class="font-bold text-teal" href="/terms">our terms</a>.</p>
+  </div>
+</main>
+
+<footer class="border-t border-line/70 py-8">
+  <div class="mx-auto flex max-w-5xl items-center justify-between px-6 text-[12.5px] font-semibold text-slateInk">
+    <span>© 2026 ReplyLo</span>
+    <span class="flex gap-4">
+      <a class="hover:text-teal" href="/privacy">Privacy</a>
+      <a class="hover:text-teal" href="/terms">Terms</a>
+      <a class="hover:text-teal" href="/data-deletion">Data deletion</a>
+    </span>
+  </div>
+</footer>
+<!-- Currency picker: prices come from /api/billing/config (minor units) and
+     are re-rendered with Intl for the chosen currency. Server default = INR. -->
+<script>
+(function () {
+  var sel = document.getElementById("pricingCurrency");
+  if (!sel) return;
+  var cfg = null;
+  function fmtMinor(minor, code) {
+    var c = null;
+    for (var i = 0; i < cfg.currencies.length; i++) if (cfg.currencies[i].code === code) c = cfg.currencies[i];
+    var major = Number(minor) / Math.pow(10, c ? c.exponent : 2);
+    return window.I18N ? window.I18N.money(major, code) : code + " " + major.toLocaleString();
+  }
+  function paint() {
+    if (!cfg) return;
+    var cur = sel.value;
+    var els = document.querySelectorAll("[data-plan-price]");
+    for (var i = 0; i < els.length; i++) {
+      var id = els[i].getAttribute("data-plan-price"), plan = null;
+      for (var j = 0; j < cfg.plans.length; j++) if (cfg.plans[j].id === id) plan = cfg.plans[j];
+      var p = plan && plan.prices ? plan.prices[cur] : null;
+      els[i].textContent = p == null ? "\u2014" : fmtMinor(p, cur);
+    }
+    var vb = document.getElementById("viralBody");
+    if (vb && window.I18N && cfg.topup) {
+      var tp = cfg.topup.prices ? cfg.topup.prices[cur] : null;
+      vb.textContent = window.I18N.t("pricing.viralBody", { replies: cfg.topup.replies, price: tp == null ? "\u2014" : fmtMinor(tp, cur) });
+    }
+  }
+  fetch("/api/billing/config").then(function (r) { return r.json(); }).then(function (j) {
+    cfg = j;
+    sel.innerHTML = "";
+    for (var i = 0; i < j.currencies.length; i++) {
+      var o = document.createElement("option");
+      o.value = j.currencies[i].code;
+      o.textContent = j.currencies[i].code;
+      sel.appendChild(o);
+    }
+    sel.value = j.userCurrency || "INR";
+    sel.style.display = "";
+    sel.onchange = function () {
+      paint();
+      // remember the choice for logged-in users; anonymous users just re-render
+      fetch("/api/billing/currency", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ currency: sel.value }) }).catch(function () {});
+    };
+    paint();
+  }).catch(function () { sel.style.display = "none"; });
+})();
+</script>
+</body>
+</html>

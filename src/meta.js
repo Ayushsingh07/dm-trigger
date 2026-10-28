@@ -224,4 +224,5 @@ function parseSignedRequest(signedRequest) {
 module.exports = {
   buildOAuthUrl, exchangeCode, exchangeLongLived, refreshLongLived, fetchIgProfile,
   sendPrivateReply, sendDM, buildDMMessage, isFollower, parseSignedRequest,
+  shouldRetry,
 };

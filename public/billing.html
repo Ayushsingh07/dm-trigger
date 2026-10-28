@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{t:billing.title|brand=ReplyLo}}</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/billing-page.css" />
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/"><span class="mark">⚡</span> ReplyLo</a>
+  <div class="nav-right">
+    <a class="pill light" href="/app">{{t:billing.backDash}}</a>
+    <a class="pill light" href="/pricing" target="_blank" rel="noopener">{{t:billing.howCounting}}</a>
+    <span data-lang-switcher="pill light"></span>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="greet">
+    <h1>{{t:billing.heading}}</h1>
+    <p>{{t:billing.sub}}</p>
+  </div>
+
+  <div id="banners"></div>
+
+  <div class="panel planhero">
+    <div>
+      <div class="pname" id="planName">&hellip;</div>
+      <div class="pmeta" id="planMeta">&nbsp;</div>
+    </div>
+    <div class="days" id="planDays"></div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>{{t:billing.usageTitle}}</h2><span class="st" id="periodSt">&mdash;</span></div>
+    <div class="sub" id="usageSub">&nbsp;</div>
+    <table>
+      <thead><tr><th>{{t:billing.thPost}}</th><th>{{t:billing.thReplies}}</th><th style="width:34%">{{t:billing.thUsage}}</th><th></th></tr></thead>
+      <tbody id="usageBody"><tr><td colspan="4" class="dim">{{t:billing.noUsage}}</td></tr></tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="upgradePanel" style="display:none">
+    <h2 id="upgradeTitle">{{t:billing.changePlan}}</h2>
+    <div class="sub">{{t:billing.changePlanSub}}</div>
+    <div class="planpick" id="planPick"></div>
+    <div class="hint" id="billingHint"></div>
+    <div class="hint" id="currencyRow" style="display:none;margin-top:10px">
+      <label for="currencySel" id="currencyLabel" style="margin-right:8px"></label>
+      <select id="currencySel" onchange="setBillingCurrency(this.value)" style="padding:6px 10px;border-radius:8px;border:1px solid var(--line, #ddd);background:#fff"></select>
+      <span id="currencyNote" class="dim" style="margin-left:10px"></span>
+    </div>
+  </section>
+
+  <section class="panel" id="historyPanel" style="display:none">
+    <h2>{{t:billing.historyTitle}}</h2>
+    <table>
+      <thead><tr><th>{{t:billing.thWhen}}</th><th>{{t:billing.thItem}}</th><th>{{t:billing.thAmount}}</th><th>{{t:billing.thStatus}}</th></tr></thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+  </section>
+</div>
+
+<!-- billing-page.js / billing.js call window.I18N (t, tplural, money); the
+     server injects <script src="/assets/i18n.js"> in <head> because this file
+     mentions I18N. -->
+<script src="/assets/billing-page.js"></script>
+<script src="/assets/billing.js"></script>
+</body>
+</html>
