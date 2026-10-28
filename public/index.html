@@ -390,7 +390,7 @@ fetch("/auth/me").then(r => r.json()).then(j => {
   const who = document.getElementById("whoBadge");
   who.style.display = "";
   const initial = j.user.email[0].toUpperCase();
-  who.innerHTML = `<span class="avatar">${esc(initial)}</span>${esc(j.user.email.split("@")[0])}${j.user.role === "admin" ? " · <a href='/admin' style='font-weight:800'>${T("admin.badge")}</a>" : ""}`;
+  who.innerHTML = `<span class="avatar">${esc(initial)}</span>${esc(j.user.email.split("@")[0])}${j.user.role === "admin" ? " · <a href='/admin' style='font-weight:800'>${T('admin.badge')}</a>" : ""}`;
   document.getElementById("signoutBtn").style.display = "";
   document.getElementById("deleteAccountBtn").style.display = "";
   const h = new Date().getHours();

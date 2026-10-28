@@ -1,6 +1,6 @@
 import React from "react";
 import * as ReactDOM from "react-dom/client";
-import { ImageSlot, AvatarStack, CommentToDM, KeywordChips, MessageEditor, ResultsBars, KeywordMarquee, MockConnected, MockPickPost, MockReplyEditor, MockEveryComment, MockResults, ChatMock, Bubble, LinkCard } from "./visuals";
+import { ImageSlot, AvatarStack, CommentToDM, KeywordChips, MessageEditor, ResultsBars, MockConnected, MockPickPost, MockReplyEditor, MockEveryComment, MockResults, ChatMock, Bubble, LinkCard } from "./visuals";
 
 const { useState, useRef, useEffect } = React;
 
@@ -606,12 +606,6 @@ function HowItWorks() {
         ))}
       </div>
 
-      {/* keyword marquee */}
-      <Reveal delay={120}>
-        <div className="mt-10">
-          <KeywordMarquee />
-        </div>
-      </Reveal>
     </section>
   );
 }
