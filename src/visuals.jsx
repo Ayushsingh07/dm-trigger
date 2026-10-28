@@ -3,6 +3,12 @@
    Imported by src/landing.jsx section by section. */
 import React from "react";
 
+/* i18n: window.I18N comes from /assets/i18n.js (loaded before landing.js). */
+const t = (key, vars) => {
+  const i = (typeof window !== "undefined" && window.I18N) || null;
+  return i ? i.t(key, vars) : key.split(".").pop();
+};
+
 /* ============================ Illustration ============================ */
 /* Flat SVG scene used as the ImageSlot fallback until real photos exist.
    4:5 viewBox, warm palette, teal/amber accents. */
@@ -123,37 +129,37 @@ export function CommentToDM({ keyword = "GUIDE", compact = false }) {
      so the sequence loops instead of ending hidden. */
   const stepIn = (n) => `v-step-${n} 9s cubic-bezier(.2,.9,.3,1.15) infinite both`;
   return (
-    <div className={`flex flex-col gap-2.5 ${compact ? "max-w-[300px]" : "max-w-[360px]"}`} aria-label="Comment, public reply, then a DM">
+    <div className={`flex flex-col gap-2.5 ${compact ? "max-w-[300px]" : "max-w-[360px]"}`} aria-label={t("landing.mock.c2dAria")}>
       {/* 1 - comment */}
       <div className="v-step" style={{ animation: stepIn(1) }}>
         <div className="flex items-start gap-2">
           <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-300 to-violet-400 text-[13px]">🙋‍♀️</span>
           <div className="rounded-2xl rounded-tl-md bg-white px-3.5 py-2 text-[13px] shadow-soft">
-            <b className="mr-1.5 text-[12px]">maya.creates</b>{kw.toLowerCase()} please! 🙌
-            <span className="ml-2 text-[11px] text-slate-400">now</span>
+            <b className="me-1.5 text-[12px]">maya.creates</b>{kw.toLowerCase()} please! 🙌
+            <span className="ms-2 text-[11px] text-slate-400">now</span>
           </div>
         </div>
       </div>
       {/* 2 - public reply */}
-      <div className="v-step pl-6" style={{ animation: stepIn(2) }}>
+      <div className="v-step ps-6" style={{ animation: stepIn(2) }}>
         <div className="flex items-start gap-2">
           <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-amber-300 via-pink-400 to-indigo-400 text-[13px]">⚡</span>
           <div className="rounded-2xl rounded-tl-md bg-teal-soft px-3.5 py-2 text-[13px] text-teal-dark">
-            <b className="mr-1.5 text-[12px] text-ink">your.brand</b>Sent you a DM 📩
+            <b className="me-1.5 text-[12px] text-ink">your.brand</b>{t("landing.mock.sentYouDm")}
           </div>
         </div>
       </div>
       {/* 3 - DM card */}
-      <div className="v-step mt-1 ml-auto w-[85%] rounded-2xl border border-line bg-white p-3 shadow-chip" style={{ animation: stepIn(3) }}>
+      <div className="v-step mt-1 ms-auto w-[85%] rounded-2xl border border-line bg-white p-3 shadow-chip" style={{ animation: stepIn(3) }}>
         <div className="flex items-center gap-2 border-b border-line pb-2">
           <span className="grid h-6 w-6 place-items-center rounded-full bg-gradient-to-br from-amber-300 via-pink-400 to-indigo-400 text-[11px]">👩‍🍳</span>
           <span className="text-[12px] font-extrabold">your.brand</span>
-          <span className="ml-auto rounded-full bg-mist px-2 py-0.5 text-[10px] font-bold text-slate-400">DM</span>
+          <span className="ms-auto rounded-full bg-mist px-2 py-0.5 text-[10px] font-bold text-slate-400">DM</span>
         </div>
-        <p className="pt-2 text-[13px] leading-snug">Hey Maya! 👋 Here's the guide you asked for — reply YES and it's yours.</p>
+        <p className="pt-2 text-[13px] leading-snug">{t("landing.visuals.demoDm")}</p>
         <div className="mt-2 flex gap-1.5">
-          <span className="rounded-full bg-teal px-3 py-1 text-[11px] font-bold text-white">Get the guide</span>
-          <span className="rounded-full border border-line px-3 py-1 text-[11px] font-bold text-slateInk">Ask a question</span>
+          <span className="rounded-full bg-teal px-3 py-1 text-[11px] font-bold text-white">{t("landing.visuals.getGuide")}</span>
+          <span className="rounded-full border border-line px-3 py-1 text-[11px] font-bold text-slateInk">{t("landing.visuals.askQuestion")}</span>
         </div>
       </div>
     </div>
@@ -198,10 +204,10 @@ export function KeywordChips({ match = "GUIDE" }) {
 export function MessageEditor({ text = "Hey! 👋 Here's the guide you asked for." }) {
   return (
     <div className="w-full max-w-[260px] rounded-2xl border border-line bg-white p-3 shadow-soft">
-      <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">DM text</div>
+      <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">{t("landing.visuals.dmText")}</div>
       <div className="mt-1.5 rounded-xl bg-mist px-3 py-2 text-[12.5px] leading-snug">{text}<span className="v-caret" /></div>
       <div className="mt-2 flex justify-end">
-        <span className="rounded-full bg-teal px-3 py-1 text-[11px] font-bold text-white">Save</span>
+        <span className="rounded-full bg-teal px-3 py-1 text-[11px] font-bold text-white">{t("landing.visuals.save")}</span>
       </div>
     </div>
   );
@@ -210,9 +216,9 @@ export function MessageEditor({ text = "Hey! 👋 Here's the guide you asked for
 export function FollowersOnlyToggle() {
   return (
     <div className="flex items-center gap-2.5 rounded-full border border-line bg-white px-3.5 py-2 shadow-soft">
-      <span className="text-[12.5px] font-bold text-slateInk">Followers only</span>
+      <span className="text-[12.5px] font-bold text-slateInk">{t("landing.visuals.followersOnly")}</span>
       <span className="relative h-5 w-9 rounded-full bg-teal">
-        <span className="absolute right-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow" />
+        <span className="absolute end-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow" />
       </span>
     </div>
   );
@@ -221,10 +227,10 @@ export function FollowersOnlyToggle() {
 export function EmailCollect() {
   return (
     <div className="flex w-full max-w-[260px] flex-col gap-2">
-      <div className="ml-auto rounded-2xl rounded-br-md bg-sky-500 px-3.5 py-2 text-[12.5px] font-medium text-white">maya@mail.com</div>
+      <div className="ms-auto rounded-2xl rounded-ee-md bg-sky-500 px-3.5 py-2 text-[12.5px] font-medium text-white">maya@mail.com</div>
       <div className="flex items-center gap-2 self-end rounded-full bg-teal-soft px-3 py-1.5 text-[12px] font-bold text-teal-dark">
         <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m5 13 4 4L19 7" /></svg>
-        Email saved
+        {t("landing.visuals.emailSaved")}
       </div>
     </div>
   );
@@ -232,7 +238,7 @@ export function EmailCollect() {
 
 export function ResultsBars({ bars = [40, 65, 52, 88] }) {
   return (
-    <div className="flex h-20 items-end gap-2" role="img" aria-label="Results trending up">
+    <div className="flex h-20 items-end gap-2" role="img" aria-label={t("landing.mock.resultsAria")}>
       {bars.map((v, i) => (
         <div key={i} className="v-bar w-5 rounded-t-md" style={{ height: `${v}%`, background: i === bars.length - 1 ? "#0d9488" : "#99d5ce", animationDelay: `${i * 0.12}s` }} />
       ))}
@@ -245,8 +251,8 @@ export function ResultsBars({ bars = [40, 65, 52, 88] }) {
 
 export function MockConnected() {
   const rows = [
-    { icon: "👩‍🍳", grad: "from-amber-300 via-pink-400 to-indigo-400", name: "your.brand", sub: "Instagram · creator account" },
-    { icon: "f", grad: "from-sky-500 to-blue-600", name: "Your Page", sub: "Facebook Page · Messenger" },
+    { icon: "👩‍🍳", grad: "from-amber-300 via-pink-400 to-indigo-400", name: "your.brand", sub: t("landing.tutorial.mock.igSub") },
+    { icon: "f", grad: "from-sky-500 to-blue-600", name: t("landing.tutorial.mock.pageName"), sub: t("landing.tutorial.mock.fbSub") },
   ];
   return (
     <div className="flex w-full max-w-[340px] flex-col gap-3">
@@ -257,13 +263,13 @@ export function MockConnected() {
             <div className="text-[13.5px] font-extrabold">{r.name}</div>
             <div className="text-[11.5px] text-slate-400">{r.sub}</div>
           </div>
-          <span className="ml-auto flex items-center gap-1 rounded-full bg-teal-soft px-2.5 py-1 text-[11px] font-extrabold text-teal-dark">
+          <span className="ms-auto flex items-center gap-1 rounded-full bg-teal-soft px-2.5 py-1 text-[11px] font-extrabold text-teal-dark">
             <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m5 13 4 4L19 7" /></svg>
-            Connected
+            {t("landing.tutorial.mock.connected")}
           </span>
         </div>
       ))}
-      <p className="text-center text-[11.5px] text-slate-400">Meta's own login. We never see your password.</p>
+      <p className="text-center text-[11.5px] text-slate-400">{t("landing.tutorial.mock.loginNote")}</p>
     </div>
   );
 }
@@ -272,23 +278,23 @@ export function MockPickPost({ keyword = "GUIDE" }) {
   const tiles = ["🍝", "👩‍🍳", "🧑‍🍳", "📋", "💻", "🪞"];
   return (
     <div className="w-full max-w-[340px] rounded-2xl border border-line bg-white p-4 shadow-soft">
-      <div className="text-[13px] font-extrabold">On which post?</div>
+      <div className="text-[13px] font-extrabold">{t("landing.tutorial.mock.whichPost")}</div>
       <div className="mt-2.5 grid grid-cols-3 gap-2">
         {tiles.map((t, i) => (
           <div key={i} className={`relative grid aspect-square place-items-center rounded-xl bg-linear-to-br text-2xl ${i === 0 ? "from-teal-soft to-amber/15 ring-2 ring-ink" : "from-mist to-line/60"}`}>
             {t}
             {i === 0 && (
-              <span className="absolute right-1.5 top-1.5 grid h-[18px] w-[18px] place-items-center rounded-full bg-ink text-white">
+              <span className="absolute end-1.5 top-1.5 grid h-[18px] w-[18px] place-items-center rounded-full bg-ink text-white">
                 <svg viewBox="0 0 24 24" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="m5 13 4 4L19 7" /></svg>
               </span>
             )}
           </div>
         ))}
       </div>
-      <div className="mt-3 text-[13px] font-extrabold">…and the word they comment</div>
+      <div className="mt-3 text-[13px] font-extrabold">{t("landing.tutorial.mock.whichWord")}</div>
       <div className="mt-2 flex items-center gap-2 rounded-xl border border-line px-3 py-2">
         <span className="rounded-full bg-ink px-2.5 py-1 text-[11px] font-extrabold text-white">{keyword} ×</span>
-        <span className="text-[12px] text-slate-400">Add another</span>
+        <span className="text-[12px] text-slate-400">{t("landing.tutorial.mock.addAnother")}</span>
       </div>
     </div>
   );
@@ -297,15 +303,15 @@ export function MockPickPost({ keyword = "GUIDE" }) {
 export function MockReplyEditor({ text = "Here's the guide you asked for 👇", link = "yourlink.com/guide" }) {
   return (
     <div className="w-full max-w-[340px] rounded-2xl border border-line bg-white p-4 shadow-soft">
-      <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">The DM they get</div>
+      <div className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400">{t("landing.tutorial.mock.dmLabel")}</div>
       <div className="mt-2 rounded-xl bg-mist px-3 py-2.5 text-[12.5px] leading-snug">{text}<span className="v-caret" /></div>
-      <div className="mt-2.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-400">Button</div>
+      <div className="mt-2.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-400">{t("landing.tutorial.mock.buttonLabel")}</div>
       <div className="mt-1.5 flex items-center justify-between rounded-xl border border-line px-3 py-2">
         <span className="text-[12px] font-bold text-teal-dark">{link}</span>
-        <span className="rounded-full bg-teal px-3 py-1 text-[11px] font-bold text-white">Open</span>
+        <span className="rounded-full bg-teal px-3 py-1 text-[11px] font-bold text-white">{t("landing.tutorial.mock.open")}</span>
       </div>
       <div className="mt-3 flex justify-end">
-        <span className="rounded-full bg-ink px-4 py-1.5 text-[11.5px] font-extrabold text-white">Save rule</span>
+        <span className="rounded-full bg-ink px-4 py-1.5 text-[11.5px] font-extrabold text-white">{t("landing.tutorial.mock.saveRule")}</span>
       </div>
     </div>
   );
@@ -325,9 +331,9 @@ export function MockEveryComment() {
           <span className="font-extrabold">{r.u}</span>
           <span className="text-slateInk">{r.c}</span>
           {r.ok ? (
-            <span className="ml-auto rounded-full bg-teal-soft px-2 py-0.5 text-[10.5px] font-extrabold text-teal-dark">DM sent ✓</span>
+            <span className="ms-auto rounded-full bg-teal-soft px-2 py-0.5 text-[10.5px] font-extrabold text-teal-dark">{t("landing.tutorial.mock.dmSent")}</span>
           ) : (
-            <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[10.5px] font-bold text-slate-400">no match</span>
+            <span className="ms-auto rounded-full bg-white px-2 py-0.5 text-[10.5px] font-bold text-slate-400">{t("landing.tutorial.mock.noMatch")}</span>
           )}
         </div>
       ))}
@@ -339,7 +345,7 @@ export function MockResults() {
   return (
     <div className="w-full max-w-[340px] rounded-2xl border border-line bg-white p-4 shadow-soft">
       <div className="grid grid-cols-3 gap-2 text-center">
-        {[["Matches", "128"], ["DMs sent", "121"], ["Emails", "34"]].map(([l, v]) => (
+        {[[t("landing.tutorial.mock.matches"), "128"], [t("landing.tutorial.mock.dmsSent"), "121"], [t("landing.tutorial.mock.emails"), "34"]].map(([l, v]) => (
           <div key={l} className="rounded-xl bg-mist px-2 py-2.5">
             <div className="text-[18px] font-extrabold text-teal-dark">{v}</div>
             <div className="text-[10.5px] font-bold text-slate-400">{l}</div>
@@ -347,7 +353,7 @@ export function MockResults() {
         ))}
       </div>
       <div className="mt-3"><ResultsBars bars={[35, 55, 48, 85]} /></div>
-      <div className="mt-2 text-center text-[11.5px] text-slate-400">This month · export as CSV</div>
+      <div className="mt-2 text-center text-[11.5px] text-slate-400">{t("landing.tutorial.mock.monthNote")}</div>
     </div>
   );
 }
@@ -363,7 +369,7 @@ export function ChatMock({ children, className = "" }) {
 }
 export function Bubble({ me = false, children }) {
   return me ? (
-    <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-sky-500 px-3.5 py-2 text-[12.5px] font-medium text-white">{children}</div>
+    <div className="ms-auto max-w-[85%] rounded-2xl rounded-ee-md bg-sky-500 px-3.5 py-2 text-[12.5px] font-medium text-white">{children}</div>
   ) : (
     <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-white px-3.5 py-2 text-[12.5px] font-medium shadow-soft">{children}</div>
   );
@@ -394,8 +400,8 @@ export function KeywordMarquee({ words = ["GUIDE", "PRICE", "MENU", "BOOK", "COA
   const row = [...words, ...words];
   return (
     <div className="relative overflow-hidden" aria-hidden="true">
-      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-linear-to-r from-mist to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-linear-to-l from-mist to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 start-0 z-10 w-16 bg-linear-to-r from-mist to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 end-0 z-10 w-16 bg-linear-to-l from-mist to-transparent" />
       <div className="v-marquee flex w-max gap-3 py-1">
         {row.map((w, i) => (
           <span key={i} className={`rounded-full border px-4 py-1.5 text-[13px] font-extrabold tracking-wide ${i % 3 === 0 ? "border-teal/30 bg-teal-soft text-teal-dark" : i % 3 === 1 ? "border-amber/30 bg-amber/10 text-amber" : "border-line bg-white text-slateInk"}`}>

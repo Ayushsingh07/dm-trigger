@@ -1,5 +1,6 @@
 // ReplyLo — mock payment provider (development and self-hosted testing).
-// createOrder hands back a fake order id; nothing talks to a real gateway.
+// Works with EVERY currency in development: createOrder just echoes the
+// amount/currency back. Nothing talks to a real gateway.
 // There is NO webhook for the mock: verifyWebhook always fails, so a payment
 // can only be granted through POST /api/billing/mock-pay, which is itself
 // hard-disabled when NODE_ENV=production.
@@ -8,10 +9,11 @@ const crypto = require("crypto");
 
 const name = "mock";
 
-function createOrder({ amountPaise, receipt }) {
+function createOrder({ currency = "INR", amountMinor, receipt }) {
   return {
     orderId: `mock_order_${crypto.randomBytes(8).toString("hex")}`,
-    amountPaise,
+    amountMinor,
+    currency: String(currency).toUpperCase(),
     receipt,
   };
 }
@@ -20,8 +22,8 @@ function checkoutConfig(order) {
   return {
     provider: name,
     orderId: order.orderId,
-    amountPaise: order.amountPaise,
-    currency: "INR",
+    amountMinor: order.amountMinor,
+    currency: order.currency || "INR",
   };
 }
 
@@ -31,4 +33,4 @@ function verifyWebhook() {
   return { ok: false, error: "mock provider has no webhook" };
 }
 
-module.exports = { name, createOrder, checkoutConfig, verifyWebhook };
+module.exports = { name, enabled: () => true, createOrder, checkoutConfig, verifyWebhook };

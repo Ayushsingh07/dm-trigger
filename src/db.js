@@ -158,6 +158,12 @@ for (const stmt of [
   "ALTER TABLE users ADD COLUMN pass_started_at TEXT",
   "ALTER TABLE users ADD COLUMN pass_expires_at TEXT",
   "ALTER TABLE conversations ADD COLUMN post_id TEXT",
+  // i18n preferences
+  "ALTER TABLE users ADD COLUMN lang TEXT",
+  "ALTER TABLE users ADD COLUMN currency TEXT",
+  // multi-currency / multi-provider billing
+  "ALTER TABLE purchases ADD COLUMN currency TEXT",   // ISO code; NULL = legacy INR
+  "ALTER TABLE purchases ADD COLUMN provider TEXT",   // mock | razorpay | dodo
 ]) {
   try { db.exec(stmt); } catch { /* column already exists */ }
 }

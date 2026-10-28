@@ -6,17 +6,17 @@
 const store = require("../store");
 const logger = require("../logger");
 
-// orderId/paymentId/amountPaise come from the provider's verified event.
-// Returns { ok, already?, kind? } or { ok:false, reason }.
-function grantPurchase({ orderId, paymentId, amountPaise }) {
+// orderId/paymentId/amountMinor/currency come from the provider's verified
+// event. Returns { ok, already?, kind? } or { ok:false, reason }.
+function grantPurchase({ orderId, paymentId, amountMinor, currency }) {
   if (!orderId) return { ok: false, reason: "missing_order" };
 
-  const res = store.markPurchasePaid({ orderId, paymentId, amountPaise });
+  const res = store.markPurchasePaid({ orderId, paymentId, amountMinor, currency });
 
-  if (!res.ok && res.reason === "amount_mismatch") {
-    // Never grant on a mismatched amount; keep the order 'created' and alert.
-    logger.error({ orderId, expected: res.expected, got: res.got }, "[billing] REJECTED payment: amount mismatch");
-    return { ok: false, reason: "amount_mismatch" };
+  if (!res.ok && (res.reason === "amount_mismatch" || res.reason === "currency_mismatch")) {
+    // Never grant on a mismatch; keep the order 'created' and alert.
+    logger.error({ orderId, reason: res.reason, expected: res.expected, got: res.got }, "[billing] REJECTED payment: mismatch");
+    return { ok: false, reason: res.reason };
   }
   if (!res.ok) {
     logger.warn({ orderId, reason: res.reason }, "[billing] grant failed");

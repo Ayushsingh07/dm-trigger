@@ -1,5 +1,5 @@
-// Billing: grant rules, provider behavior, and the production guards.
-// Runs with BILLING_PROVIDER=mock against a temp DB (helpers.js).
+// Billing: grant rules, provider behavior, multi-currency, and the production
+// guards. Runs with BILLING_PROVIDER=mock against a temp DB (helpers.js).
 process.env.BILLING_PROVIDER = "mock";
 
 const { test, before, after } = require("node:test");
@@ -9,8 +9,11 @@ const { cleanup } = require("./helpers");
 
 const store = require("../src/store");
 const auth = require("../src/auth");
+const provider = require("../src/billing/provider");
 const { grantPurchase } = require("../src/billing/grant");
-const { PLANS, TOPUP } = require("../src/pricing");
+const {
+  PLANS, TOPUP, priceMinor, topupPriceMinor, exponentOf, toMajor,
+} = require("../src/pricing");
 
 const DAY = 864e5;
 let seq = 0;
@@ -18,10 +21,10 @@ const newUserId = () => store.createUser({
   email: `b${seq++}-${Math.random().toString(36).slice(2)}@x.io`, passwordHash: "h", plan: "free", status: "active",
 }).id;
 
-function makeOrder({ kind = "pass", plan = "growth", postId = null, amount = PLANS.growth.pricePaise, userId = null }) {
+function makeOrder({ kind = "pass", plan = "growth", postId = null, amountMinor = priceMinor("growth", "INR"), currency = "INR", userId = null }) {
   const orderId = `mock_order_test_${Math.random().toString(36).slice(2)}`;
   store.createPurchase({
-    id: `pur_${orderId}`, userId: userId ?? newUserId(), orderId, kind, plan, postId, amountPaise: amount,
+    id: `pur_${orderId}`, userId: userId ?? newUserId(), orderId, kind, plan, postId, amountMinor, currency,
   });
   return orderId;
 }
@@ -33,12 +36,12 @@ test("grantPurchase twice with the same order grants once", () => {
   const userId = newUserId();
   const orderId = makeOrder({ userId });
 
-  const first = grantPurchase({ orderId, paymentId: "pay_1", amountPaise: PLANS.growth.pricePaise });
+  const first = grantPurchase({ orderId, paymentId: "pay_1", amountMinor: priceMinor("growth", "INR"), currency: "INR" });
   assert.equal(first.ok, true);
   const u1 = store.getUserById(userId);
   assert.equal(u1.pass_plan, "growth");
 
-  const second = grantPurchase({ orderId, paymentId: "pay_2", amountPaise: PLANS.growth.pricePaise });
+  const second = grantPurchase({ orderId, paymentId: "pay_2", amountMinor: priceMinor("growth", "INR"), currency: "INR" });
   assert.equal(second.ok, true);
   assert.equal(second.already, true);
   const u2 = store.getUserById(userId);
@@ -49,7 +52,7 @@ test("grantPurchase twice with the same order grants once", () => {
 test("a mismatched amount is rejected and nothing is granted", () => {
   const userId = newUserId();
   const orderId = makeOrder({ userId });
-  const res = grantPurchase({ orderId, paymentId: "pay_x", amountPaise: 1 });
+  const res = grantPurchase({ orderId, paymentId: "pay_x", amountMinor: 1, currency: "INR" });
   assert.equal(res.ok, false);
   assert.equal(res.reason, "amount_mismatch");
   const u = store.getUserById(userId);
@@ -57,14 +60,25 @@ test("a mismatched amount is rejected and nothing is granted", () => {
   assert.equal(store.getPurchaseByOrderId(orderId).status, "created", "order left unpaid");
 });
 
+test("a mismatched currency is rejected even when the amount matches", () => {
+  const userId = newUserId();
+  // order stored in USD...
+  const orderId = makeOrder({ userId, plan: "growth", amountMinor: priceMinor("growth", "INR"), currency: "USD" });
+  // ...but the "payment" claims INR with the same number of minor units.
+  const res = grantPurchase({ orderId, paymentId: "pay_c", amountMinor: priceMinor("growth", "INR"), currency: "INR" });
+  assert.equal(res.ok, false);
+  assert.equal(res.reason, "currency_mismatch");
+  assert.equal(store.getUserById(userId).pass_plan, null, "no pass granted");
+});
+
 test("a pass renewal extends from the current expiry", () => {
   const userId = newUserId();
   const orderId = makeOrder({ userId });
-  grantPurchase({ orderId, paymentId: "pay_a", amountPaise: PLANS.growth.pricePaise });
+  grantPurchase({ orderId, paymentId: "pay_a", amountMinor: priceMinor("growth", "INR"), currency: "INR" });
   const firstExpiry = new Date(store.getUserById(userId).pass_expires_at).getTime();
 
   const orderId2 = makeOrder({ userId });
-  grantPurchase({ orderId: orderId2, paymentId: "pay_b", amountPaise: PLANS.growth.pricePaise });
+  grantPurchase({ orderId: orderId2, paymentId: "pay_b", amountMinor: priceMinor("growth", "INR"), currency: "INR" });
   const secondExpiry = new Date(store.getUserById(userId).pass_expires_at).getTime();
 
   const days = (secondExpiry - firstExpiry) / DAY;
@@ -78,8 +92,8 @@ test("a topup raises only that post's cap", () => {
   store.tryConsumeReply(userId, "postA");
   store.tryConsumeReply(userId, "postB");
 
-  const orderId = makeOrder({ kind: "topup", plan: null, postId: "postA", amount: TOPUP.pricePaise, userId });
-  const res = grantPurchase({ orderId, paymentId: "pay_t", amountPaise: TOPUP.pricePaise });
+  const orderId = makeOrder({ kind: "topup", plan: null, postId: "postA", amountMinor: topupPriceMinor("INR"), userId });
+  const res = grantPurchase({ orderId, paymentId: "pay_t", amountMinor: topupPriceMinor("INR"), currency: "INR" });
   assert.equal(res.ok, true);
 
   const s = store.getUsageSummary(userId);
@@ -89,6 +103,43 @@ test("a topup raises only that post's cap", () => {
   assert.equal(a.cap, PLANS.growth.repliesPerPost + TOPUP.replies);
   assert.equal(b.extraReplies, 0);
   assert.equal(b.cap, PLANS.growth.repliesPerPost);
+});
+
+// ---------------------------------------------------------------- multi-currency
+test("INR resolves to razorpay and other currencies to dodo in auto mode", () => {
+  const saved = process.env.BILLING_PROVIDER;
+  process.env.BILLING_PROVIDER = "auto";
+  try {
+    assert.equal(provider.nameFor("INR"), "razorpay");
+    assert.equal(provider.nameFor("USD"), "dodo");
+    assert.equal(provider.nameFor("EUR"), "dodo");
+    assert.equal(provider.nameFor("JPY"), "dodo");
+  } finally {
+    process.env.BILLING_PROVIDER = saved;
+  }
+});
+
+test("JPY and IDR use exponent 0; USD/EUR/GBP/BRL use 2", () => {
+  assert.equal(exponentOf("JPY"), 0);
+  assert.equal(exponentOf("IDR"), 0);
+  assert.equal(exponentOf("USD"), 2);
+  assert.equal(exponentOf("INR"), 2);
+  // JPY minor units ARE major units: 34900 minor -> 34900 yen, not 349.00
+  assert.equal(toMajor(34900, "JPY"), 34900);
+  assert.equal(toMajor(34900, "USD"), 349);
+});
+
+test("mock provider is disabled in production even when forced", () => {
+  const saved = process.env.BILLING_PROVIDER;
+  process.env.BILLING_PROVIDER = "mock";
+  process.env.NODE_ENV = "production";
+  try {
+    assert.equal(provider.enabledFor("INR"), false);
+    assert.equal(provider.enabledFor("USD"), false);
+  } finally {
+    delete process.env.NODE_ENV;
+    process.env.BILLING_PROVIDER = saved;
+  }
 });
 
 // ---------------------------------------------------------------- HTTP guards
@@ -108,14 +159,34 @@ function cookieFor(userId) {
   return `${auth.COOKIE}=${auth.createSession(userId)}`;
 }
 
-test("GET /api/billing/config lists plans and the mock provider", async () => {
+test("GET /api/billing/config lists plans, currencies and the mock provider", async () => {
   const res = await fetch(`${base}/api/billing/config`);
   assert.equal(res.status, 200);
   const j = await res.json();
   assert.equal(j.provider, "mock");
   assert.equal(j.enabled, true, "mock enabled outside production");
   assert.equal(j.plans.length, 4);
-  assert.equal(j.topup.pricePaise, TOPUP.pricePaise);
+  assert.equal(j.topup.prices.INR, topupPriceMinor("INR"));
+  assert.equal(j.currencies.length, 7);
+  const jpy = j.currencies.find((c) => c.code === "JPY");
+  assert.equal(jpy.exponent, 0);
+  const growth = j.plans.find((p) => p.id === "growth");
+  assert.equal(growth.prices.INR, priceMinor("growth", "INR"));
+});
+
+test("POST /api/billing/currency saves the user's billing currency", async () => {
+  const userId = newUserId();
+  const headers = { "Content-Type": "application/json", cookie: cookieFor(userId) };
+
+  const bad = await fetch(`${base}/api/billing/currency`, { method: "POST", headers, body: JSON.stringify({ currency: "XXX" }) });
+  assert.equal(bad.status, 400);
+
+  const ok = await fetch(`${base}/api/billing/currency`, { method: "POST", headers, body: JSON.stringify({ currency: "usd" }) });
+  assert.equal(ok.status, 200);
+  assert.equal(store.getUserById(userId).currency, "USD", "stored upper-cased");
+
+  const usage = await (await fetch(`${base}/api/billing/usage`, { headers })).json();
+  assert.equal(usage.currency, "USD");
 });
 
 test("POST /api/billing/order rejects unknown plans and creates valid ones", async () => {
@@ -129,10 +200,23 @@ test("POST /api/billing/order rejects unknown plans and creates valid ones", asy
   assert.equal(ok.status, 200);
   const cfg = await ok.json();
   assert.equal(cfg.provider, "mock");
-  assert.equal(cfg.amountPaise, PLANS.starter.pricePaise, "price comes from pricing.js");
+  assert.equal(cfg.amountMinor, priceMinor("starter", "INR"), "price comes from pricing.js");
+  assert.equal(cfg.currency, "INR");
   const order = store.getPurchaseByOrderId(cfg.orderId);
   assert.equal(order.user_id, userId);
   assert.equal(order.status, "created");
+  assert.equal(order.currency, "INR");
+  assert.equal(order.provider, "mock");
+});
+
+test("an order in a currency with no price yet is rejected with 400", async () => {
+  const userId = newUserId();
+  const headers = { "Content-Type": "application/json", cookie: cookieFor(userId) };
+  await fetch(`${base}/api/billing/currency`, { method: "POST", headers, body: JSON.stringify({ currency: "JPY" }) });
+  // JPY prices are TODO-PRICE (null) until real numbers are filled in.
+  assert.equal(priceMinor("growth", "JPY"), null);
+  const res = await fetch(`${base}/api/billing/order`, { method: "POST", headers, body: JSON.stringify({ kind: "pass", plan: "growth" }) });
+  assert.equal(res.status, 400);
 });
 
 test("topup order requires an active post this period", async () => {
@@ -175,12 +259,20 @@ test("mock-pay grants, is single-use, and 404s in production", async () => {
   }
 });
 
-test("POST /billing/webhook returns 400 under the mock provider", async () => {
-  const res = await fetch(`${base}/billing/webhook`, {
+test("POST /billing/webhook/razorpay returns 400 under the mock provider", async () => {
+  const res = await fetch(`${base}/billing/webhook/razorpay`, {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ event: "order.paid" }),
   });
   assert.equal(res.status, 400);
+});
+
+test("POST /billing/webhook/dodo is rejected while dodo is a stub", async () => {
+  const res = await fetch(`${base}/billing/webhook/dodo`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ event: "order.paid" }),
+  });
+  assert.equal(res.status, 400, "stub throws -> verification failure -> 400");
 });
 
 // ---------------------------------------------------------------- expiry job
@@ -214,8 +306,8 @@ test("GET /api/billing/usage reports the plan rank used to hide lower plans", as
   let usage = await (await fetch(`${base}/api/billing/usage`, { headers })).json();
   assert.equal(usage.rank, 0, "free ranks 0");
 
-  const orderId = makeOrder({ userId, plan: "starter", amount: PLANS.starter.pricePaise });
-  grantPurchase({ orderId, paymentId: "pay_st", amountPaise: PLANS.starter.pricePaise });
+  const orderId = makeOrder({ userId, plan: "starter", amountMinor: priceMinor("starter", "INR") });
+  grantPurchase({ orderId, paymentId: "pay_st", amountMinor: priceMinor("starter", "INR"), currency: "INR" });
   usage = await (await fetch(`${base}/api/billing/usage`, { headers })).json();
   assert.equal(usage.plan, "starter");
   assert.equal(usage.rank, 1, "starter ranks 1 -> chooser shows starter+ only");
@@ -225,7 +317,7 @@ test("GET /api/billing/history lists only this user's purchases", async () => {
   const userId = newUserId();
   const headers = { "Content-Type": "application/json", cookie: cookieFor(userId) };
   const mine = makeOrder({ userId });
-  grantPurchase({ orderId: mine, paymentId: "pay_h", amountPaise: PLANS.growth.pricePaise });
+  grantPurchase({ orderId: mine, paymentId: "pay_h", amountMinor: priceMinor("growth", "INR"), currency: "INR" });
   makeOrder({ userId: newUserId() }); // someone else's purchase
 
   const res = await fetch(`${base}/api/billing/history`, { headers });

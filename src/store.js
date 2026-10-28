@@ -43,6 +43,14 @@ const getUserByEmail = (email) =>
   db.prepare("SELECT * FROM users WHERE email = ?").get(String(email || "").trim().toLowerCase()) || null;
 const getUserById = (id) => db.prepare("SELECT * FROM users WHERE id = ?").get(id) || null;
 
+// i18n preferences (validated by the caller against SUPPORTED locales)
+function setUserLang(userId, lang) {
+  db.prepare("UPDATE users SET lang = ? WHERE id = ?").run(lang, userId);
+}
+function setUserCurrency(userId, currency) {
+  db.prepare("UPDATE users SET currency = ? WHERE id = ?").run(currency, userId);
+}
+
 // ---------------------------------------------------------------- accounts
 // access_token is encrypted at rest (see src/crypto.js). Callers always see
 // plaintext; the ciphertext never leaves this module.
@@ -84,6 +92,11 @@ function updateAccountToken(igUserId, accessToken, tokenIssuedAt = now()) {
 }
 
 // ---------------------------------------------------------------- rules
+// Keywords are stored NFKC-normalized and trimmed, keeping the user's case
+// (matching is case-insensitive in actions.commentMatchesKeyword). The old
+// .toUpperCase() mangled non-Latin scripts (ß -> SS) and was pointless.
+const normalizeKeyword = (kw) => String(kw).normalize("NFKC").trim();
+
 function createRule({
   accountId, userId = null, keyword, scope = "all", postIds = [],
   dmText = "Hey {name}! 👋 Here's the link you asked for.",
@@ -93,7 +106,7 @@ function createRule({
   if (links.length > 3) throw new Error("A DM can have at most 3 links");
   const rule = {
     id: uid("r_"), accountId: String(accountId), userId,
-    keyword: String(keyword).trim().toUpperCase(), scope, postIds, dmText,
+    keyword: normalizeKeyword(keyword), scope, postIds, dmText,
     links: links.slice(0, 3), followersOnly, askEmail, reminderAfterMin,
     active: true, createdAt: now(),
   };
@@ -109,7 +122,7 @@ function updateRule(id, patch) {
   const cur = db.prepare("SELECT * FROM rules WHERE id = ?").get(id);
   if (!cur) return null;
   const next = {
-    keyword: patch.keyword !== undefined ? String(patch.keyword).trim().toUpperCase() : cur.keyword,
+    keyword: patch.keyword !== undefined ? normalizeKeyword(patch.keyword) : cur.keyword,
     scope: patch.scope ?? cur.scope,
     post_ids: patch.postIds !== undefined ? J(patch.postIds) : cur.post_ids,
     dm_text: patch.dmText ?? cur.dm_text,
@@ -461,11 +474,12 @@ function hasBlockEventToday(userId, postId, reason) {
 }
 
 // ---------------------------------------------------------------- purchases
-// One row per checkout attempt. Amounts are always server-side (from pricing.js).
-function createPurchase({ id, userId, orderId, kind, plan = null, postId = null, amountPaise }) {
-  db.prepare(`INSERT INTO purchases (id, user_id, razorpay_order_id, kind, plan, post_id, amount_paise, status, created_at)
-              VALUES (?,?,?,?,?,?,?,?,?)`)
-    .run(id, userId, orderId, kind, plan, postId, amountPaise, "created", now());
+// One row per checkout attempt. Amounts are always server-side (from pricing.js)
+// and stored in the order currency's MINOR units (see pricing.CURRENCY_EXPONENT).
+function createPurchase({ id, userId, orderId, kind, plan = null, postId = null, amountMinor, currency = "INR", provider = "mock" }) {
+  db.prepare(`INSERT INTO purchases (id, user_id, razorpay_order_id, kind, plan, post_id, amount_paise, status, created_at, currency, provider)
+              VALUES (?,?,?,?,?,?,?,?,?,?,?)`)
+    .run(id, userId, orderId, kind, plan, postId, amountMinor, "created", now(), String(currency).toUpperCase(), provider);
   return getPurchaseByOrderId(orderId);
 }
 const getPurchaseByOrderId = (orderId) =>
@@ -473,13 +487,20 @@ const getPurchaseByOrderId = (orderId) =>
 
 // Marks a purchase paid and applies its effect in the SAME transaction.
 // Idempotent: a second call for an already-paid order changes nothing.
-// A mismatched amount is refused (never granted) and reported to the caller.
-function markPurchasePaid({ orderId, paymentId, amountPaise }) {
+// BOTH amount and currency must match the stored order; a mismatch is refused
+// (never granted) and reported to the caller. Legacy rows without a currency
+// are treated as INR.
+function markPurchasePaid({ orderId, paymentId, amountMinor, currency }) {
   const order = getPurchaseByOrderId(orderId);
   if (!order) return { ok: false, reason: "not_found" };
   if (order.status === "paid") return { ok: true, already: true };
-  if (Number(amountPaise) !== Number(order.amount_paise)) {
-    return { ok: false, reason: "amount_mismatch", expected: order.amount_paise, got: amountPaise };
+  if (Number(amountMinor) !== Number(order.amount_paise)) {
+    return { ok: false, reason: "amount_mismatch", expected: order.amount_paise, got: amountMinor };
+  }
+  const orderCur = String(order.currency || "INR").toUpperCase();
+  const eventCur = currency ? String(currency).toUpperCase() : orderCur;
+  if (eventCur !== orderCur) {
+    return { ok: false, reason: "currency_mismatch", expected: orderCur, got: eventCur };
   }
 
   db.exec("BEGIN IMMEDIATE");
@@ -593,7 +614,7 @@ function purgeExpiredSessions() {
 module.exports = {
   db,
   listAllRules, listAllConversations, listAllEmails,
-  createUser, getUserByEmail, getUserById,
+  createUser, getUserByEmail, getUserById, setUserLang, setUserCurrency,
   upsertAccount, getAccount, listAccounts, listAccountRows, updateAccountToken,
   createRule, updateRule, deleteRule, getRule, rulesForAccount,
   createConversation, updateConversation, getConversation, conversationsForAccount, lastConversationForPsid,

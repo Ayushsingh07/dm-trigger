@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Admin — ReplyLo</title>
+<title>{{t:admin.title|brand=ReplyLo}}</title>
 <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
 <link rel="stylesheet" href="/assets/app.css" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -18,14 +18,15 @@
   <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
     <div class="flex items-center gap-2.5 text-[17px] font-extrabold tracking-tight">
       <span class="grid h-8 w-8 place-items-center rounded-xl bg-gradient-to-br from-teal to-teal-dark text-white shadow-soft">⚡</span>
-      ReplyLo <span class="ml-1 rounded-full bg-ink px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">Admin</span>
+      ReplyLo <span class="ms-1 rounded-full bg-ink px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">{{t:admin.badge}}</span>
     </div>
-    <div class="flex items-center gap-3 text-[14px] font-semibold">
-      <a href="/app" class="hidden text-slateInk transition hover:text-ink sm:block">Dashboard</a>
-      <a href="/" class="hidden text-slateInk transition hover:text-ink sm:block">Site</a>
+    <div class="flex flex-wrap items-center gap-3 text-[14px] font-semibold">
+      <a href="/app" class="hidden text-slateInk transition hover:text-ink sm:block">{{t:admin.dashboard}}</a>
+      <a href="/" class="hidden text-slateInk transition hover:text-ink sm:block">{{t:admin.site}}</a>
       <span id="who" class="hidden text-slateInk sm:inline"></span>
-      <button id="refresh" class="rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-bold transition hover:border-teal active:scale-95">↻ Refresh</button>
-      <button id="signout" class="rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-bold text-white transition hover:bg-teal-dark active:scale-95">Sign out</button>
+      <span data-lang-switcher="rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-bold transition hover:border-teal"></span>
+      <button id="refresh" class="rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-bold transition hover:border-teal active:scale-95">{{t:admin.refresh}}</button>
+      <button id="signout" class="rounded-full bg-ink px-3.5 py-1.5 text-[13px] font-bold text-white transition hover:bg-teal-dark active:scale-95 whitespace-normal">{{t:admin.signout}}</button>
     </div>
   </div>
 </header>
@@ -33,9 +34,9 @@
 <main class="mx-auto max-w-6xl px-4 py-8">
   <div id="gate" class="hidden rounded-2xl border border-line bg-white p-10 text-center shadow-soft">
     <p class="text-4xl">🔒</p>
-    <h2 class="mt-3 text-xl font-extrabold">Admin access only</h2>
-    <p class="mt-1 text-[14px] text-slateInk">Sign in with an admin account to see launch metrics.</p>
-    <a href="/login" class="mt-5 inline-block rounded-full bg-teal px-5 py-2.5 text-[14px] font-bold text-white transition hover:bg-teal-dark">Sign in →</a>
+    <h2 class="mt-3 text-xl font-extrabold">{{t:admin.gateTitle}}</h2>
+    <p class="mt-1 text-[14px] text-slateInk">{{t:admin.gateBody}}</p>
+    <a href="/login" class="mt-5 inline-block rounded-full bg-teal px-5 py-2.5 text-[14px] font-bold text-white transition hover:bg-teal-dark">{{t:admin.gateCta}}</a>
   </div>
 
   <div id="dash" class="hidden space-y-8">
@@ -46,14 +47,14 @@
     <section class="grid gap-4 lg:grid-cols-2">
       <div class="rounded-2xl border border-line bg-white p-5 shadow-soft">
         <div class="flex items-baseline justify-between">
-          <h3 class="text-[15px] font-extrabold">Visitors — last 7 days</h3>
+          <h3 class="text-[15px] font-extrabold">{{t:admin.visitors7}}</h3>
           <span id="visitsTotal" class="text-[12px] font-bold text-slate-400"></span>
         </div>
         <div id="visitsChart" class="mt-4"></div>
       </div>
       <div class="rounded-2xl border border-line bg-white p-5 shadow-soft">
         <div class="flex items-baseline justify-between">
-          <h3 class="text-[15px] font-extrabold">Signups — last 7 days</h3>
+          <h3 class="text-[15px] font-extrabold">{{t:admin.signups7}}</h3>
           <span id="signupsTotal" class="text-[12px] font-bold text-slate-400"></span>
         </div>
         <div id="signupsChart" class="mt-4"></div>
@@ -63,13 +64,13 @@
     <!-- funnel + plans -->
     <section class="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
       <div class="rounded-2xl border border-line bg-white p-5 shadow-soft">
-        <h3 class="text-[15px] font-extrabold">Activation funnel</h3>
+        <h3 class="text-[15px] font-extrabold">{{t:admin.funnel}}</h3>
         <div id="funnel" class="mt-4 space-y-2.5"></div>
       </div>
       <div class="rounded-2xl border border-line bg-white p-5 shadow-soft">
-        <h3 class="text-[15px] font-extrabold">Plans</h3>
+        <h3 class="text-[15px] font-extrabold">{{t:admin.plans}}</h3>
         <div id="plans" class="mt-4 space-y-2.5"></div>
-        <h3 class="mt-6 text-[15px] font-extrabold">Top pages</h3>
+        <h3 class="mt-6 text-[15px] font-extrabold">{{t:admin.topPages}}</h3>
         <div id="paths" class="mt-3 space-y-1.5 text-[13px]"></div>
       </div>
     </section>
@@ -77,16 +78,16 @@
     <!-- users table -->
     <section class="rounded-2xl border border-line bg-white p-5 shadow-soft">
       <div class="flex flex-wrap items-center justify-between gap-3">
-        <h3 class="text-[15px] font-extrabold">Users</h3>
-        <input id="userSearch" placeholder="Search email or name…"
-          class="w-56 rounded-full border border-line bg-mist px-4 py-2 text-[13px] outline-none transition focus:border-teal focus:bg-white focus:ring-4 focus:ring-teal/10" />
+        <h3 class="text-[15px] font-extrabold">{{t:admin.users}}</h3>
+        <input id="userSearch" placeholder="{{t:admin.userSearch}}"
+          class="w-full min-w-0 max-w-56 rounded-full border border-line bg-mist px-4 py-2 text-[13px] outline-none transition focus:border-teal focus:bg-white focus:ring-4 focus:ring-teal/10" />
       </div>
       <div class="mt-4 overflow-x-auto">
-        <table class="w-full text-left text-[13px]">
+        <table class="w-full text-start text-[13px]">
           <thead>
             <tr class="border-b border-line text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-              <th class="pb-2 pr-4">Email</th><th class="pb-2 pr-4">Name</th><th class="pb-2 pr-4">Plan</th>
-              <th class="pb-2 pr-4">Status</th><th class="pb-2 pr-4">Joined</th><th class="pb-2 pr-4">Last seen</th><th class="pb-2">Actions</th>
+              <th class="pb-2 pe-4">{{t:admin.thEmail}}</th><th class="pb-2 pe-4">{{t:admin.thName}}</th><th class="pb-2 pe-4">{{t:admin.thPlan}}</th>
+              <th class="pb-2 pe-4">{{t:admin.thStatus}}</th><th class="pb-2 pe-4">{{t:admin.thJoined}}</th><th class="pb-2 pe-4">{{t:admin.thLastSeen}}</th><th class="pb-2">{{t:admin.thActions}}</th>
             </tr>
           </thead>
           <tbody id="usersBody"></tbody>
@@ -96,23 +97,28 @@
 
     <!-- events -->
     <section class="rounded-2xl border border-line bg-white p-5 shadow-soft">
-      <h3 class="text-[15px] font-extrabold">Recent activity</h3>
+      <h3 class="text-[15px] font-extrabold">{{t:admin.activity}}</h3>
       <div id="events" class="mt-4 space-y-2"></div>
     </section>
   </div>
 </main>
 
 <script>
+const T = (k, v) => (window.I18N ? window.I18N.t(k, v) : k);
 const $ = (id) => document.getElementById(id);
-const fmt = (n) => (n ?? 0).toLocaleString();
-const dayLabel = (d) => new Date(d + "T00:00:00").toLocaleDateString(undefined, { weekday: "short" });
+const fmt = (n) => (window.I18N ? window.I18N.num(n ?? 0) : (n ?? 0).toLocaleString());
+const dayLabel = (d) => {
+  const date = new Date(d + "T00:00:00");
+  try { return new Intl.DateTimeFormat(window.I18N ? window.I18N.locale : undefined, { weekday: "short" }).format(date); }
+  catch { return date.toLocaleDateString(undefined, { weekday: "short" }); }
+};
 const timeAgo = (iso) => {
   if (!iso) return "—";
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (s < 60) return "just now";
-  if (s < 3600) return Math.floor(s / 60) + "m ago";
-  if (s < 86400) return Math.floor(s / 3600) + "h ago";
-  return Math.floor(s / 86400) + "d ago";
+  if (s < 60) return T("admin.justNow");
+  if (s < 3600) return T("admin.mAgo", { count: Math.floor(s / 60) });
+  if (s < 86400) return T("admin.hAgo", { count: Math.floor(s / 3600) });
+  return T("admin.dAgo", { count: Math.floor(s / 86400) });
 };
 
 async function load() {
@@ -124,10 +130,10 @@ async function load() {
 
   // headline cards
   const cards = [
-    { l: "Signups", v: m.totals.users, sub: `+${m.today.signups} today`, e: "👤" },
-    { l: "Visitors today", v: m.today.visits, sub: `${fmt(m.today.unique)} unique`, e: "👀" },
-    { l: "DMs sent", v: m.totals.conversations, sub: `${fmt(m.totals.replied)} engaged`, e: "📨" },
-    { l: "Emails captured", v: m.totals.emails, sub: `${fmt(m.totals.rules)} rules live`, e: "✉️" },
+    { l: T("admin.cardSignups"), v: m.totals.users, sub: T("admin.cardToday", { count: m.today.signups }), e: "👤" },
+    { l: T("admin.cardVisitors"), v: m.today.visits, sub: T("admin.cardUnique", { count: fmt(m.today.unique) }), e: "👀" },
+    { l: T("admin.cardDms"), v: m.totals.conversations, sub: T("admin.cardEngaged", { count: fmt(m.totals.replied) }), e: "📨" },
+    { l: T("admin.cardEmails"), v: m.totals.emails, sub: T("admin.cardRules", { count: fmt(m.totals.rules) }), e: "✉️" },
   ];
   $("cards").innerHTML = cards.map((c) => `
     <div class="rounded-2xl border border-line bg-white p-5 shadow-soft transition hover:shadow-chip">
@@ -151,13 +157,13 @@ async function load() {
     }).join("")}</div>`;
   };
   $("visitsChart").innerHTML = bars(m.series.visits, "c", "bg-teal");
-  $("visitsTotal").textContent = `${fmt(m.totals.visits)} all-time`;
+  $("visitsTotal").textContent = T("admin.allTime", { count: fmt(m.totals.visits) });
   $("signupsChart").innerHTML = bars(m.series.signups, "c", "bg-amber");
-  $("signupsTotal").textContent = `${fmt(m.totals.users)} all-time`;
+  $("signupsTotal").textContent = T("admin.allTime", { count: fmt(m.totals.users) });
 
   // funnel
   const f = m.funnel;
-  const steps = [["Visited site", f.visited], ["Signed up", f.signedUp], ["Connected IG", f.connected], ["Created a rule", f.createdRule], ["Got a DM sent", f.sentDm], ["Email captured", f.collectedEmail]];
+  const steps = [[T("admin.funnelVisited"), f.visited], [T("admin.funnelSignup"), f.signedUp], [T("admin.funnelConnected"), f.connected], [T("admin.funnelRule"), f.createdRule], [T("admin.funnelDm"), f.sentDm], [T("admin.funnelEmail"), f.collectedEmail]];
   const maxF = Math.max(1, ...steps.map(([, v]) => v));
   $("funnel").innerHTML = steps.map(([l, v]) => `
     <div>
@@ -173,12 +179,12 @@ async function load() {
       <span class="h-3 w-3 rounded-full ${planColors[p.plan] || "bg-slate-300"}"></span>
       <span class="flex-1 text-[13px] font-bold capitalize">${p.plan}</span>
       <span class="num text-[13px] font-bold text-slate-400">${fmt(p.c)}</span>
-      <span class="num w-10 text-right text-[12px] text-slate-400">${Math.round((p.c / totalU) * 100)}%</span>
+      <span class="num min-w-10 text-end text-[12px] text-slate-400">${Math.round((p.c / totalU) * 100)}%</span>
     </div>`).join("");
 
   $("paths").innerHTML = (m.topPaths.length ? m.topPaths : []).map((p) =>
     `<div class="flex justify-between"><span class="truncate font-mono text-[12px] text-slateInk">${p.path}</span><span class="num font-bold">${fmt(p.c)}</span></div>`
-  ).join("") || `<p class="text-[12px] text-slate-400">No visits yet.</p>`;
+  ).join("") || `<p class="text-[12px] text-slate-400">${T("admin.noVisits")}</p>`;
 
   renderUsers(m.recentUsers);
 
@@ -188,26 +194,26 @@ async function load() {
       <span>${evIcon[e.name] || "•"}</span>
       <span class="font-bold capitalize">${e.name.replace(/_/g, " ")}</span>
       <span class="text-slate-400">${e.email || ""}</span>
-      <span class="ml-auto text-[12px] text-slate-400">${timeAgo(e.created_at)}</span>
-    </div>`).join("") || `<p class="text-[13px] text-slate-400">Nothing yet — events will appear here as users arrive.</p>`;
+      <span class="ms-auto text-[12px] text-slate-400">${timeAgo(e.created_at)}</span>
+    </div>`).join("") || `<p class="text-[13px] text-slate-400">${T("admin.noEvents")}</p>`;
 }
 
 function renderUsers(users) {
   $("usersBody").innerHTML = (users.length ? users : []).map((u) => `
     <tr class="border-b border-line/60 last:border-0">
-      <td class="py-2.5 pr-4 font-bold">${u.email}${u.role === "admin" ? ' <span class="ml-1 rounded bg-ink px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-white">admin</span>' : ""}</td>
-      <td class="py-2.5 pr-4 text-slateInk">${u.name || "—"}</td>
-      <td class="py-2.5 pr-4"><span class="rounded-full ${u.plan === "pro" ? "bg-teal-soft text-teal-dark" : "bg-mist text-slateInk"} px-2.5 py-1 text-[11px] font-extrabold capitalize">${u.plan}</span></td>
-      <td class="py-2.5 pr-4 text-slateInk capitalize">${u.status}</td>
-      <td class="py-2.5 pr-4 text-slate-400">${new Date(u.created_at).toLocaleDateString()}</td>
-      <td class="py-2.5 pr-4 text-slate-400">${timeAgo(u.last_seen_at)}</td>
+      <td class="py-2.5 pe-4 font-bold">${u.email}${u.role === "admin" ? ' <span class="ms-1 rounded bg-ink px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-white">admin</span>' : ""}</td>
+      <td class="py-2.5 pe-4 text-slateInk">${u.name || "—"}</td>
+      <td class="py-2.5 pe-4"><span class="rounded-full ${u.plan === "pro" ? "bg-teal-soft text-teal-dark" : "bg-mist text-slateInk"} px-2.5 py-1 text-[11px] font-extrabold capitalize">${u.plan}</span></td>
+      <td class="py-2.5 pe-4 text-slateInk capitalize">${u.status}</td>
+      <td class="py-2.5 pe-4 text-slate-400">${window.I18N ? I18N.date(u.created_at) : new Date(u.created_at).toLocaleDateString()}</td>
+      <td class="py-2.5 pe-4 text-slate-400">${timeAgo(u.last_seen_at)}</td>
       <td class="py-2.5 space-x-1.5">
         ${u.role !== "admin" ? `
-          ${u.plan !== "pro" ? `<button data-act="pro" data-id="${u.id}" class="rounded-full bg-teal px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-teal-dark">→ Pro</button>` : ""}
-          ${u.status === "canceled" ? `<button data-act="reactivate" data-id="${u.id}" class="rounded-full border border-line px-2.5 py-1 text-[11px] font-bold transition hover:border-teal">Reactivate</button>` : `<button data-act="cancel" data-id="${u.id}" class="rounded-full border border-line px-2.5 py-1 text-[11px] font-bold text-slate-500 transition hover:border-rose-300 hover:text-rose-500">Cancel</button>`}
+          ${u.plan !== "pro" ? `<button data-act="pro" data-id="${u.id}" class="rounded-full bg-teal px-2.5 py-1 text-[11px] font-bold text-white transition hover:bg-teal-dark">${T("admin.toPro")}</button>` : ""}
+          ${u.status === "canceled" ? `<button data-act="reactivate" data-id="${u.id}" class="rounded-full border border-line px-2.5 py-1 text-[11px] font-bold transition hover:border-teal">${T("admin.reactivate")}</button>` : `<button data-act="cancel" data-id="${u.id}" class="rounded-full border border-line px-2.5 py-1 text-[11px] font-bold text-slate-500 transition hover:border-rose-300 hover:text-rose-500">${T("admin.cancel")}</button>`}
         ` : "—"}
       </td>
-    </tr>`).join("") || `<tr><td colspan="7" class="py-6 text-center text-slate-400">No users yet.</td></tr>`;
+    </tr>`).join("") || `<tr><td colspan="7" class="py-6 text-center text-slate-400">${T("admin.noUsers")}</td></tr>`;
 }
 
 $("usersBody").addEventListener("click", async (e) => {

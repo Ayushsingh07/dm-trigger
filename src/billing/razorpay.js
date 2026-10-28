@@ -30,7 +30,7 @@
 //      event.event === "order.paid"     -> type 'paid'
 //        orderId  = payload.order.entity.id
 //        paymentId = payload.payment.entity.id (may be absent)
-//        amountPaise = payload.order.entity.amount
+//        amountMinor = payload.order.entity.amount, currency: "INR"
 //      event.event === "payment.failed" -> type 'failed'
 //        orderId = payload.payment.entity.order_id
 //      anything else -> { ok:false } (ignore unknown events)
@@ -50,6 +50,11 @@ const name = "razorpay";
 
 module.exports = {
   name,
+  // Always false while this is a stub — createOrder/verifyWebhook throw.
+  // When implemented, switch to:
+  //   () => !!(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET &&
+  //            process.env.RAZORPAY_WEBHOOK_SECRET)
+  enabled: () => false,
   createOrder: notReady,
   checkoutConfig: notReady,
   verifyWebhook: notReady,
