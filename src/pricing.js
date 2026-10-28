@@ -34,20 +34,20 @@ const PLANS = {
 const PERIOD_DAYS = 30;
 
 // One-off extra replies for a SINGLE post (raises that post's cap only).
-const TOPUP = { replies: 100 };
+const TOPUP = { replies: 300 };
 
 // ---------------------------------------------------------------- prices
 // Price of each purchasable plan per currency, in MINOR units.
 // null = not sellable in that currency yet (UI shows a dash, orders are 400).
-// TODO-PRICE: only INR has real numbers. Fill the rest with real local prices
-// (rounded nicely for the market) before enabling each currency.
+// INR and USD have real numbers (owner-approved price list). Fill the rest
+// with real local prices (rounded nicely for the market) before enabling.
 const PLAN_PRICES_MINOR = {
-  starter: { INR: 19900, USD: null /* TODO-PRICE */, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ },
-  growth:  { INR: 34900, USD: null /* TODO-PRICE */, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ },
-  pro:     { INR: 69900, USD: null /* TODO-PRICE */, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ },
+  starter: { INR: 19900, USD: 500, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ },
+  growth:  { INR: 34900, USD: 900, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ },
+  pro:     { INR: 69900, USD: 1900, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ },
 };
-// TODO-PRICE: top-up price per currency, minor units (INR ₹49 = 4900 paise).
-const TOPUP_PRICE_MINOR = { INR: 4900, USD: null, EUR: null, GBP: null, JPY: null, BRL: null, IDR: null };
+// Top-up price per currency, minor units (INR ₹79 = 7900 paise; USD $4).
+const TOPUP_PRICE_MINOR = { INR: 7900, USD: 400, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ };
 
 const exponentOf = (currency) => CURRENCY_EXPONENT[String(currency || "").toUpperCase()] ?? 2;
 const isSupportedCurrency = (c) => Object.prototype.hasOwnProperty.call(CURRENCY_EXPONENT, String(c || "").toUpperCase());
