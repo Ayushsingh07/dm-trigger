@@ -78,8 +78,10 @@ test("resolveLocale: header used when no cookie/user, else en", () => {
 // ------------------------------------------------------------------ t() fallback
 test("t: exact hit, English fallback for missing key, key itself when unknown", () => {
   assert.strictEqual(t("en", "landing.how.title"), "Three steps. Zero typing.");
-  // es catalog has empty values -> falls back to English
-  assert.strictEqual(t("es", "landing.how.title"), "Three steps. Zero typing.");
+  // es is fully translated -> returns Spanish
+  assert.strictEqual(t("es", "landing.how.title"), "Tres pasos. Cero esfuerzo.");
+  // de is fully translated -> returns German
+  assert.strictEqual(t("de", "landing.how.title"), "Drei Schritte. Null Tipparbeit.");
   assert.strictEqual(t("de", "no.such.key.exists"), "no.such.key.exists");
   assert.strictEqual(t("xx", "landing.how.title"), "Three steps. Zero typing."); // bad locale -> en
 });
@@ -161,7 +163,7 @@ test("localeRouting: /es/pricing renders localized pricing page", () => {
   const res = fakeRes();
   localeRouting({ method: "GET", path: "/es/pricing", headers: {} }, res, () => {});
   assert.ok(res.sent.includes("<html lang=\"es\""));
-  assert.ok(res.sent.includes("Simple prepaid pricing")); // es empty -> en fallback
+  assert.ok(res.sent.includes("Precios prepago simples")); // es is translated
   assert.ok(!res.sent.includes("{{t:"));
 });
 
@@ -193,8 +195,8 @@ test("tplural: picks key.one / key.other and interpolates {count}", () => {
 });
 
 test("tplural: falls back to other when the exact category is missing", () => {
-  // ja has no translations yet -> en fallback -> key.other for count 2
-  assert.strictEqual(tplural("ja", "app.daysLeft", 2, { count: 2 }), "2 days left");
+  // ja is fully translated -> ja key.other for count 2
+  assert.strictEqual(tplural("ja", "app.daysLeft", 2, { count: 2 }), "残り2日");
 });
 
 test("tplural: unknown key returns the key itself", () => {
