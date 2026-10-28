@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ReplyLo · Billing</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/billing-page.css" />
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/"><span class="mark">⚡</span> ReplyLo</a>
+  <div class="nav-right">
+    <a class="pill light" href="/app">&larr; Dashboard</a>
+    <a class="pill light" href="/pricing" target="_blank" rel="noopener">How counting works</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="greet">
+    <h1>Billing</h1>
+    <p>Your pass, usage this period, and top-ups &mdash; all in one place.</p>
+  </div>
+
+  <div id="banners"></div>
+
+  <div class="panel planhero">
+    <div>
+      <div class="pname" id="planName">&hellip;</div>
+      <div class="pmeta" id="planMeta">&nbsp;</div>
+    </div>
+    <div class="days" id="planDays"></div>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Usage this period</h2><span class="st" id="periodSt">&mdash;</span></div>
+    <div class="sub" id="usageSub">&nbsp;</div>
+    <table>
+      <thead><tr><th>Post</th><th>Replies used</th><th style="width:34%">Usage</th><th></th></tr></thead>
+      <tbody id="usageBody"><tr><td colspan="4" class="dim">No posts have used replies this period.</td></tr></tbody>
+    </table>
+  </section>
+
+  <section class="panel" id="upgradePanel" style="display:none">
+    <h2 id="upgradeTitle">Change your plan</h2>
+    <div class="sub">Renews for 30 days from your current expiry. Upgrades take effect immediately.</div>
+    <div class="planpick" id="planPick"></div>
+    <div class="hint" id="billingHint"></div>
+  </section>
+
+  <section class="panel" id="historyPanel" style="display:none">
+    <h2>Payment history</h2>
+    <table>
+      <thead><tr><th>When</th><th>Item</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody id="historyBody"></tbody>
+    </table>
+  </section>
+</div>
+
+<script src="/assets/billing-page.js"></script>
+<script src="/assets/billing.js"></script>
+</body>
+</html>

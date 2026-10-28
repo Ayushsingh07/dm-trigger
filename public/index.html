@@ -110,28 +110,6 @@
   .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
   code.inline { background:var(--peach); border-radius:6px; padding:1px 7px; font-size:12.5px; color:var(--acc-ink); }
 
-  /* ---------- billing ---------- */
-  .banner { display:none; border-radius:16px; padding:13px 18px; font-size:13.5px; font-weight:600;
-            margin-bottom:14px; border:1px solid var(--line); }
-  .banner.show { display:flex; align-items:center; gap:10px; justify-content:space-between; flex-wrap:wrap; }
-  .banner.warn { background:var(--amber); color:var(--warn); }
-  .banner.bad { background:var(--rose); color:var(--bad); }
-  .banner.info { background:var(--mint); color:var(--ok); }
-  .bar { height:8px; border-radius:999px; background:var(--line); overflow:hidden; min-width:90px; }
-  .bar i { display:block; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--acc),var(--acc2)); transition:width .3s; }
-  .bar i.full { background:linear-gradient(90deg,#dc2626,#f87171); }
-  .planpick { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:16px; }
-  @media (max-width:700px) { .planpick { grid-template-columns:1fr; } }
-  .planopt { border:1.5px solid var(--line2); border-radius:16px; padding:16px; background:var(--bg2);
-             transition:border-color .15s, transform .15s; }
-  .planopt:hover { border-color:#f5d5bd; transform:translateY(-2px); }
-  .planopt .pname { font-weight:800; font-size:14px; letter-spacing:-.01em; }
-  .planopt .pprice { font-size:24px; font-weight:800; letter-spacing:-.03em; margin-top:6px; }
-  .planopt .pprice small { font-size:12px; color:var(--soft); font-weight:600; letter-spacing:0; }
-  .planopt .pdesc { color:var(--soft); font-size:12px; margin-top:4px; }
-  .planopt button { margin-top:12px; width:100%; }
-  .planopt.cur { border-color:var(--acc); background:var(--acc-soft); }
-
   /* ---------- demo hero ---------- */
   .demo { display:grid; grid-template-columns:1.05fr .95fr; gap:40px; align-items:center; }
   @media (max-width:880px) { .demo { grid-template-columns:1fr; } }
@@ -222,7 +200,7 @@
 
   <div class="greet">
     <h1 id="greetTitle">Welcome back 👋</h1>
-    <p>Your Instagram keyword replies — live in one place. <span id="planBadge" class="badge" style="display:none;vertical-align:2px" title="Plan usage this month"></span></p>
+    <p>Your Instagram keyword replies — live in one place.</p>
   </div>
 
   <div class="grid">
@@ -315,21 +293,12 @@
   </div>
 
   <section>
-    <div class="panel">
-      <div class="panel-head"><h2>Billing</h2><a class="pill light" href="/pricing" target="_blank" rel="noopener">How counting works</a></div>
-      <div class="sub" id="billingSub">Loading your plan…</div>
-
-      <div id="billingBanners" style="margin-top:14px"></div>
-
-      <div class="tablewrap">
-        <table>
-          <thead><tr><th>Post</th><th>Replies used</th><th style="width:34%">Usage</th><th></th></tr></thead>
-          <tbody id="usageBody"><tr><td colspan="4" class="dim">No posts have used replies this period.</td></tr></tbody>
-        </table>
+    <div class="panel" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+      <div>
+        <h2>Billing</h2>
+        <div class="sub" id="billingSub">Loading your plan…</div>
       </div>
-
-      <div id="planPick" class="planpick"></div>
-      <div class="hint" id="billingHint"></div>
+      <a class="pill dark" href="/billing">Manage plan &amp; usage →</a>
     </div>
   </section>
 
@@ -451,16 +420,6 @@ async function refresh() {
   $("sRate").textContent = stats.clickRate + "%";
   bumpIfChanged("sEmails", stats.emails);
 
-  const pb = $("planBadge");
-  if (stats.plan) {
-    const u = stats.plan.usage, l = stats.plan.limits;
-    pb.style.display = "";
-    pb.className = "badge" + (stats.plan.trialExpired ? " warn" : "");
-    pb.textContent = `${stats.plan.plan} · ${u.rules}/${l.rules} rules · ${u.conversationsThisMonth}/${l.conversationsPerMonth} DMs`;
-  } else {
-    pb.style.display = "none";
-  }
-
   $("rulesBody").innerHTML = rules.rules.map(r => `
     <tr>
       <td><span class="kw">${esc(r.keyword)}</span></td>
@@ -511,103 +470,23 @@ async function simulate() {
   setTimeout(refresh, 400);
 }
 
-/* ---------------- billing ---------------- */
-let billingConfig = null;
-
-async function refreshBilling() {
-  const sub = $("billingSub"), banners = $("billingBanners"),
-        body = $("usageBody"), pick = $("planPick"), hint = $("billingHint");
+/* ---------------- billing (summary only; full page at /billing) ---------------- */
+async function refreshBillingSummary() {
   try {
-    if (!billingConfig) billingConfig = await fetch("/api/billing/config").then(r => r.json());
     const usage = await fetch("/api/billing/usage").then(r => r.json());
-    const cfg = billingConfig;
-
-    // ---- summary line
-    const planName = (usage.plan || "free").toUpperCase();
-    let line = `Plan ${planName} · ${usage.postsUsed} of ${usage.postsAllowed} posts used · ${usage.repliesPerPost} replies per post`;
-    if (usage.passExpiresAt) line += ` · pass expires ${new Date(usage.passExpiresAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`;
-    if (usage.daysLeft != null) line += ` (${usage.daysLeft} day${usage.daysLeft === 1 ? "" : "s"} left)`;
-    sub.textContent = line;
-
-    // ---- banners
-    const bl = [];
-    if (usage.passPlan && usage.daysLeft != null && usage.daysLeft <= 3 && usage.daysLeft > 0)
-      bl.push(["warn", `⏳ ${usage.daysLeft} day${usage.daysLeft === 1 ? "" : "s"} left on your ${usage.passPlan} pass — renew before it expires.`]);
-    if (usage.passPlan && usage.daysLeft === 0)
-      bl.push(["bad", "⛔ Your pass expired — replies are paused on the free limits until you renew."]);
-    const capped = (usage.posts || []).filter(p => p.used >= p.cap);
-    if (capped.length)
-      bl.push(["bad", `🚫 Post ${esc(shortPost(capped[0].postId))} reached its limit (${capped[0].cap} replies). Add 100 replies to keep it replying.`]);
-    banners.innerHTML = bl.map(([cls, msg]) => `<div class="banner ${cls} show"><span>${msg}</span></div>`).join("");
-
-    // ---- per-post usage table
-    if (!usage.posts || !usage.posts.length) {
-      body.innerHTML = `<tr><td colspan="4" class="dim">No posts have used replies this period.</td></tr>`;
-    } else {
-      body.innerHTML = usage.posts.map((p) => {
-        const pct = Math.min(100, Math.round((p.used / Math.max(1, p.cap)) * 100));
-        const near = p.used >= p.cap * 0.8;
-        const topup = (cfg.enabled && near)
-          ? `<button class="pill light" style="padding:6px 12px;font-size:12px" onclick="buyTopup('${esc(p.postId)}')">+100 replies · ${fmtPaise(cfg.topup.pricePaise)}</button>` : "";
-        return `<tr>
-          <td><code class="inline">${esc(shortPost(p.postId))}</code></td>
-          <td>${p.used} / ${p.cap}${p.extraReplies ? ` <span class="dim">(+${p.extraReplies} extra)</span>` : ""}</td>
-          <td><div class="bar"><i class="${p.used >= p.cap ? "full" : ""}" style="width:${pct}%"></i></div></td>
-          <td>${topup}</td>
-        </tr>`;
-      }).join("");
-    }
-
-    // ---- plan chooser / payments-closed state
-    if (!cfg.enabled) {
-      pick.innerHTML = "";
-      hint.textContent = "Payments opening soon.";
-    } else {
-      const buyable = (cfg.plans || []).filter(p => p.id !== "free");
-      pick.innerHTML = buyable.map((p) => {
-        const cur = usage.passPlan === p.id;
-        return `<div class="planopt${cur ? " cur" : ""}">
-          <div class="pname">${p.id[0].toUpperCase() + p.id.slice(1)}${cur ? " · current" : ""}</div>
-          <div class="pprice">${fmtPaise(p.pricePaise)} <small>/ 30 days</small></div>
-          <div class="pdesc">${p.repliesPerPost} replies per post · ${p.postsPerPeriod} posts</div>
-          <button class="pill ${cur ? "light" : "dark"}" ${cur ? "disabled style='opacity:.5'" : ""} onclick="buyPass('${p.id}')">${cur ? "Renew" : "Choose"}</button>
-        </div>`;
-      }).join("");
-      hint.innerHTML = `All prices in INR. Passes never auto-renew. <a href="/terms" style="color:var(--acc-ink)">Refund policy</a>.`;
-    }
+    const plan = (usage.plan || "free") === "trial" ? "Trial" : (usage.plan || "free").toUpperCase();
+    let line = `Plan ${plan} · ${usage.postsUsed} of ${usage.postsAllowed} posts used · ${usage.repliesPerPost} replies per post`;
+    if (usage.daysLeft != null) line += ` · ${usage.daysLeft} day${usage.daysLeft === 1 ? "" : "s"} left`;
+    $("billingSub").textContent = line;
   } catch {
-    sub.textContent = "Could not load billing.";
+    $("billingSub").textContent = "Plan details unavailable.";
   }
-}
-window.refreshBilling = refreshBilling;
-
-const fmtPaise = (p) => "₹" + (p / 100).toLocaleString("en-IN");
-const shortPost = (id) => { const s = String(id || "?"); return s.length > 14 ? s.slice(-8) : s; };
-
-async function buyPass(plan) {
-  const res = await fetch("/api/billing/order", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ kind: "pass", plan }),
-  });
-  const j = await res.json();
-  if (!res.ok) return alert(j.error || "Could not create the order.");
-  window.openCheckout(j);
-}
-async function buyTopup(postId) {
-  const res = await fetch("/api/billing/order", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ kind: "topup", postId }),
-  });
-  const j = await res.json();
-  if (!res.ok) return alert(j.error || "Could not create the order.");
-  window.openCheckout(j);
 }
 
 refresh();
 setInterval(refresh, 5000);
-refreshBilling();
-setInterval(refreshBilling, 30000);
+refreshBillingSummary();
+setInterval(refreshBillingSummary, 30000);
 </script>
-<script src="/assets/billing.js"></script>
 </body>
 </html>

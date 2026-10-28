@@ -6,7 +6,7 @@ const crypto = require("crypto");
 const store = require("../store");
 const provider = require("../billing/provider");
 const { grantPurchase } = require("../billing/grant");
-const { PLANS, TOPUP, PERIOD_DAYS, PURCHASABLE } = require("../pricing");
+const { PLANS, TOPUP, PERIOD_DAYS, PURCHASABLE, rankOf } = require("../pricing");
 const { requireUser, attachUser } = require("../auth");
 const logger = require("../logger");
 
@@ -29,14 +29,26 @@ router.get("/config", (_req, res) => {
   });
 });
 
-// GET /api/billing/usage — per-post quota table for the dashboard.
+// GET /api/billing/usage — per-post quota table for the billing page.
+// `rank` lets the UI offer only the current plan (renew) and upgrades.
 router.get("/usage", requireUser, (req, res) => {
   const summary = store.getUsageSummary(req.user.id);
   const period = store.getPeriod(req.user);
   const daysLeft = period.plan !== "free" && period.end
     ? Math.max(0, Math.ceil((new Date(period.end).getTime() - Date.now()) / 864e5))
     : null;
-  res.json({ ...summary, daysLeft, passPlan: req.user.pass_plan ?? null, passExpiresAt: req.user.pass_expires_at ?? null });
+  res.json({
+    ...summary,
+    daysLeft,
+    rank: rankOf(period.plan),
+    passPlan: req.user.pass_plan ?? null,
+    passExpiresAt: req.user.pass_expires_at ?? null,
+  });
+});
+
+// GET /api/billing/history — the user's own orders (payment history table).
+router.get("/history", requireUser, (req, res) => {
+  res.json({ purchases: store.listPurchases(req.user.id).slice(0, 50) });
 });
 
 // ---------------------------------------------------------------- order

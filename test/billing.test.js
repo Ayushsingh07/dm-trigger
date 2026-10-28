@@ -205,3 +205,33 @@ test("pass expiry job downgrades expired passes and warns 3 days ahead", async (
   assert.equal(store.db.prepare("SELECT * FROM events WHERE name='pass_expiring' AND user_id=?").all(expiring).length, 1, "not duplicated same day");
   assert.ok(store.db.prepare("SELECT * FROM events WHERE name='pass_expired' AND user_id=?").all(dead).length >= 1);
 });
+
+// ---------------------------------------------------------------- billing page APIs
+test("GET /api/billing/usage reports the plan rank used to hide lower plans", async () => {
+  const userId = newUserId();
+  const headers = { "Content-Type": "application/json", cookie: cookieFor(userId) };
+
+  let usage = await (await fetch(`${base}/api/billing/usage`, { headers })).json();
+  assert.equal(usage.rank, 0, "free ranks 0");
+
+  const orderId = makeOrder({ userId, plan: "starter", amount: PLANS.starter.pricePaise });
+  grantPurchase({ orderId, paymentId: "pay_st", amountPaise: PLANS.starter.pricePaise });
+  usage = await (await fetch(`${base}/api/billing/usage`, { headers })).json();
+  assert.equal(usage.plan, "starter");
+  assert.equal(usage.rank, 1, "starter ranks 1 -> chooser shows starter+ only");
+});
+
+test("GET /api/billing/history lists only this user's purchases", async () => {
+  const userId = newUserId();
+  const headers = { "Content-Type": "application/json", cookie: cookieFor(userId) };
+  const mine = makeOrder({ userId });
+  grantPurchase({ orderId: mine, paymentId: "pay_h", amountPaise: PLANS.growth.pricePaise });
+  makeOrder({ userId: newUserId() }); // someone else's purchase
+
+  const res = await fetch(`${base}/api/billing/history`, { headers });
+  assert.equal(res.status, 200);
+  const { purchases } = await res.json();
+  assert.equal(purchases.length, 1);
+  assert.equal(purchases[0].razorpay_order_id, mine);
+  assert.equal(purchases[0].status, "paid");
+});

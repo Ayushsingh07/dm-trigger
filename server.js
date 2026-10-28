@@ -91,6 +91,7 @@ app.get("/admin", (_req, res) => res.sendFile(pub("admin.html")));
 app.get("/privacy", (_req, res) => res.sendFile(pub("privacy.html")));
 app.get("/terms", (_req, res) => res.sendFile(pub("terms.html")));
 app.get("/pricing", (_req, res) => res.sendFile(pub("pricing.html")));
+app.get("/billing", (_req, res) => res.sendFile(pub("billing.html")));
 app.get("/data-deletion", (_req, res) => res.sendFile(pub("data-deletion.html")));
 
 // Clean URLs. The .html files are an implementation detail; every page has a
@@ -105,6 +106,7 @@ const CANONICAL_REDIRECTS = {
   "/privacy.html": "/privacy",
   "/terms.html": "/terms",
   "/pricing.html": "/pricing",
+  "/billing.html": "/billing",
   "/data-deletion.html": "/data-deletion",
   "/404.html": "/", // never served by URL — only rendered by the 404 handler
 };
