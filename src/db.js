@@ -148,6 +148,169 @@ CREATE TABLE IF NOT EXISTS purchases (
 
 CREATE INDEX IF NOT EXISTS idx_post_usage_user ON post_usage(user_id, period_start);
 CREATE INDEX IF NOT EXISTS idx_purchases_user  ON purchases(user_id, status);
+
+-- Advanced analytics: every comment we receive (matched or not) so per-post
+-- comment totals are measurable without extra Meta permissions.
+CREATE TABLE IF NOT EXISTS comment_events (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  account_id   TEXT NOT NULL,
+  user_id      TEXT,
+  post_id      TEXT,
+  comment_id   TEXT,
+  commenter_id TEXT,
+  matched      INTEGER NOT NULL DEFAULT 0,
+  created_at   TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_ce_comment ON comment_events(comment_id) WHERE comment_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_ce_user_post ON comment_events(user_id, post_id);
+
+-- Click-tracking redirects: DM links are rewritten to /go/<token> so link
+-- clicks and unique visitors are measurable (Instagram never reports them).
+CREATE TABLE IF NOT EXISTS go_links (
+  token      TEXT PRIMARY KEY,
+  conv_id    TEXT,
+  user_id    TEXT,
+  account_id TEXT,
+  rule_id    TEXT,
+  post_id    TEXT,
+  url        TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_go_conv ON go_links(conv_id);
+
+CREATE TABLE IF NOT EXISTS link_clicks (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  token      TEXT NOT NULL,
+  day        TEXT NOT NULL,             -- YYYY-MM-DD for cheap daily metrics
+  ua_hash    TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_lc_token ON link_clicks(token);
+
+-- Flows: multi-step DM automations (step builder with quick-reply branches).
+CREATE TABLE IF NOT EXISTS flows (
+  id            TEXT PRIMARY KEY,
+  user_id       TEXT NOT NULL REFERENCES users(id),
+  account_id    TEXT,                    -- IG business id; NULL = any account
+  name          TEXT NOT NULL,
+  trigger_type  TEXT NOT NULL DEFAULT 'dm_keyword', -- dm_keyword | comment_keyword
+  keyword       TEXT,                    -- trigger keyword (both trigger types)
+  status        TEXT NOT NULL DEFAULT 'draft',      -- draft | live | paused
+  start_step_id TEXT,
+  created_at    TEXT NOT NULL,
+  updated_at    TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_flows_user ON flows(user_id);
+
+CREATE TABLE IF NOT EXISTS flow_steps (
+  id            TEXT PRIMARY KEY,
+  flow_id       TEXT NOT NULL REFERENCES flows(id) ON DELETE CASCADE,
+  text          TEXT NOT NULL,
+  buttons       TEXT NOT NULL DEFAULT '[]',  -- [{label,payload,next_step_id}]
+  links         TEXT NOT NULL DEFAULT '[]',  -- [{title,url}] web_url buttons
+  follow_gate   INTEGER NOT NULL DEFAULT 0,  -- ask "did you follow?" before advancing
+  is_end        INTEGER NOT NULL DEFAULT 0,
+  position      INTEGER NOT NULL DEFAULT 0,
+  created_at    TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_fsteps_flow ON flow_steps(flow_id);
+
+-- One row per (flow, follower): where they are in the flow right now.
+CREATE TABLE IF NOT EXISTS flow_sessions (
+  id             TEXT PRIMARY KEY,
+  flow_id        TEXT NOT NULL,
+  user_id        TEXT,
+  account_id     TEXT NOT NULL,
+  psid           TEXT NOT NULL,
+  step_id        TEXT,                    -- step awaiting their reply
+  status         TEXT NOT NULL DEFAULT 'active', -- active | completed | gated
+  gate_confirmed INTEGER NOT NULL DEFAULT 0,
+  last_msg_at    TEXT,
+  created_at     TEXT NOT NULL,
+  updated_at     TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_fsess_flow_psid ON flow_sessions(flow_id, account_id, psid);
+
+-- Subscribers: people who opted in to broadcasts (via comment/DM flows).
+CREATE TABLE IF NOT EXISTS subscribers (
+  id           TEXT PRIMARY KEY,
+  user_id      TEXT NOT NULL REFERENCES users(id),
+  account_id   TEXT NOT NULL,
+  psid         TEXT NOT NULL,
+  ig_username  TEXT,
+  source       TEXT,                     -- comment | dm | flow
+  opted_out    INTEGER NOT NULL DEFAULT 0,
+  last_seen_at TEXT,
+  created_at   TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_subs_psid ON subscribers(user_id, account_id, psid);
+
+-- Broadcast campaigns + their per-recipient queue (paced sender).
+CREATE TABLE IF NOT EXISTS broadcasts (
+  id           TEXT PRIMARY KEY,
+  user_id      TEXT NOT NULL REFERENCES users(id),
+  account_id   TEXT,
+  name         TEXT NOT NULL,
+  text         TEXT NOT NULL,
+  links        TEXT NOT NULL DEFAULT '[]',
+  status       TEXT NOT NULL DEFAULT 'scheduled', -- scheduled | sending | done | cancelled
+  scheduled_at TEXT,
+  sent_count   INTEGER NOT NULL DEFAULT 0,
+  fail_count   INTEGER NOT NULL DEFAULT 0,
+  created_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_bc_user ON broadcasts(user_id);
+
+CREATE TABLE IF NOT EXISTS broadcast_items (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  broadcast_id TEXT NOT NULL,
+  subscriber_id TEXT NOT NULL,
+  psid         TEXT NOT NULL,
+  account_id   TEXT NOT NULL,
+  status       TEXT NOT NULL DEFAULT 'pending', -- pending | sent | skipped | failed
+  reason       TEXT,
+  attempts     INTEGER NOT NULL DEFAULT 0,
+  sent_at      TEXT,
+  created_at   TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_bi_bc ON broadcast_items(broadcast_id, status);
+
+-- Fan Mode: loyalty points, tiers, streaks, reward DMs.
+CREATE TABLE IF NOT EXISTS fan_config (
+  user_id        TEXT PRIMARY KEY REFERENCES users(id),
+  enabled        INTEGER NOT NULL DEFAULT 0,
+  points_comment INTEGER NOT NULL DEFAULT 10,
+  points_follow  INTEGER NOT NULL DEFAULT 20,
+  points_streak  INTEGER NOT NULL DEFAULT 5,   -- multiplier % per streak day (cap 100)
+  tiers          TEXT NOT NULL DEFAULT '[]',   -- [{name,points,reward_text}]
+  updated_at     TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS fan_members (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id       TEXT NOT NULL REFERENCES users(id),
+  account_id    TEXT NOT NULL,
+  psid          TEXT NOT NULL,
+  ig_username   TEXT,
+  points        INTEGER NOT NULL DEFAULT 0,
+  tier_index    INTEGER NOT NULL DEFAULT -1,  -- highest tier reached
+  streak_days   INTEGER NOT NULL DEFAULT 0,
+  last_active   TEXT,                          -- YYYY-MM-DD (UTC)
+  created_at    TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_fan_psid ON fan_members(user_id, account_id, psid);
+
+CREATE TABLE IF NOT EXISTS fan_ledger (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id    TEXT NOT NULL,
+  account_id TEXT NOT NULL,
+  psid       TEXT NOT NULL,
+  kind       TEXT NOT NULL,             -- comment | follow | streak | reward
+  points     INTEGER NOT NULL DEFAULT 0,
+  note       TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_fanled_user ON fan_ledger(user_id, psid, created_at);
 `);
 
 // Tiny forward-migrations for databases created by older versions.
@@ -166,6 +329,8 @@ for (const stmt of [
   // multi-currency / multi-provider billing
   "ALTER TABLE purchases ADD COLUMN currency TEXT",   // ISO code; NULL = legacy INR
   "ALTER TABLE purchases ADD COLUMN provider TEXT",   // mock | razorpay | dodo
+  // advanced analytics: delivery receipts from message_deliveries webhooks
+  "ALTER TABLE conversations ADD COLUMN delivered INTEGER NOT NULL DEFAULT 0",
 ]) {
   try { db.exec(stmt); } catch { /* column already exists */ }
 }

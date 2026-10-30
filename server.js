@@ -169,7 +169,12 @@ app.use("/api/demo", rateLimit({ // public landing demo (no Meta signature possi
   message: { error: "Demo is busy — try again in a minute" },
 }), require("./src/routes/demo"));                               // synthetic comment events
 app.use("/api/rules", require("./src/routes/rules"));           // keyword rule CRUD
+app.use("/api/flows", require("./src/routes/flows"));           // step-builder DM automations
+app.use("/api/audience", require("./src/routes/audience"));     // subscribers + broadcasts
+app.use("/api/fan", require("./src/routes/fan"));               // fan mode (loyalty)
 app.use("/api/stats", require("./src/routes/stats"));           // dashboard numbers
+app.use("/api/analytics", require("./src/routes/analytics"));   // advanced analytics (Pro)
+app.use("/go", require("./src/routes/go"));                     // DM link click-tracking redirects
 app.use("/api/admin", require("./src/routes/admin"));           // admin metrics
 app.use("/track", trackLimiter, require("./src/routes/track")); // first-party analytics
 

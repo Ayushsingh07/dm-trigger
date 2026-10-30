@@ -175,6 +175,10 @@ function updateConversation(id, patch) {
   return convRow(db.prepare("SELECT * FROM conversations WHERE id = ?").get(id));
 }
 
+// Used when a DM send ultimately fails after the row was created, so the
+// "reached" count only ever reflects DMs that were actually sent.
+const deleteConversation = (id) => db.prepare("DELETE FROM conversations WHERE id = ?").run(id).changes > 0;
+
 // Rows the reminder scheduler should process: due, still "sent", not reminded.
 function dueReminders(limit = 50) {
   return db.prepare(`SELECT * FROM conversations
@@ -575,6 +579,9 @@ function passesExpiringWithin(days) {
 // GDPR-style erasure: everything the user owns, plus their sessions.
 function deleteUserCompletely(userId) {
   const stmts = [
+    "DELETE FROM link_clicks WHERE token IN (SELECT token FROM go_links WHERE user_id = ?)",
+    "DELETE FROM go_links WHERE user_id = ?",
+    "DELETE FROM comment_events WHERE user_id = ?",
     "DELETE FROM conversations WHERE user_id = ?",
     "DELETE FROM rules WHERE user_id = ?",
     "DELETE FROM emails WHERE user_id = ?",
@@ -602,6 +609,7 @@ function deleteAccountByIgUserId(igUserId) {
   if (!row) return false;
   db.prepare("DELETE FROM accounts WHERE ig_user_id = ?").run(String(igUserId));
   db.prepare("UPDATE rules SET account_id = 'demo' WHERE account_id = ?").run(String(igUserId));
+  db.prepare("DELETE FROM comment_events WHERE account_id = ?").run(String(igUserId));
   return true;
 }
 
@@ -611,6 +619,437 @@ function purgeExpiredSessions() {
   return res.changes;
 }
 
+// ---------------------------------------------------------------- analytics: comment events
+// Record every inbound comment (matched or not) so per-post comment totals are
+// measurable. Duplicate comment_id (Meta retry) is ignored quietly.
+function recordCommentEvent({ accountId, userId = null, postId = null, commentId = null, commenterId = null, matched = false }) {
+  try {
+    db.prepare(`INSERT INTO comment_events (account_id, user_id, post_id, comment_id, commenter_id, matched, created_at)
+                VALUES (?,?,?,?,?,?,?)`)
+      .run(String(accountId), userId, postId ? String(postId) : null, commentId ? String(commentId) : null,
+        commenterId ? String(commenterId) : null, matched ? 1 : 0, now());
+  } catch (err) {
+    if (!isUniqueViolation(err)) throw err; // Meta retry of the same comment — fine
+  }
+}
+
+// Upgrade a previously recorded comment to "matched" (a rule fired for it).
+function markCommentMatched(commentId) {
+  if (!commentId) return;
+  db.prepare("UPDATE comment_events SET matched = 1 WHERE comment_id = ?").run(String(commentId));
+}
+
+// Per-post comment aggregates for one user (comments seen, unique commenters,
+// matched comments). `since` is an ISO cutoff or null for all time.
+function commentStatsForUser(userId, since = null) {
+  const where = `user_id = ?${since ? " AND created_at >= ?" : ""}`;
+  const args = since ? [userId, since] : [userId];
+  return db.prepare(`SELECT post_id,
+      COUNT(*) AS comments,
+      COUNT(DISTINCT commenter_id) AS commenters,
+      SUM(matched) AS matched
+    FROM comment_events WHERE ${where} GROUP BY post_id`).all(...args);
+}
+
+// Daily comment counts for one post (drill-down trend).
+function commentStatsForPost(userId, postId, since = null) {
+  const where = `user_id = ? AND post_id = ?${since ? " AND created_at >= ?" : ""}`;
+  const args = since ? [userId, String(postId), since] : [userId, String(postId)];
+  return db.prepare(`SELECT substr(created_at,1,10) AS day, COUNT(*) AS comments,
+      COUNT(DISTINCT commenter_id) AS commenters, SUM(matched) AS matched
+    FROM comment_events WHERE ${where} GROUP BY day ORDER BY day`).all(...args);
+}
+
+// ---------------------------------------------------------------- analytics: go links + clicks
+// One token per (conversation, link index) so clicks attribute to conv/post.
+function createGoLink({ convId = null, userId = null, accountId = null, ruleId = null, postId = null, url }) {
+  const token = crypto.randomBytes(9).toString("base64url"); // 12 chars, URL-safe
+  db.prepare(`INSERT INTO go_links (token, conv_id, user_id, account_id, rule_id, post_id, url, created_at)
+              VALUES (?,?,?,?,?,?,?,?)`)
+    .run(token, convId, userId, accountId ? String(accountId) : null, ruleId ?? null,
+      postId ? String(postId) : null, String(url).slice(0, 2000), now());
+  return token;
+}
+
+const getGoLink = (token) => db.prepare("SELECT * FROM go_links WHERE token = ?").get(token) || null;
+
+// Record a click and return the link row (or null for unknown tokens).
+function recordGoClick(token, ua = "") {
+  const link = getGoLink(token);
+  if (!link) return null;
+  const uaHash = crypto.createHash("sha256").update(String(ua || "")).digest("hex").slice(0, 16);
+  db.prepare("INSERT INTO link_clicks (token, day, ua_hash, created_at) VALUES (?,?,?,?)")
+    .run(token, now().slice(0, 10), uaHash, now());
+  return link;
+}
+
+// Click aggregates for one user, joined to their links. Unique visitors =
+// distinct (post, ua_hash) pairs — one person clicking twice counts once.
+function clickStatsForUser(userId, since = null) {
+  const where = `l.user_id = ?${since ? " AND c.created_at >= ?" : ""}`;
+  const args = since ? [userId, since] : [userId];
+  return db.prepare(`SELECT l.post_id, COUNT(*) AS clicks, COUNT(DISTINCT c.ua_hash) AS uniques
+    FROM link_clicks c JOIN go_links l ON l.token = c.token WHERE ${where} GROUP BY l.post_id`).all(...args);
+}
+
+function clickStatsForPost(userId, postId, since = null) {
+  const where = `l.user_id = ? AND l.post_id = ?${since ? " AND c.created_at >= ?" : ""}`;
+  const args = since ? [userId, String(postId), since] : [userId, String(postId)];
+  return db.prepare(`SELECT COUNT(*) AS clicks, COUNT(DISTINCT c.ua_hash) AS uniques
+    FROM link_clicks c JOIN go_links l ON l.token = c.token WHERE ${where}`).get(...args)
+    || { clicks: 0, uniques: 0 };
+}
+
+// Daily clicks for one post.
+function clickSeriesForPost(userId, postId, since = null) {
+  const where = `l.user_id = ? AND l.post_id = ?${since ? " AND c.created_at >= ?" : ""}`;
+  const args = since ? [userId, String(postId), since] : [userId, String(postId)];
+  return db.prepare(`SELECT c.day, COUNT(*) AS clicks, COUNT(DISTINCT c.ua_hash) AS uniques
+    FROM link_clicks c JOIN go_links l ON l.token = c.token WHERE ${where} GROUP BY c.day ORDER BY c.day`).all(...args);
+}
+
+// Daily clicks for one user, optionally scoped to one post.
+function clickSeriesForUser(userId, postId = null, since = null) {
+  const where = `l.user_id = ?${postId ? " AND l.post_id = ?" : ""}${since ? " AND c.created_at >= ?" : ""}`;
+  const args = [userId, ...(postId ? [String(postId)] : []), ...(since ? [since] : [])];
+  return db.prepare(`SELECT c.day, COUNT(*) AS clicks, COUNT(DISTINCT c.ua_hash) AS uniques
+    FROM link_clicks c JOIN go_links l ON l.token = c.token WHERE ${where} GROUP BY c.day ORDER BY c.day`).all(...args);
+}
+
+// Total unique visitors for a user (distinct ua_hash across all their links).
+function uniqueVisitorsForUser(userId, since = null) {
+  const where = `l.user_id = ?${since ? " AND c.created_at >= ?" : ""}`;
+  const args = since ? [userId, since] : [userId];
+  return (db.prepare(`SELECT COUNT(DISTINCT c.ua_hash) n
+    FROM link_clicks c JOIN go_links l ON l.token = c.token WHERE ${where}`).get(...args) || { n: 0 }).n;
+}
+
+// Distinct conversations that produced at least one click (for CTR).
+function clickedConversationsForUser(userId, since = null) {
+  const where = `l.user_id = ? AND l.conv_id IS NOT NULL${since ? " AND c.created_at >= ?" : ""}`;
+  const args = since ? [userId, since] : [userId];
+  const row = db.prepare(`SELECT COUNT(DISTINCT l.conv_id) AS n
+    FROM link_clicks c JOIN go_links l ON l.token = c.token WHERE ${where}`).get(...args);
+  return row ? row.n : 0;
+}
+
+// ---------------------------------------------------------------- analytics: delivery receipts
+// message_deliveries webhook: mark how many DMs Meta confirmed delivering.
+function markDelivered(convId) {
+  db.prepare("UPDATE conversations SET delivered = 1 WHERE id = ? AND delivered = 0").run(convId);
+}
+
+function deliveredCountForUser(userId, since = null) {
+  const where = `user_id = ? AND delivered = 1${since ? " AND sent_at >= ?" : ""}`;
+  const args = since ? [userId, since] : [userId];
+  return (db.prepare(`SELECT COUNT(*) n FROM conversations WHERE ${where}`).get(...args) || { n: 0 }).n;
+}
+
+function deliveredCountForPost(userId, postId, since = null) {
+  const where = `user_id = ? AND post_id = ? AND delivered = 1${since ? " AND sent_at >= ?" : ""}`;
+  const args = since ? [userId, String(postId), since] : [userId, String(postId)];
+  return (db.prepare(`SELECT COUNT(*) n FROM conversations WHERE ${where}`).get(...args) || { n: 0 }).n;
+}
+
+// ---------------------------------------------------------------- flows
+function flowRow(r) {
+  if (!r) return null;
+  return { id: r.id, userId: r.user_id, accountId: r.account_id, name: r.name,
+    triggerType: r.trigger_type, keyword: r.keyword, status: r.status,
+    startStepId: r.start_step_id, createdAt: r.created_at, updatedAt: r.updated_at };
+}
+function stepRow(r) {
+  if (!r) return null;
+  return { id: r.id, flowId: r.flow_id, text: r.text, buttons: P(r.buttons, []),
+    links: P(r.links, []), followGate: !!r.follow_gate, isEnd: !!r.is_end, position: r.position };
+}
+
+function createFlow({ userId, accountId = null, name, triggerType = "dm_keyword", keyword = null }) {
+  const id = uid("fl_");
+  db.prepare(`INSERT INTO flows (id, user_id, account_id, name, trigger_type, keyword, status, created_at, updated_at)
+              VALUES (?,?,?,?,?,?, 'draft', ?, ?)`)
+    .run(id, userId, accountId ? String(accountId) : null, String(name).slice(0, 120),
+      triggerType, keyword ? String(keyword).slice(0, 80) : null, now(), now());
+  return getFlow(id);
+}
+const getFlow = (id) => flowRow(db.prepare("SELECT * FROM flows WHERE id = ?").get(id));
+function listFlows(userId) {
+  return db.prepare("SELECT * FROM flows WHERE user_id = ? ORDER BY created_at DESC").all(userId).map(flowRow);
+}
+function updateFlow(id, patch) {
+  const sets = [], args = [];
+  if (patch.name !== undefined) { sets.push("name = ?"); args.push(String(patch.name).slice(0, 120)); }
+  if (patch.status !== undefined) { sets.push("status = ?"); args.push(patch.status); }
+  if (patch.keyword !== undefined) { sets.push("keyword = ?"); args.push(patch.keyword ? String(patch.keyword).slice(0, 80) : null); }
+  if (patch.triggerType !== undefined) { sets.push("trigger_type = ?"); args.push(patch.triggerType === "comment_keyword" ? "comment_keyword" : "dm_keyword"); }
+  if (patch.accountId !== undefined) { sets.push("account_id = ?"); args.push(patch.accountId ? String(patch.accountId) : null); }
+  if (patch.startStepId !== undefined) { sets.push("start_step_id = ?"); args.push(patch.startStepId); }
+  if (!sets.length) return getFlow(id);
+  sets.push("updated_at = ?"); args.push(now(), id);
+  db.prepare(`UPDATE flows SET ${sets.join(", ")} WHERE id = ?`).run(...args);
+  return getFlow(id);
+}
+function deleteFlow(id) {
+  db.prepare("DELETE FROM flow_steps WHERE flow_id = ?").run(id);
+  db.prepare("DELETE FROM flow_sessions WHERE flow_id = ?").run(id);
+  db.prepare("DELETE FROM flows WHERE id = ?").run(id);
+}
+
+// Replace all steps of a flow in one transaction (builder always sends the full list).
+function saveFlowSteps(flowId, steps) {
+  const list = Array.isArray(steps) ? steps.slice(0, 25) : [];
+  const ids = list.map((s, i) => (s.id && String(s.id).startsWith("st_")) ? s.id : uid("st_"));
+  db.exec("BEGIN");
+  try {
+    db.prepare("DELETE FROM flow_steps WHERE flow_id = ?").run(flowId);
+    const ins = db.prepare(`INSERT INTO flow_steps (id, flow_id, text, buttons, links, follow_gate, is_end, position, created_at)
+                            VALUES (?,?,?,?,?,?,?,?,?)`);
+    list.forEach((s, i) => {
+      const buttons = (Array.isArray(s.buttons) ? s.buttons.slice(0, 13) : []).map((b) => ({
+        label: String(b.label || "").slice(0, 20),
+        payload: String(b.payload || "").slice(0, 20) || String(b.label || "").slice(0, 20),
+        nextStepId: b.nextStepId ? String(b.nextStepId) : null,
+        end: !!b.end }));
+      const links = (Array.isArray(s.links) ? s.links.slice(0, 3) : []).map((l) => ({
+        title: String(l.title || "").slice(0, 20), url: String(l.url || "").slice(0, 2000) }));
+      ins.run(ids[i], flowId, String(s.text || "").slice(0, 2000), J(buttons), J(links),
+        s.followGate ? 1 : 0, s.isEnd ? 1 : 0, i, now());
+    });
+    // Remap button targets that referenced old ids we replaced.
+    db.prepare("UPDATE flows SET updated_at = ? WHERE id = ?").run(now(), flowId);
+    db.exec("COMMIT");
+  } catch (e) { db.exec("ROLLBACK"); throw e; }
+  // Fix dangling next_step references -> end of flow.
+  const valid = new Set(listFlowSteps(flowId).map((s) => s.id));
+  for (const s of listFlowSteps(flowId)) {
+    let dirty = false;
+    const buttons = s.buttons.map((b) => {
+      if (b.nextStepId && !valid.has(b.nextStepId)) { dirty = true; return { ...b, nextStepId: null, end: true }; }
+      return b;
+    });
+    if (dirty) db.prepare("UPDATE flow_steps SET buttons = ? WHERE id = ?").run(J(buttons), s.id);
+  }
+  return listFlowSteps(flowId);
+}
+function listFlowSteps(flowId) {
+  return db.prepare("SELECT * FROM flow_steps WHERE flow_id = ? ORDER BY position").all(flowId).map(stepRow);
+}
+const getFlowStep = (id) => stepRow(db.prepare("SELECT * FROM flow_steps WHERE id = ?").get(id));
+// Live flows with a dm_keyword trigger (engine scans these on inbound DMs).
+function listLiveDmFlows() {
+  return db.prepare("SELECT * FROM flows WHERE status = 'live' AND trigger_type = 'dm_keyword' AND keyword IS NOT NULL")
+    .all().map(flowRow);
+}
+function countFlowsForUser(userId) {
+  return (db.prepare("SELECT COUNT(*) n FROM flows WHERE user_id = ?").get(userId) || { n: 0 }).n;
+}
+
+// ---------------------------------------------------------------- flow sessions
+// Start (or restart) a follower's position in a flow.
+function startFlowSession({ flowId, userId, accountId, psid, stepId }) {
+  const existing = db.prepare("SELECT * FROM flow_sessions WHERE flow_id = ? AND account_id = ? AND psid = ?")
+    .get(flowId, String(accountId), String(psid));
+  if (existing) {
+    db.prepare(`UPDATE flow_sessions SET status='active', step_id=?, gate_confirmed=0, last_msg_at=?, updated_at=? WHERE id=?`)
+      .run(stepId ?? null, now(), now(), existing.id);
+    return existing.id;
+  }
+  const id = uid("fs_");
+  db.prepare(`INSERT INTO flow_sessions (id, flow_id, user_id, account_id, psid, step_id, status, last_msg_at, created_at, updated_at)
+              VALUES (?,?,?,?,?,?, 'active', ?, ?, ?)`)
+    .run(id, flowId, userId ?? null, String(accountId), String(psid), stepId ?? null, now(), now(), now());
+  return id;
+}
+// Active session for a follower on an account (engine routing point).
+function activeFlowSession(accountId, psid) {
+  const r = db.prepare(`SELECT fs.*, f.user_id AS flow_owner FROM flow_sessions fs
+    JOIN flows f ON f.id = fs.flow_id
+    WHERE fs.account_id = ? AND fs.psid = ? AND fs.status IN ('active','gated')
+    ORDER BY fs.updated_at DESC LIMIT 1`).get(String(accountId), String(psid));
+  return r || null;
+}
+function updateFlowSession(id, patch) {
+  const sets = [], args = [];
+  if (patch.stepId !== undefined) { sets.push("step_id = ?"); args.push(patch.stepId); }
+  if (patch.status !== undefined) { sets.push("status = ?"); args.push(patch.status); }
+  if (patch.gateConfirmed !== undefined) { sets.push("gate_confirmed = ?"); args.push(patch.gateConfirmed ? 1 : 0); }
+  if (patch.lastMsg !== undefined) { sets.push("last_msg_at = ?"); args.push(patch.lastMsg); }
+  if (!sets.length) return;
+  sets.push("updated_at = ?"); args.push(now(), id);
+  db.prepare(`UPDATE flow_sessions SET ${sets.join(", ")} WHERE id = ?`).run(...args);
+}
+// Expire active sessions idle for more than the messaging window (24h + slack).
+function expireStaleFlowSessions(hours = 26) {
+  const cutoff = new Date(Date.now() - hours * 3600 * 1000).toISOString();
+  db.prepare(`UPDATE flow_sessions SET status='completed', updated_at=? WHERE status IN ('active','gated') AND COALESCE(last_msg_at, updated_at) < ?`)
+    .run(now(), cutoff);
+}
+function flowStatsForUser(userId) {
+  return db.prepare(`SELECT f.id, f.name, f.status,
+      COUNT(DISTINCT fs.id) AS sessions,
+      SUM(CASE WHEN fs.status='completed' THEN 1 ELSE 0 END) AS completed
+    FROM flows f LEFT JOIN flow_sessions fs ON fs.flow_id = f.id
+    WHERE f.user_id = ? GROUP BY f.id`).all(userId);
+}
+
+// ---------------------------------------------------------------- subscribers
+function upsertSubscriber({ userId, accountId, psid, igUsername = null, source = null }) {
+  const existing = db.prepare("SELECT * FROM subscribers WHERE user_id = ? AND account_id = ? AND psid = ?")
+    .get(userId, String(accountId), String(psid));
+  if (existing) {
+    db.prepare("UPDATE subscribers SET opted_out = 0, last_seen_at = ?, ig_username = COALESCE(?, ig_username) WHERE id = ?")
+      .run(now(), igUsername, existing.id);
+    return existing.id;
+  }
+  const id = uid("sub_");
+  db.prepare(`INSERT INTO subscribers (id, user_id, account_id, psid, ig_username, source, last_seen_at, created_at)
+              VALUES (?,?,?,?,?,?,?,?)`)
+    .run(id, userId, String(accountId), String(psid), igUsername, source, now(), now());
+  return id;
+}
+function listSubscribers(userId, { includeOptedOut = false } = {}) {
+  return db.prepare(`SELECT * FROM subscribers WHERE user_id = ?${includeOptedOut ? "" : " AND opted_out = 0"} ORDER BY last_seen_at DESC`)
+    .all(userId);
+}
+function subscriberCount(userId) {
+  return (db.prepare("SELECT COUNT(*) n FROM subscribers WHERE user_id = ? AND opted_out = 0").get(userId) || { n: 0 }).n;
+}
+function optOutSubscriber(userId, accountId, psid) {
+  db.prepare("UPDATE subscribers SET opted_out = 1, last_seen_at = ? WHERE user_id = ? AND account_id = ? AND psid = ?")
+    .run(now(), userId, String(accountId), String(psid));
+}
+
+// ---------------------------------------------------------------- broadcasts
+function createBroadcast({ userId, accountId = null, name, text, links = [], scheduledAt = null }) {
+  const id = uid("bc_");
+  db.prepare(`INSERT INTO broadcasts (id, user_id, account_id, name, text, links, status, scheduled_at, created_at)
+              VALUES (?,?,?,?,?,?, 'scheduled', ?, ?)`)
+    .run(id, userId, accountId ? String(accountId) : null, String(name).slice(0, 120),
+      String(text).slice(0, 2000), J(links), scheduledAt, now());
+  return db.prepare("SELECT * FROM broadcasts WHERE id = ?").get(id);
+}
+function queueBroadcastItems(broadcastId, recipients) {
+  const ins = db.prepare(`INSERT INTO broadcast_items (broadcast_id, subscriber_id, psid, account_id, status, created_at)
+                          VALUES (?,?,?,?, 'pending', ?)`);
+  db.exec("BEGIN");
+  try {
+    for (const r of recipients) ins.run(broadcastId, r.subscriberId, r.psid, String(r.accountId), now());
+    db.exec("COMMIT");
+  } catch (e) { db.exec("ROLLBACK"); throw e; }
+}
+function claimBroadcast(broadcastId) {
+  db.prepare("UPDATE broadcasts SET status = 'sending' WHERE id = ? AND status = 'scheduled'").run(broadcastId);
+  const r = db.prepare("SELECT * FROM broadcasts WHERE id = ?").get(broadcastId);
+  return r;
+}
+function nextBroadcastItems(broadcastId, limit = 10) {
+  return db.prepare(`SELECT * FROM broadcast_items WHERE broadcast_id = ? AND status = 'pending' ORDER BY id LIMIT ?`)
+    .all(broadcastId, limit);
+}
+function markBroadcastItem(id, status, reason = null) {
+  db.prepare("UPDATE broadcast_items SET status = ?, reason = ?, attempts = attempts + 1, sent_at = ? WHERE id = ?")
+    .run(status, reason, status === "sent" ? now() : null, id);
+}
+function bumpBroadcastCounts(broadcastId, sent, failed) {
+  db.prepare("UPDATE broadcasts SET sent_count = sent_count + ?, fail_count = fail_count + ? WHERE id = ?")
+    .run(sent, failed, broadcastId);
+}
+function finishBroadcast(broadcastId) {
+  db.prepare("UPDATE broadcasts SET status = 'done' WHERE id = ? AND status = 'sending'").run(broadcastId);
+}
+function dueBroadcasts(nowIso) {
+  return db.prepare(`SELECT * FROM broadcasts WHERE (status = 'scheduled' AND (scheduled_at IS NULL OR scheduled_at <= ?)) OR status = 'sending' ORDER BY created_at`)
+    .all(nowIso);
+}
+function listBroadcasts(userId) {
+  return db.prepare("SELECT * FROM broadcasts WHERE user_id = ? ORDER BY created_at DESC").all(userId);
+}
+const getBroadcast = (id) => db.prepare("SELECT * FROM broadcasts WHERE id = ?").get(id) || null;
+function cancelBroadcast(id) {
+  db.prepare("UPDATE broadcasts SET status = 'cancelled' WHERE id = ? AND status IN ('scheduled','sending')").run(id);
+  db.prepare("UPDATE broadcast_items SET status = 'skipped', reason = 'cancelled' WHERE broadcast_id = ? AND status = 'pending'").run(id);
+}
+
+// ---------------------------------------------------------------- fan mode
+const FAN_TIERS_DEFAULT = `[{"name":"Bronze","points":100},{"name":"Silver","points":300},{"name":"Gold","points":700}]`;
+function getFanConfig(userId) {
+  const r = db.prepare("SELECT * FROM fan_config WHERE user_id = ?").get(userId);
+  if (!r) return { enabled: false, pointsComment: 10, pointsFollow: 20, pointsStreak: 5, tiers: JSON.parse(FAN_TIERS_DEFAULT) };
+  return { enabled: !!r.enabled, pointsComment: r.points_comment, pointsFollow: r.points_follow,
+    pointsStreak: r.points_streak, tiers: P(r.tiers, []) };
+}
+function setFanConfig(userId, patch) {
+  const cur = db.prepare("SELECT * FROM fan_config WHERE user_id = ?").get(userId);
+  const base = cur || { enabled: 0, points_comment: 10, points_follow: 20, points_streak: 5, tiers: FAN_TIERS_DEFAULT };
+  const next = {
+    enabled: patch.enabled !== undefined ? (patch.enabled ? 1 : 0) : base.enabled,
+    points_comment: patch.pointsComment ?? base.points_comment,
+    points_follow: patch.pointsFollow ?? base.points_follow,
+    points_streak: patch.pointsStreak ?? base.points_streak,
+    tiers: patch.tiers !== undefined ? J(patch.tiers.slice(0, 8)) : base.tiers
+  };
+  db.prepare(`INSERT INTO fan_config (user_id, enabled, points_comment, points_follow, points_streak, tiers, updated_at)
+              VALUES (?,?,?,?,?,?,?)
+              ON CONFLICT(user_id) DO UPDATE SET enabled=excluded.enabled, points_comment=excluded.points_comment,
+                points_follow=excluded.points_follow, points_streak=excluded.points_streak, tiers=excluded.tiers, updated_at=excluded.updated_at`)
+    .run(userId, next.enabled, next.points_comment, next.points_follow, next.points_streak, next.tiers, now());
+  return getFanConfig(userId);
+}
+// Award points once per (psid, day, kind) for comment/streak actions; 'follow' is one-time.
+function awardFanPoints({ userId, accountId, psid, igUsername = null, kind, points, oncePerDay = true }) {
+  const today = now().slice(0, 10);
+  if (oncePerDay) {
+    const dup = db.prepare(`SELECT id FROM fan_ledger WHERE user_id=? AND psid=? AND kind=? AND substr(created_at,1,10)=? LIMIT 1`)
+      .get(userId, String(psid), kind, today);
+    if (dup) return null;
+  }
+  const member = db.prepare("SELECT * FROM fan_members WHERE user_id=? AND account_id=? AND psid=?")
+    .get(userId, String(accountId), String(psid));
+  let streak = member ? member.streak_days : 0;
+  if (member && member.last_active !== today) streak = (member.last_active === new Date(Date.now() - 86400000).toISOString().slice(0, 10)) ? streak + 1 : 1;
+  else if (!member) streak = 1;
+  // Streak bonus: points_streak % per consecutive day, capped at 20 days.
+  const cfg = db.prepare("SELECT points_streak FROM fan_config WHERE user_id = ?").get(userId);
+  const perDay = kind === "comment" ? Math.max(0, Math.min(20, (cfg && cfg.points_streak) || 0)) : 0;
+  const total = points + Math.round(points * Math.min(streak, 20) * perDay / 100);
+  db.prepare(`INSERT INTO fan_ledger (user_id, account_id, psid, kind, points, note, created_at) VALUES (?,?,?,?,?,?,?)`)
+    .run(userId, String(accountId), String(psid), kind, total, null, now());
+  if (member) {
+    db.prepare(`UPDATE fan_members SET points = points + ?, streak_days = ?, last_active = ?, ig_username = COALESCE(?, ig_username) WHERE id = ?`)
+      .run(total, streak, today, igUsername, member.id);
+  } else {
+    db.prepare(`INSERT INTO fan_members (user_id, account_id, psid, ig_username, points, tier_index, streak_days, last_active, created_at)
+                VALUES (?,?,?,?,?, -1, ?, ?, ?)`)
+      .run(userId, String(accountId), String(psid), igUsername, total, streak, today, now());
+  }
+  return { points: total, streak };
+}
+function fanMember(userId, accountId, psid) {
+  return db.prepare("SELECT * FROM fan_members WHERE user_id=? AND account_id=? AND psid=?").get(userId, String(accountId), String(psid)) || null;
+}
+function fanLeaderboard(userId, limit = 10) {
+  return db.prepare(`SELECT psid, ig_username, points, streak_days, tier_index FROM fan_members
+    WHERE user_id = ? ORDER BY points DESC LIMIT ?`).all(userId, limit);
+}
+function fanLedgerFor(userId, psid, limit = 20) {
+  return db.prepare("SELECT kind, points, created_at FROM fan_ledger WHERE user_id=? AND psid=? ORDER BY created_at DESC LIMIT ?")
+    .all(userId, String(psid), limit);
+}
+// Members who just crossed a tier boundary and haven't been rewarded yet.
+function fanPendingRewards(userId) {
+  const cfg = getFanConfig(userId);
+  if (!cfg.enabled || !cfg.tiers.length) return [];
+  const members = db.prepare("SELECT * FROM fan_members WHERE user_id = ? AND tier_index < ?").all(userId, cfg.tiers.length - 1);
+  return members.filter((m) => {
+    const idx = cfg.tiers.reduce((acc, t, i) => (Number(t.points) <= m.points ? i : acc), -1);
+    return idx > m.tier_index;
+  });
+}
+function setFanTier(userId, accountId, psid, tierIndex) {
+  db.prepare("UPDATE fan_members SET tier_index = ? WHERE user_id=? AND account_id=? AND psid=?")
+    .run(tierIndex, userId, String(accountId), String(psid));
+}
+
 // expose a light db handle for actions that used store.db.*
 module.exports = {
   db,
@@ -618,7 +1057,7 @@ module.exports = {
   createUser, getUserByEmail, getUserById, setUserLang, setUserCurrency,
   upsertAccount, getAccount, listAccounts, listAccountRows, updateAccountToken,
   createRule, updateRule, deleteRule, getRule, rulesForAccount,
-  createConversation, updateConversation, getConversation, conversationsForAccount, lastConversationForPsid,
+  createConversation, updateConversation, deleteConversation, getConversation, conversationsForAccount, lastConversationForPsid,
   dueReminders,
   collectEmail, emailsForAccount,
   trackVisit, trackEvent,
@@ -633,4 +1072,22 @@ module.exports = {
   // purchases
   createPurchase, getPurchaseByOrderId, markPurchasePaid, markPurchaseFailed, listPurchases,
   deleteUserCompletely, deleteAccountByIgUserId, purgeExpiredSessions,
+  // advanced analytics
+  recordCommentEvent, markCommentMatched, commentStatsForUser, commentStatsForPost,
+  createGoLink, getGoLink, recordGoClick,
+  clickStatsForUser, clickStatsForPost, clickSeriesForPost, clickSeriesForUser,
+  clickedConversationsForUser, uniqueVisitorsForUser,
+  markDelivered, deliveredCountForUser, deliveredCountForPost,
+  // flows / dm automation
+  createFlow, getFlow, listFlows, updateFlow, deleteFlow,
+  saveFlowSteps, listFlowSteps, getFlowStep, listLiveDmFlows, countFlowsForUser,
+  startFlowSession, activeFlowSession, updateFlowSession, expireStaleFlowSessions, flowStatsForUser,
+  // subscribers + broadcasts
+  upsertSubscriber, listSubscribers, subscriberCount, optOutSubscriber,
+  createBroadcast, queueBroadcastItems, claimBroadcast, nextBroadcastItems,
+  markBroadcastItem, bumpBroadcastCounts, finishBroadcast, dueBroadcasts,
+  listBroadcasts, getBroadcast, cancelBroadcast,
+  // fan mode
+  getFanConfig, setFanConfig, awardFanPoints, fanMember, fanLeaderboard,
+  fanLedgerFor, fanPendingRewards, setFanTier,
 };

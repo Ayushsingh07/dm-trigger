@@ -112,6 +112,73 @@ function runPassExpiry() {
   return { downgraded: downgraded.length };
 }
 
+// ---------------------------------------------------------------- broadcasts
+// Paced sender: every minute, take up to 10 pending items from due broadcasts
+// and send them. Only inside Meta's 24h window (last_seen_at) — outside it we
+// mark "skipped" (pre-approved broadcast templates are a later milestone).
+const BROADCAST_TICK_MS = 60 * 1000;
+const BROADCAST_BATCH = 10;
+let broadcastBusy = false;
+async function runBroadcastQueue() {
+  if (broadcastBusy) return;
+  broadcastBusy = true;
+  try {
+    for (const bc of store.dueBroadcasts(new Date().toISOString())) {
+      const items = store.nextBroadcastItems(bc.id, BROADCAST_BATCH);
+      if (!items.length) { store.finishBroadcast(bc.id); continue; }
+      const message = { text: bc.text };
+      let sent = 0, failed = 0;
+      for (const item of items) {
+        try {
+          const account = store.getAccount(item.account_id);
+          const subs = account?.user_id ? store.listSubscribers(account.user_id) : [];
+          const sub = subs.find((s) => s.psid === item.psid);
+          if (!account || (sub && sub.opted_out)) {
+            store.markBroadcastItem(item.id, "skipped", "opted_out"); continue;
+          }
+          // 24h window from the follower's last inbound activity.
+          const lastSeen = sub?.last_seen_at ? new Date(sub.last_seen_at).getTime() : 0;
+          if (!lastSeen || Date.now() - lastSeen > 24 * 3600 * 1000) {
+            store.markBroadcastItem(item.id, "skipped", "outside_window"); continue;
+          }
+          const res = await meta.sendDM(account.accessToken, item.psid, message, account.ig_user_id);
+          if (res.ok) { store.markBroadcastItem(item.id, "sent"); sent++; }
+          else if (meta.shouldRetry(res) && item.attempts < 2) { /* leave pending for retry */ failed++; }
+          else { store.markBroadcastItem(item.id, "failed", String(res.status || res.err || "")); failed++; }
+        } catch (err) {
+          store.markBroadcastItem(item.id, "failed", err.message); failed++;
+        }
+      }
+      store.bumpBroadcastCounts(bc.id, sent, failed);
+      const remaining = store.nextBroadcastItems(bc.id, 1).length === 0;
+      if (remaining) store.finishBroadcast(bc.id);
+    }
+  } finally {
+    broadcastBusy = false;
+  }
+}
+
+// ---------------------------------------------------------------- fan rewards
+// Daily: DM a congratulation message to members who crossed a tier boundary.
+async function runFanRewards() {
+  for (const userId of store.db.prepare("SELECT user_id FROM fan_config WHERE enabled = 1").all().map((r) => r.user_id)) {
+    const cfg = store.getFanConfig(userId);
+    for (const m of store.fanPendingRewards(userId)) {
+      const idx = cfg.tiers.reduce((acc, t, i) => (Number(t.points) <= m.points ? i : acc), -1);
+      if (idx <= m.tier_index) continue;
+      const tier = cfg.tiers[idx];
+      const account = store.getAccount(m.account_id);
+      if (account && tier.reward_text) {
+        const res = await meta.sendDM(account.accessToken, m.psid, { text: tier.reward_text }, account.ig_user_id);
+        if (!res.ok && !res.dryRun) continue; // retry tomorrow
+      }
+      store.setFanTier(userId, m.account_id, m.psid, idx);
+      store.trackEvent("fan_tier", userId, { psid: m.psid, tier: tier.name });
+      logger.info({ user: userId, tier: tier.name }, "[fan] tier reward sent");
+    }
+  }
+}
+
 // ---------------------------------------------------------------- scheduling
 // "Run every N ms, and also fire once shortly after boot if the time-of-day
 // target was already passed" — simple daily cadence without cron deps.
@@ -148,8 +215,21 @@ function startJobs() {
   scheduleDaily(4, runBackup, "sqlite-backup");
   scheduleDaily(5, () => store.purgeExpiredSessions(), "session-purge");
   scheduleDaily(6, runPassExpiry, "pass-expiry");
+  scheduleDaily(7, runFanRewards, "fan-rewards");
 
-  logger.info("[jobs] reminder scheduler every 30s; daily: token-refresh 03:00Z, backup 04:00Z, purge 05:00Z, pass-expiry 06:00Z");
+  const broadcastTimer = setInterval(() => {
+    runBroadcastQueue().catch((err) => logger.error({ err: err.message }, "[jobs] broadcast tick failed"));
+  }, BROADCAST_TICK_MS);
+  broadcastTimer.unref();
+  timers.push(broadcastTimer);
+
+  // Flow sessions idle past the messaging window are closed out.
+  store.expireStaleFlowSessions();
+  const flowExpireTimer = setInterval(() => store.expireStaleFlowSessions(), 15 * 60 * 1000);
+  flowExpireTimer.unref();
+  timers.push(flowExpireTimer);
+
+  logger.info("[jobs] reminder 30s, broadcast queue 60s; daily: token-refresh 03:00Z, backup 04:00Z, purge 05:00Z, pass-expiry 06:00Z, fan-rewards 07:00Z");
 }
 
 function stopJobs() {
@@ -157,4 +237,4 @@ function stopJobs() {
   timers.length = 0;
 }
 
-module.exports = { startJobs, stopJobs, runDueReminders, refreshStaleTokens, runBackup, runPassExpiry };
+module.exports = { startJobs, stopJobs, runDueReminders, refreshStaleTokens, runBackup, runPassExpiry, runBroadcastQueue, runFanRewards };

@@ -580,19 +580,6 @@ function Hero() {
   );
 }
 
-/* ---------------- logo strip ---------------- */
-function Logos() {
-  const names = ["BLOOM studio", "northbrew", "LUXE resale", "macrofit", "pasta nonna", "glowroom"];
-  return (
-    <section className="border-y border-line bg-white py-8">
-      <p className="text-center text-[12px] font-bold uppercase tracking-[0.2em] text-slate-400">{t("landing.demo.poweredBy")}</p>
-      <div className="mx-auto mt-5 flex max-w-4xl flex-wrap items-center justify-center gap-x-12 gap-y-3 px-4 opacity-60">
-        {names.map((n) => <span key={n} className="text-[17px] font-extrabold tracking-tight text-slateInk">{n}</span>)}
-      </div>
-    </section>
-  );
-}
-
 /* ---------------- how it works ---------------- */
 function HowItWorks() {
   const steps = [
@@ -877,6 +864,30 @@ function Features() {
       t: t("landing.featuresItems.f6t"), d: t("landing.featuresItems.f6d"),
       mock: <><div className="grid grid-cols-3 gap-2"><div className="rounded-xl bg-white px-2 py-2 text-center shadow-soft"><div className="text-[16px] font-extrabold text-teal-dark">128</div><div className="text-[10px] font-bold text-slate-400">{t("landing.featuresItems.f6matches")}</div></div><div className="rounded-xl bg-white px-2 py-2 text-center shadow-soft"><div className="text-[16px] font-extrabold text-teal-dark">121</div><div className="text-[10px] font-bold text-slate-400">{t("landing.featuresItems.f6dms")}</div></div><div className="rounded-xl bg-white px-2 py-2 text-center shadow-soft"><div className="text-[16px] font-extrabold text-teal-dark">34</div><div className="text-[10px] font-bold text-slate-400">{t("landing.featuresItems.f6emails")}</div></div></div><ResultsBars bars={[35, 55, 48, 85]} /></>,
     },
+    {
+      t: t("landing.featuresItems.f7t"), d: t("landing.featuresItems.f7d"), newBadge: true,
+      mock: <><Bubble me>Hi! Here's part 1 of the guide 🤍</Bubble><div className="ms-auto rounded-full bg-white px-3 py-1.5 text-[11.5px] font-bold text-sky-600 shadow-soft">➡️ {t("landing.featuresItems.f7next")}</div><div className="ms-auto rounded-full bg-white px-3 py-1.5 text-[11.5px] font-bold text-sky-600 shadow-soft">🎁 {t("landing.featuresItems.f7gift")}</div><Bubble>ooh nice, send me the gift!</Bubble></>,
+    },
+    {
+      t: t("landing.featuresItems.f8t"), d: t("landing.featuresItems.f8d"), newBadge: true,
+      mock: <><div className="rounded-xl bg-white px-3 py-2 shadow-soft"><div className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wide">{t("landing.featuresItems.f8bc")}</div><div className="mt-1 text-[12.5px] font-bold">📣 {t("landing.featuresItems.f8msg")}</div></div><div className="mt-2 grid grid-cols-3 gap-2"><div className="rounded-xl bg-white px-2 py-2 text-center shadow-soft"><div className="text-[16px] font-extrabold text-teal-dark">1.2k</div><div className="text-[10px] font-bold text-slate-400">{t("landing.featuresItems.f8subs")}</div></div><div className="rounded-xl bg-white px-2 py-2 text-center shadow-soft"><div className="text-[16px] font-extrabold text-teal-dark">980</div><div className="text-[10px] font-bold text-slate-400">{t("landing.featuresItems.f8sent")}</div></div><div className="rounded-xl bg-white px-2 py-2 text-center shadow-soft"><div className="text-[16px] font-extrabold text-teal-dark">21%</div><div className="text-[10px] font-bold text-slate-400">{t("landing.featuresItems.f8ctr")}</div></div></div></>,
+    },
+    {
+      t: t("landing.featuresItems.f9t"), d: t("landing.featuresItems.f9d"), newBadge: true,
+      mock: <><div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-soft"><span className="text-[18px]">🏆</span><div className="flex-1"><div className="text-[12.5px] font-extrabold">@maya · 1,240 pts</div><div className="mt-1 h-1.5 w-full rounded-full bg-slate-100"><div className="h-1.5 w-3/4 rounded-full bg-teal" /></div></div><span className="rounded-full bg-amber/15 px-2 py-0.5 text-[10px] font-extrabold text-amber-700">🥇 {t("landing.featuresItems.f9gold")}</span></div><div className="mt-2 flex items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-soft"><span className="text-[18px]">🔥</span><div className="text-[12.5px] font-bold text-slateInk">{t("landing.featuresItems.f9streak")}</div></div></>,
+    },
+    {
+      t: t("landing.featuresItems.f10t"), d: t("landing.featuresItems.f10d"), newBadge: true,
+      mock: <><div className="flex items-center justify-between rounded-xl bg-white px-3 py-2.5 shadow-soft"><div className="flex items-center gap-2"><span className="grid h-8 w-8 place-items-center rounded-full bg-teal/10 text-[15px]">💚</span><div className="text-[12.5px] font-extrabold">{t("landing.featuresItems.f10score")} 96/100</div></div><span className="rounded-full bg-teal/10 px-2 py-0.5 text-[10px] font-extrabold text-teal-dark">{t("landing.featuresItems.f10safe")}</span></div><div className="mt-2 rounded-xl bg-white px-3 py-2 text-[12px] font-bold text-slateInk shadow-soft">✅ {t("landing.featuresItems.f10tip")}</div></>,
+    },
+    {
+      t: t("landing.featuresItems.f11t"), d: t("landing.featuresItems.f11d"),
+      mock: <><Bubble me>{t("landing.featuresItems.f11dm")}</Bubble><div className="my-1.5 text-center text-[10.5px] font-bold text-slate-400">⏰ {t("landing.featuresItems.f11later")}</div><Bubble me>{t("landing.featuresItems.f11nudge")}</Bubble><Bubble>{t("landing.featuresItems.f11reply")}</Bubble></>,
+    },
+    {
+      t: t("landing.featuresItems.f12t"), d: t("landing.featuresItems.f12d"),
+      mock: <><div className="flex flex-wrap justify-center gap-1.5">{["GUIDE", "गाइड", "ガイド", "guía"].map((w) => (<span key={w} className="rounded-full bg-white px-2.5 py-1 text-[11px] font-extrabold text-slateInk shadow-soft">💬 {w}</span>))}</div><div className="mt-2.5 rounded-xl bg-white px-3 py-2 text-[12px] font-bold text-teal-dark shadow-soft">✅ {t("landing.featuresItems.f12all")}</div></>,
+    },
   ];
   return (
     <section id="features" className="border-t border-line bg-mist/50">
@@ -889,6 +900,9 @@ function Features() {
           {items.map((f, i) => (
             <Reveal key={f.t} delay={(i % 3) * 100}>
               <div className="flex h-full flex-col rounded-2xl border border-line bg-white p-4 shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-chip">
+                {f.newBadge && (
+                  <div className="mb-2 self-start rounded-full bg-teal/10 px-2.5 py-0.5 text-[10.5px] font-extrabold uppercase tracking-wide text-teal-dark">✨ {t("landing.features.newBadge")}</div>
+                )}
                 <ChatMock>{f.mock}</ChatMock>
                 <h3 className="mt-4 px-1 text-[16px] font-extrabold">{f.t}</h3>
                 <p className="mt-1.5 px-1 pb-1 text-[13.5px] leading-relaxed text-slateInk">{f.d}</p>
@@ -951,7 +965,6 @@ function App() {
       <Nav />
       <main>
         <Hero />
-        <Logos />
         <HowItWorks />
         <Tutorial />
         <UseCases />

@@ -326,6 +326,25 @@ function buildDMMessage(dmText, links, name = "there") {
   };
 }
 
+// Build the message(s) for one flow step: text + quick_reply chips, and an
+// optional follow-up button-template message when the step also has links
+// (quick_replies ride on the text message; web_url buttons need a template).
+function buildStepMessage(step, links = [], name = "there") {
+  const text = (step.text || "").replace(/\{name\}/g, name);
+  const msgs = [];
+  const quick = (step.buttons || []).slice(0, 13).map((b) => ({
+    content_type: "text",
+    title: String(b.label || b.payload || "").slice(0, 20),
+    payload: String(b.payload || b.label || "").slice(0, 20),
+  }));
+  if (quick.length) msgs.push({ text, quick_replies: quick });
+  else if (links.length) msgs.push(buildDMMessage(step.text, links, name));
+  else msgs.push({ text });
+  // When the step has BOTH chips and links, links go in a second message.
+  if (quick.length && links.length) msgs.push(buildDMMessage("", links, name));
+  return msgs;
+}
+
 // Check whether the commenter follows the business account
 // (used by the followers-only option).
 // TODO(meta-docs): the Instagram API with Unified/Facebook login does not
@@ -371,6 +390,6 @@ function parseSignedRequest(signedRequest) {
 
 module.exports = {
   buildOAuthUrl, exchangeCode, exchangeLongLived, refreshLongLived, fetchIgProfile,
-  sendPrivateReply, sendCommentDM, sendDM, buildDMMessage, isFollower, parseSignedRequest,
+  sendPrivateReply, sendCommentDM, sendDM, buildDMMessage, buildStepMessage, isFollower, parseSignedRequest,
   shouldRetry, metaErrorText,
 };

@@ -111,6 +111,94 @@
           background:var(--bg2); color:var(--ink); flex:1; min-width:130px; outline:none; transition:border-color .15s, box-shadow .15s; }
   input.field:focus { border-color:#f8b48f; box-shadow:0 0 0 3px rgba(255,107,74,.12); background:#fff; }
   .hint { color:var(--faint); font-size:12.5px; margin-top:12px; }
+
+  /* ---------- growth dashboard widgets ---------- */
+  .rangebar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:14px; }
+  .rangebar .chip-btn { border:1px solid var(--line2); background:#fff; border-radius:999px;
+          padding:6px 14px; font-size:12.5px; font-weight:700; color:var(--soft); cursor:pointer; }
+  .rangebar .chip-btn.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .rangebar .grow { margin-inline-start:auto; }
+  .delta { font-size:11.5px; font-weight:800; padding:2px 8px; border-radius:999px; }
+  .delta.up { background:var(--mint); color:var(--ok); }
+  .delta.down { background:var(--rose); color:var(--bad); }
+  .delta.flat { background:var(--bg2); color:var(--faint); }
+  .growth-grid { display:grid; grid-template-columns:1.6fr 1fr; gap:14px; margin-bottom:34px; }
+  @media (max-width:820px) { .growth-grid { grid-template-columns:1fr; } }
+  .chart { display:flex; align-items:flex-end; gap:6px; height:150px; margin-top:16px; }
+  .chart .col { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; min-width:0; }
+  .chart .bar { width:100%; max-width:44px; border-radius:8px 8px 4px 4px;
+          background:linear-gradient(180deg,var(--acc),var(--acc2)); min-height:3px; transition:height .3s; }
+  .chart .bar.eng { background:linear-gradient(180deg,#ffb191,#ffd0b8); }
+  .chart .day { font-size:10.5px; color:var(--faint); white-space:nowrap; }
+  .chart .col:hover .bar { filter:brightness(1.08); }
+  .funnel-row { margin-top:14px; }
+  .funnel-row .lbl { display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; color:var(--soft); }
+  .funnel-row .track { height:12px; border-radius:999px; background:var(--bg2); margin-top:5px; overflow:hidden; }
+  .funnel-row .fill { height:100%; border-radius:999px; background:linear-gradient(90deg,var(--acc),var(--acc2)); }
+  .funnel-row .pct { font-size:11px; color:var(--faint); }
+  .tops-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:34px; }
+  @media (max-width:820px) { .tops-grid { grid-template-columns:1fr; } }
+  .top-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--line); }
+  .top-row:last-child { border-bottom:0; }
+  .top-row .n { margin-inline-start:auto; font-weight:800; font-size:13px; }
+  .top-row .track { flex:1; height:8px; border-radius:999px; background:var(--bg2); overflow:hidden; }
+  .top-row .fill { height:100%; background:var(--acc); border-radius:999px; }
+  .meter { height:12px; border-radius:999px; background:var(--bg2); overflow:hidden; margin-top:8px; }
+  .meter .fill { height:100%; background:linear-gradient(90deg,var(--acc),var(--acc2)); border-radius:999px; }
+  .meter.warnfill .fill { background:linear-gradient(90deg,#f59e0b,#f97316); }
+  .checklist { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+  .pro-badge { display:inline-block; font-size:10px; font-weight:900; letter-spacing:.06em;
+          background:linear-gradient(90deg,var(--acc),var(--acc2)); color:#fff;
+          border-radius:6px; padding:2px 7px; vertical-align:middle; margin-inline-start:6px; }
+  .analytics-locked { position:relative; overflow:hidden; margin:24px -22px -22px; }
+  #analyticsPanel { overflow:hidden; }
+  .locked-preview { filter:blur(7px) saturate(.9); opacity:.8; transform:scale(1.03);
+          pointer-events:none; user-select:none; padding:22px 20px 18px; }
+  .locked-preview .kpi { background:#fff; }
+  .locked-preview .kpi .v { color:var(--soft); }
+  .locked-preview .fakebar { height:9px; border-radius:999px; background:var(--line2); margin-top:8px; }
+  .locked-preview .chart { height:110px; margin-top:18px; }
+  .locked-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+          padding:16px; background:linear-gradient(180deg,rgba(253,249,244,.10),rgba(253,249,244,.50)); }
+  .locked-card { text-align:center; max-width:420px; padding:10px 20px; }
+  .locked-card .lock-ic { width:52px; height:52px; margin:0 auto 12px; border-radius:16px; display:flex;
+          align-items:center; justify-content:center; font-size:24px;
+          background:linear-gradient(135deg,var(--acc),var(--acc2)); color:#fff;
+          box-shadow:0 10px 24px -6px rgba(255,107,74,.5); }
+  .locked-card .locked-title { font-weight:900; font-size:16.5px; text-shadow:0 0 18px rgba(253,249,244,.95), 0 0 6px rgba(253,249,244,.9); }
+  .locked-card .sub { margin:8px 0 16px; font-size:13px; text-shadow:0 0 18px rgba(253,249,244,.95), 0 0 6px rgba(253,249,244,.9); }
+  .locked-card .upgrade-btn { box-shadow:0 12px 26px -8px rgba(255,107,74,.55); }
+  .upgrade-btn { display:inline-block; border:0; color:#fff !important; font-weight:800; font-size:13.5px;
+          padding:11px 26px; border-radius:999px; text-decoration:none;
+          background:linear-gradient(90deg,var(--acc),var(--acc2));
+          box-shadow:0 12px 26px -8px rgba(255,107,74,.55); transition:transform .15s ease, box-shadow .15s ease; }
+  .upgrade-btn:hover { transform:translateY(-2px); box-shadow:0 16px 32px -8px rgba(255,107,74,.6); }
+  @media (max-width:560px) { .locked-preview .kpi-grid { grid-template-columns:repeat(2,1fr); } }
+  .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:10px; margin-top:14px; }
+  .kpi { border:1px solid var(--line2); background:var(--bg2); border-radius:14px; padding:12px 14px; }
+  .kpi .v { font-size:22px; font-weight:900; }
+  .kpi .k { font-size:11.5px; font-weight:700; color:var(--soft); margin-top:2px; }
+  .analytics-h3 { margin:22px 0 4px; font-size:15px; }
+  .posts-table-wrap { overflow-x:auto; }
+  .posts-table { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:8px; }
+  .posts-table th { text-align:start; color:var(--faint); font-weight:700; font-size:11px;
+          text-transform:uppercase; letter-spacing:.04em; padding:8px 10px; border-bottom:1px solid var(--line); }
+  .posts-table td { padding:10px; border-bottom:1px dashed var(--line); }
+  .posts-table tr:last-child td { border-bottom:0; }
+  .posts-table tr.post-row { cursor:pointer; }
+  .posts-table tr.post-row:hover td { background:var(--bg2); }
+  .posts-table .pid { font-family:ui-monospace,monospace; font-size:11.5px; }
+  .chart .bar.clk { background:linear-gradient(180deg,#8b5cf6,#c4b5fd); }
+  .check-item { display:flex; align-items:center; gap:8px; border:1px solid var(--line2); background:var(--bg2);
+          border-radius:14px; padding:9px 14px; font-size:13px; font-weight:600; color:var(--soft); }
+  .check-item.done { background:var(--mint); border-color:#bfe3cf; color:var(--ok); }
+  .check-item .tick { font-weight:900; }
+  .acct { display:flex; align-items:center; gap:12px; }
+  .acct .ig-avatar { width:44px; height:44px; border-radius:50%;
+          background:conic-gradient(#feda75,#d62976,#962fbf,#4f5bd5,#feda75); position:relative; flex:none; }
+  .acct .ig-avatar::after { content:""; position:absolute; inset:4px; border-radius:50%; background:#fff; }
+  .acct .ig-avatar span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+          font-size:18px; z-index:1; }
   .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
   code.inline { background:var(--peach); border-radius:6px; padding:1px 7px; font-size:12.5px; color:var(--acc-ink); }
 
@@ -213,15 +301,71 @@
           flex:0 0 auto; min-height:28px; font-size:12px; font-weight:600; color:var(--faint);
           text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
     #deleteAccountBtn { color:#c98f8f; }
-    .greet { padding:24px 0 4px; }
-    .wrap { padding:0 14px 70px; }
   }
+  /* ---- flows / audience / fan / health ---- */
+.flows-list { display:grid; gap:10px; margin-top:14px; }
+.flow-row { display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--line);
+  border-radius:12px; background:#fffdfb; }
+.flow-row .f-name { font-weight:700; }
+.flow-row .f-kw { font-size:12px; color:var(--faint); }
+.flow-status { font-size:10px; font-weight:800; letter-spacing:.4px; padding:2px 8px; border-radius:99px; text-transform:uppercase; }
+.flow-status.live { background:#e3f6ea; color:#1a7f4f; }
+.flow-status.draft { background:#f1eee9; color:#8a8177; }
+.flow-status.paused { background:#fdf3dd; color:#9a7b2d; }
+.flow-row .grow { flex:1; }
+.flow-editor-head { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:16px 0 12px; }
+.flow-editor-head .field { margin:0; }
+.flow-builder { display:grid; grid-template-columns:1fr 300px; gap:18px; align-items:start; }
+@media (max-width:900px){ .flow-builder { grid-template-columns:1fr; } }
+.flow-step { border:1px solid var(--line); border-radius:14px; padding:14px; background:#fff; margin-bottom:12px; position:relative; }
+.flow-step .fs-head { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.flow-step .fs-num { width:22px; height:22px; border-radius:50%; background:var(--peach); display:grid; place-items:center;
+  font-size:11px; font-weight:800; }
+.flow-step textarea { width:100%; min-height:56px; border:1px solid var(--line); border-radius:10px; padding:8px 10px;
+  font:inherit; resize:vertical; background:#fffdfb; }
+.fs-btns { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.fs-chip { display:inline-flex; align-items:center; gap:6px; font-size:12px; border:1px solid #d9cfff; background:#f6f1ff;
+  border-radius:99px; padding:3px 10px; }
+.fs-chip button { border:none; background:none; cursor:pointer; color:#8b6fd8; font-weight:800; padding:0; }
+.fs-tools { display:flex; gap:10px; align-items:center; margin-top:8px; flex-wrap:wrap; font-size:12px; color:var(--faint); }
+.fs-tools select { font-size:12px; padding:3px 6px; border-radius:8px; border:1px solid var(--line); }
+.fs-del { position:absolute; top:10px; right:10px; border:none; background:none; color:#c98f8f; cursor:pointer; font-size:14px; }
+.flow-preview { position:sticky; top:80px; }
+.flow-phone { width:290px; margin:0 auto; border:1px solid var(--line); border-radius:26px; overflow:hidden;
+  background:#fff; box-shadow:0 10px 30px rgba(60,40,20,.08); }
+.flow-chat { padding:12px; display:flex; flex-direction:column; gap:8px; min-height:260px; max-height:380px; overflow:auto; background:#faf7f4; }
+.flow-chat .bub { background:#fff; border:1px solid var(--line); border-radius:14px; padding:8px 11px; font-size:12.5px; max-width:88%; }
+.flow-chat .chips { display:flex; flex-wrap:wrap; gap:6px; }
+.flow-chat .chip { font-size:11px; border:1px solid #d9cfff; color:#6d4fc4; border-radius:99px; padding:3px 10px; background:#fff; }
+.flow-chat .gate { border-style:dashed; border-color:#e5c98f; background:#fffaf0; }
+.aud-grid { display:grid; grid-template-columns:1.2fr 1fr; gap:20px; margin-top:12px; }
+@media (max-width:900px){ .aud-grid { grid-template-columns:1fr; } }
+.subs-list { max-height:260px; overflow:auto; display:grid; gap:6px; }
+.sub-row { display:flex; justify-content:space-between; font-size:12.5px; padding:6px 10px; border:1px solid var(--line);
+  border-radius:10px; background:#fffdfb; }
+.sub-row.out { opacity:.5; text-decoration:line-through; }
+.fan-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:8px; }
+@media (max-width:900px){ .fan-grid { grid-template-columns:1fr; } }
+.fan-toggle { font-size:13px; font-weight:600; display:flex; gap:6px; align-items:center; }
+.fan-num { font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:6px; }
+.fan-tier { display:grid; grid-template-columns:1fr 90px 2fr auto; gap:8px; margin-bottom:8px; align-items:center; }
+.fan-tier input { font-size:12.5px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; }
+.health-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-top:14px; }
+.health-cell { border:1px solid var(--line); border-radius:12px; padding:12px 14px; background:#fffdfb; }
+.health-cell .v { font-size:22px; font-weight:800; }
+.health-cell .k { font-size:11.5px; color:var(--faint); }
+.health-score { font-size:13px; font-weight:800; padding:3px 12px; border-radius:99px; background:#e3f6ea; color:#1a7f4f; }
+.health-score.warn { background:#fdf3dd; color:#9a7b2d; }
+.health-score.bad { background:#fdeaea; color:#b3453f; }
+@media (max-width:640px){
+  .wrap { padding:0 14px 70px; }
+}
 </style>
 </head>
 <body>
 
 <nav>
-  <a class="logo" href="/"><span class="mark">⚡</span> ReplyLo</a>
+  <a class="logo" href="/app"><span class="mark">⚡</span> ReplyLo</a>
   <div class="nav-right">
     <span id="modeBadge" class="badge warn"><span class="dot"></span>…</span>
     <a class="pill dark" href="/auth/connect">{{t:app.connectIg}}</a>
@@ -242,14 +386,206 @@
   <div class="greet">
     <h1 id="greetTitle">{{t:app.greetDefault}}</h1>
     <p>{{t:app.greetSub}}</p>
+    <div class="rangebar">
+      <button class="chip-btn" data-range="today">{{t:app.rangeToday}}</button>
+      <button class="chip-btn on" data-range="7d">{{t:app.range7d}}</button>
+      <button class="chip-btn" data-range="30d">{{t:app.range30d}}</button>
+      <button class="chip-btn" data-range="all">{{t:app.rangeAll}}</button>
+      <a class="pill light grow" id="exportCsv" href="/api/stats/conversations/export.csv?range=7d" download>{{t:app.exportCsv}}</a>
+    </div>
   </div>
 
+  <!-- setup checklist: shown only until the basics are done -->
+  <section class="panel" id="setupPanel" style="display:none;margin-bottom:26px">
+    <h2>{{t:app.setupTitle}}</h2>
+    <div class="sub">{{t:app.setupSub}}</div>
+    <div class="checklist" id="checklist"></div>
+  </section>
+
   <div class="grid">
-    <div class="card"><div class="ic" style="background:var(--peach)">👋</div><div class="num" id="sReached">0</div><div class="lbl">{{t:app.reached}}</div></div>
-    <div class="card"><div class="ic" style="background:var(--mint)">📩</div><div class="num" id="sSent">0</div><div class="lbl">{{t:app.sent}}</div></div>
+    <div class="card"><div class="ic" style="background:var(--peach)">👋</div><div class="num" id="sReached">0</div><div class="lbl">{{t:app.reached}} <span class="delta flat" id="dReached"></span></div></div>
+    <div class="card"><div class="ic" style="background:var(--mint)">📩</div><div class="num" id="sSent">0</div><div class="lbl">{{t:app.sent}} <span class="delta flat" id="dSent"></span></div></div>
     <div class="card"><div class="ic" style="background:var(--amber)">🖱️</div><div class="num" id="sClicks">0</div><div class="lbl">{{t:app.clicks}} · <span id="sRate">0%</span></div></div>
     <div class="card"><div class="ic" style="background:#efe9ff">✉️</div><div class="num" id="sEmails">0</div><div class="lbl">{{t:app.emails}}</div></div>
   </div>
+
+  <div class="growth-grid">
+    <section class="panel">
+      <div class="panel-head"><h2>{{t:app.trendTitle}}</h2><span class="sub" id="trendLegend" style="margin:0"></span></div>
+      <div class="chart" id="trendChart"></div>
+    </section>
+    <section class="panel">
+      <h2>{{t:app.funnelTitle}}</h2>
+      <div id="funnel"></div>
+    </section>
+  </div>
+
+  <div class="tops-grid">
+    <section class="panel">
+      <h2>{{t:app.topKeywordsTitle}}</h2>
+      <div id="topKeywords" class="sub" style="margin:0"></div>
+    </section>
+    <section class="panel">
+      <h2>{{t:app.topPostsTitle}}</h2>
+      <div id="topPosts" class="sub" style="margin:0"></div>
+    </section>
+  </div>
+
+  <div class="growth-grid" style="margin-top:-14px">
+    <section class="panel">
+      <h2>{{t:app.accountTitle}}</h2>
+      <div id="accountCard"></div>
+    </section>
+    <section class="panel">
+      <h2>{{t:app.usageTitle}}</h2>
+      <div id="usageCard"></div>
+    </section>
+  </div>
+
+  <!-- Advanced Analytics (Pro plan only) -->
+  <section class="panel" id="analyticsPanel" style="margin-bottom:34px">
+    <div class="panel-head">
+      <h2>{{t:analytics.title}} <span class="pro-badge">PRO</span></h2>
+      <span class="sub" id="analyticsRangeLabel" style="margin:0"></span>
+    </div>
+    <div id="analyticsLocked" style="display:none">
+      <div class="analytics-locked">
+        <div class="locked-preview" aria-hidden="true">
+          <div class="kpi-grid">
+            <div class="kpi"><div class="v">128</div><div class="k">{{t:analytics.kComments}}</div></div>
+            <div class="kpi"><div class="v">46</div><div class="k">{{t:analytics.kReached}}</div></div>
+            <div class="kpi"><div class="v">19</div><div class="k">{{t:analytics.kClicks}}</div></div>
+            <div class="kpi"><div class="v">41%</div><div class="k">{{t:analytics.kCtr}}</div></div>
+          </div>
+          <div class="chart">
+            <div class="bar eng" style="height:34%"></div><div class="bar eng" style="height:58%"></div>
+            <div class="bar clk" style="height:26%"></div><div class="bar eng" style="height:72%"></div>
+            <div class="bar clk" style="height:44%"></div><div class="bar eng" style="height:90%"></div>
+            <div class="bar clk" style="height:52%"></div><div class="bar eng" style="height:66%"></div>
+            <div class="bar clk" style="height:38%"></div><div class="bar eng" style="height:80%"></div>
+          </div>
+          <div class="fakebar" style="width:88%"></div>
+          <div class="fakebar" style="width:64%"></div>
+        </div>
+        <div class="locked-overlay">
+          <div class="locked-card">
+            <div class="lock-ic">🔒</div>
+            <div class="locked-title">{{t:analytics.locked}}</div>
+            <div class="sub">{{t:analytics.lockedSub}}</div>
+            <a class="upgrade-btn" href="/billing">{{t:analytics.upgrade}}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="analyticsBody">
+      <div class="kpi-grid" id="analyticsKpis"></div>
+      <div id="analyticsPostsWrap">
+        <h3 class="analytics-h3">{{t:analytics.postsTitle}}</h3>
+        <div class="posts-table-wrap"><table class="posts-table" id="analyticsPosts"></table></div>
+      </div>
+      <div id="analyticsDrill" style="display:none">
+        <button class="chip-btn" id="analyticsBack">← {{t:analytics.back}}</button>
+        <h3 class="analytics-h3" id="drillTitle"></h3>
+        <div class="kpi-grid" id="drillKpis"></div>
+        <div class="panel-head" style="margin-top:10px"><span class="sub" style="margin:0">{{t:analytics.dailyTitle}}</span><span class="sub" id="drillLegend" style="margin:0"></span></div>
+        <div class="chart" id="drillChart"></div>
+      </div>
+      <div class="hint" id="analyticsEmpty" style="display:none">{{t:analytics.noData}}</div>
+    </div>
+  </section>
+
+  <!-- DM Automations (step-builder flows) -->
+  <section class="panel" id="flowsPanel" style="margin-bottom:34px">
+    <div class="panel-head">
+      <h2>{{t:flows.title}}</h2>
+      <button class="pill dark" id="newFlowBtn">+ {{t:flows.new}}</button>
+    </div>
+    <div class="sub">{{t:flows.sub}}</div>
+    <div id="flowsLimit" class="hint" style="display:none"></div>
+    <div id="flowsList" class="flows-list"></div>
+    <div id="flowEditor" style="display:none">
+      <div class="flow-editor-head">
+        <button class="chip-btn" id="flowBack">← {{t:flows.back}}</button>
+        <input class="field" id="flowName" maxlength="60" />
+        <input class="field" id="flowKeyword" maxlength="40" style="max-width:150px" />
+        <select class="field" id="flowTrigger" style="max-width:190px">
+          <option value="dm_keyword">{{t:flows.trigDm}}</option>
+          <option value="comment_keyword">{{t:flows.trigComment}}</option>
+        </select>
+      </div>
+      <div class="flow-builder">
+        <div class="flow-steps" id="flowSteps"></div>
+        <div class="flow-preview">
+          <div class="flow-phone">
+            <div class="p-head"><div class="p-avatar"></div><div><div class="p-user">your.brand</div><div class="p-sub">Instagram DM</div></div></div>
+            <div class="flow-chat" id="flowChat"></div>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="pill light" id="addStepBtn">+ {{t:flows.addStep}}</button>
+        <button class="pill dark" id="saveFlowBtn">{{t:flows.save}}</button>
+        <button class="pill dark" id="publishFlowBtn" style="background:#1a7f4f">{{t:flows.publish}}</button>
+        <button class="pill ghost" id="pauseFlowBtn" style="display:none">{{t:flows.pause}}</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Audience: subscribers + broadcasts -->
+  <section class="panel" id="audiencePanel" style="margin-bottom:34px">
+    <div class="panel-head"><h2>{{t:audience.title}}</h2><span class="sub" id="subsCount" style="margin:0"></span></div>
+    <div class="sub">{{t:audience.sub}}</div>
+    <div class="aud-grid">
+      <div>
+        <h3 class="analytics-h3">{{t:audience.bcTitle}}</h3>
+        <form id="bcForm" class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+          <input class="field" id="bcName" placeholder="{{t:audience.bcName}}" maxlength="60" required />
+          <input class="field" id="bcText" placeholder="{{t:audience.bcText}}" maxlength="500" required style="flex:2" />
+          <button class="pill dark" type="submit">{{t:audience.bcSend}}</button>
+        </form>
+        <div id="bcLimitMsg" class="hint" style="display:none"></div>
+        <table class="posts-table" id="bcTable"></table>
+      </div>
+      <div>
+        <h3 class="analytics-h3">{{t:audience.subsTitle}} <a href="/api/audience/subscribers.csv" download style="font-size:11px;font-weight:600">CSV ↓</a></h3>
+        <div id="subsList" class="subs-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fan Mode (loyalty) -->
+  <section class="panel" id="fanPanel" style="margin-bottom:34px">
+    <div class="panel-head"><h2>{{t:fan.title}} <span class="pro-badge">PRO</span></h2>
+      <label class="fan-toggle"><input type="checkbox" id="fanEnabled" /> {{t:fan.enable}}</label></div>
+    <div class="sub">{{t:fan.sub}}</div>
+    <div id="fanLocked" class="hint" style="display:none">{{t:fan.locked}} <a href="/billing" class="pill dark" style="padding:2px 10px">{{t:analytics.upgrade}}</a></div>
+    <div id="fanBody" style="display:none">
+      <div class="fan-grid">
+        <div>
+          <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+            <label class="fan-num">{{t:fan.perComment}} <input class="field" id="fanPerComment" type="number" min="1" max="1000" style="width:70px" /></label>
+            <label class="fan-num">{{t:fan.streakBonus}} <input class="field" id="fanStreak" type="number" min="0" max="20" style="width:70px" />%</label>
+          </div>
+          <h3 class="analytics-h3">{{t:fan.tiersTitle}}</h3>
+          <div id="fanTiers"></div>
+          <button class="pill light" id="fanAddTier" style="margin-top:8px">+ {{t:fan.addTier}}</button>
+          <div class="row" style="margin-top:12px"><button class="pill dark" id="fanSave">{{t:fan.save}}</button></div>
+        </div>
+        <div>
+          <h3 class="analytics-h3">{{t:fan.leaderboard}}</h3>
+          <table class="posts-table" id="fanBoard"></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Account health -->
+  <section class="panel" id="healthPanel" style="margin-bottom:34px">
+    <div class="panel-head"><h2>{{t:health.title}}</h2><span class="health-score" id="healthScore">–</span></div>
+    <div class="sub">{{t:health.sub}}</div>
+    <div id="healthBody" class="health-grid"></div>
+    <div id="healthTips" class="hint" style="display:none"></div>
+  </section>
 
   <div class="panel demo" style="margin-bottom:34px">
     <div>
@@ -301,7 +637,7 @@
 
   <div class="cols">
     <section>
-      <div class="panel">
+      <div class="panel" id="rules">
         <h2>{{t:app.rulesTitle}}</h2>
         <div class="sub">{{t:app.rulesSub}}</div>
         <form id="ruleForm">
@@ -375,6 +711,15 @@ document.querySelectorAll("#typeChips .chip-btn").forEach((btn) => {
 $("cKeyword").addEventListener("input", () => { $("pKeyword").textContent = $("cKeyword").value.toUpperCase() || "KEYWORD"; });
 $("cDm").addEventListener("input", () => {}); // DM text used when demo runs
 
+/* Same word-boundary rule as the server (src/actions.js commentMatchesKeyword),
+   so the demo only plays the reply + DM when a real rule would fire. */
+function demoMatchesKeyword(comment, keyword) {
+  const kw = String(keyword || "").trim().toLowerCase();
+  if (!kw || !String(comment || "").trim()) return false;
+  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}($|[^\\p{L}\\p{N}])`, "iu").test(comment);
+}
+
 let demoRunning = false;
 async function runDemo() {
   if (demoRunning) return;
@@ -385,6 +730,7 @@ async function runDemo() {
   const keyword = ($("cKeyword").value || "GUIDE").toUpperCase();
   const comment = $("cComment").value || `${keyword} please! 🙌`;
   const dmText = $("cDm").value || "Here's the link you asked for.";
+  const matched = demoMatchesKeyword(comment, keyword);
 
   $("pComments").innerHTML = `<div class="p-comment"><b>jordan.eats</b>ooh need this 😍<span class="meta">${T("app.comment2h")}</span></div>`;
   $("dmToast").classList.remove("show");
@@ -397,21 +743,24 @@ async function runDemo() {
   $("pComments").appendChild(c);
   await wait(900);
 
-  const t = document.createElement("div");
-  t.className = "typing pop"; t.innerHTML = "<i></i><i></i><i></i>";
-  $("pComments").appendChild(t);
-  await wait(1200);
-  t.remove();
+  if (matched) {
+    const t = document.createElement("div");
+    t.className = "typing pop"; t.innerHTML = "<i></i><i></i><i></i>";
+    $("pComments").appendChild(t);
+    await wait(1200);
+    t.remove();
 
-  const r = document.createElement("div");
-  r.className = "p-reply pop";
-  r.innerHTML = `<span class="tag">${T("app.autoTag")}</span>${T("app.demoReply")}<span class="meta">${T("app.commentNow")}</span>`;
-  $("pComments").appendChild(r);
-  await wait(500);
+    const r = document.createElement("div");
+    r.className = "p-reply pop";
+    r.innerHTML = `<span class="tag">${T("app.autoTag")}</span>${T("app.demoReply")}<span class="meta">${T("app.commentNow")}</span>`;
+    $("pComments").appendChild(r);
+    await wait(500);
 
-  $("dmToastMsg").textContent = dmText;
-  $("dmToastBtn").textContent = T("app.getThe") + " " + keyword.toLowerCase();
-  $("dmToast").classList.add("show");
+    $("dmToastMsg").textContent = dmText;
+    $("dmToastBtn").textContent = T("app.getThe") + " " + keyword.toLowerCase();
+    $("dmToast").classList.add("show");
+  }
+  // No keyword in the comment: nothing is sent, exactly like the real engine.
 
   await postWebhook(comment, "maya.creates");
   await wait(700);
@@ -485,11 +834,9 @@ async function refresh() {
   badge.className = "badge " + (live ? "live" : "warn");
   badge.innerHTML = `<span class="dot"></span>${live ? T("app.modeLive") : T("app.modeDryRun")}`;
 
-  bumpIfChanged("sReached", stats.reached);
-  bumpIfChanged("sSent", stats.sent);
   bumpIfChanged("sClicks", stats.clicked);
   $("sRate").textContent = stats.clickRate + "%";
-  bumpIfChanged("sEmails", stats.emails);
+  refreshGrowth(); // range-aware cards + charts
 
   $("rulesBody").innerHTML = rules.rules.map(r => `
     <tr>
@@ -506,6 +853,132 @@ async function refresh() {
       <td>${esc(c.psid)}</td>
       <td><span class="st ${esc(c.status)}">${esc(c.status)}</span></td>
     </tr>`).join("") || `<tr><td colspan="4" class="hint">${T("app.noConvs")}</td></tr>`;
+}
+
+/* ---------------- growth dashboard (range-aware) ---------------- */
+let statsRange = "7d";
+
+document.querySelectorAll(".rangebar .chip-btn").forEach((b) => {
+  b.addEventListener("click", () => {
+    statsRange = b.dataset.range;
+    document.querySelectorAll(".rangebar .chip-btn").forEach((x) => x.classList.toggle("on", x === b));
+    $("exportCsv").href = "/api/stats/conversations/export.csv?range=" + statsRange;
+    refreshGrowth();
+    if (analyticsLoaded || analyticsPlan === "pro") refreshAnalytics();
+  });
+});
+
+function deltaChip(id, pct) {
+  const el = $(id);
+  if (!pct) { el.textContent = ""; el.className = "delta flat"; return; }
+  el.textContent = (pct > 0 ? "▲ +" : "▼ ") + pct + "%";
+  el.className = "delta " + (pct > 0 ? "up" : "down");
+}
+
+function renderTrend(ov) {
+  const box = $("trendChart");
+  const pts = ov.series && ov.series.length ? ov.series : [];
+  if (!pts.length) { box.innerHTML = `<div class="hint">${T("app.noData")}</div>`; return; }
+  const max = Math.max(1, ...pts.map((p) => p.sent));
+  const shortDay = (d) => { const dt = new Date(d + "T00:00:00Z");
+    return window.I18N ? I18N.date ? I18N.date(dt) : dt.toLocaleDateString(undefined, { month: "short", day: "numeric" }) : d.slice(5); };
+  box.innerHTML = pts.map((p) => {
+    const h = Math.round((p.sent / max) * 118);
+    const eh = Math.round((p.engaged / max) * 118);
+    return `<div class="col" title="${esc(p.day)}: ${p.sent} ${T("app.sent")} · ${p.engaged} ${T("app.engaged")}">
+      <div style="display:flex;align-items:flex-end;gap:3px;height:124px;width:100%;justify-content:center">
+        <div class="bar" style="height:${Math.max(h, p.sent ? 4 : 2)}px"></div>
+        <div class="bar eng" style="height:${Math.max(eh, 0)}px"></div>
+      </div><div class="day">${esc(shortDay(p.day))}</div></div>`;
+  }).join("");
+  $("trendLegend").textContent = `■ ${T("app.sent")}  ■ ${T("app.engaged")}`;
+}
+
+function renderFunnel(ov) {
+  const total = ov.funnel[0].n || 0;
+  $("funnel").innerHTML = ov.funnel.map((f, i) => {
+    const pct = total ? Math.round((f.n / total) * 100) : 0;
+    const stepPct = i > 0 && ov.funnel[i - 1].n ? Math.round((f.n / ov.funnel[i - 1].n) * 100) : null;
+    return `<div class="funnel-row"><div class="lbl"><span>${T("app.funnel." + f.key)}</span>
+      <span>${f.n}${stepPct !== null ? ` <span class="pct">(${stepPct}%)</span>` : ""}</span></div>
+      <div class="track"><div class="fill" style="width:${total ? Math.max(pct, 2) : 0}%"></div></div></div>`;
+  }).join("");
+}
+
+function renderTops(ov) {
+  const row = (label, n, max) => `<div class="top-row"><span class="kw">${esc(label)}</span>
+    <div class="track"><div class="fill" style="width:${max ? Math.round((n / max) * 100) : 0}%"></div></div>
+    <span class="n">${n}</span></div>`;
+  const kw = ov.topKeywords || [];
+  $("topKeywords").innerHTML = kw.length
+    ? kw.map((k) => row(k.keyword, k.n, kw[0].n)).join("")
+    : `<div class="hint">${T("app.noData")}</div>`;
+  const ps = ov.topPosts || [];
+  $("topPosts").innerHTML = ps.length
+    ? ps.map((p) => row(String(p.postId).slice(0, 14), p.n, ps[0].n)).join("")
+    : `<div class="hint">${T("app.noPostsData")}</div>`;
+}
+
+function renderAccount(ov) {
+  const box = $("accountCard");
+  if (ov.account) {
+    box.innerHTML = `<div class="acct"><div class="ig-avatar"><span>📸</span></div>
+      <div><div style="font-weight:800">@${esc(ov.account.username || ov.account.igUserId)}</div>
+      <div class="sub" style="margin:2px 0 0">${T("app.connectedSince")} ${new Date(ov.account.connectedAt).toLocaleDateString()}</div></div>
+      <a class="pill light" style="margin-inline-start:auto" href="/app">${esc(T("app.refresh"))}</a></div>`;
+  } else {
+    box.innerHTML = `<div class="acct"><div class="ig-avatar"><span>📷</span></div>
+      <div style="flex:1"><div style="font-weight:800">${T("app.notConnected")}</div>
+      <div class="sub" style="margin:2px 0 8px">${T("app.connectHint")}</div>
+      <a class="pill dark" href="/auth/connect">${esc(T("app.connectIg"))}</a></div></div>`;
+  }
+}
+
+function renderUsage(ov) {
+  const box = $("usageCard");
+  const u = ov.usage;
+  if (!u) { box.innerHTML = `<div class="hint">${T("app.noData")}</div>`; return; }
+  const pct = u.postsAllowed ? Math.min(100, Math.round((u.postsUsed / u.postsAllowed) * 100)) : 0;
+  box.innerHTML = `<div class="lbl" style="display:flex;justify-content:space-between;font-weight:700;font-size:13px">
+      <span>${esc((u.plan || "free").toUpperCase())}</span><span>${u.postsUsed} / ${u.postsAllowed} ${T("app.postsUnit")}</span></div>
+    <div class="meter ${pct >= 80 ? "warnfill" : ""}"><div class="fill" style="width:${pct}%"></div></div>
+    <div class="hint" style="margin-top:8px">${T("app.repliesPerPost")} ${u.repliesPerPost} · ${T("app.periodEnds")} ${new Date(u.periodEnd).toLocaleDateString()}
+    ${pct >= 80 ? ` · <a href="/billing" style="font-weight:700">${T("app.upgradeNow")}</a>` : ""}</div>`;
+}
+
+function renderChecklist(ov) {
+  const s = ov.setup || {};
+  const anyDone = s.connected || s.hasRule || s.hasConversation;
+  const panel = $("setupPanel");
+  if (s.connected && s.hasRule && s.hasConversation) { panel.style.display = "none"; return; }
+  panel.style.display = "";
+  const items = [
+    { done: s.connected, label: T("app.setupConnect"), href: s.connected ? null : "/auth/connect" },
+    { done: s.hasRule, label: T("app.setupRule"), href: s.hasRule ? null : "#rules" },
+    { done: s.hasConversation, label: T("app.setupFirstDM"), href: null },
+  ];
+  $("checklist").innerHTML = items.map((i) => i.done
+    ? `<span class="check-item done"><span class="tick">✓</span>${esc(i.label)}</span>`
+    : (i.href ? `<a class="check-item" href="${i.href}"><span class="tick">○</span>${esc(i.label)}</a>`
+              : `<span class="check-item"><span class="tick">○</span>${esc(i.label)}</span>`)).join("");
+  if (!anyDone) return; // keep panel visible either way
+}
+
+async function refreshGrowth() {
+  try {
+    const ov = await fetch("/api/stats/overview?range=" + statsRange).then((r) => r.json());
+    bumpIfChanged("sReached", ov.totals.reached);
+    bumpIfChanged("sSent", ov.totals.sent);
+    bumpIfChanged("sEmails", ov.totals.emails);
+    deltaChip("dReached", ov.totals.reachedGrowth);
+    deltaChip("dSent", ov.totals.sentGrowth);
+    renderTrend(ov);
+    renderFunnel(ov);
+    renderTops(ov);
+    renderAccount(ov);
+    renderUsage(ov);
+    renderChecklist(ov);
+  } catch { /* dashboard still works without the growth panel */ }
 }
 
 function bumpIfChanged(id, val) {
@@ -554,10 +1027,340 @@ async function refreshBillingSummary() {
   }
 }
 
+// ---------------------------------------------------------------- Advanced Analytics (Pro)
+let analyticsLoaded = false;
+let analyticsPlan = null;   // null = unknown yet
+let drillPostId = null;     // currently drilled-down post (or null)
+
+const ANALYTICS_KPIS = [
+  ["comments", "analytics.kComments"], ["matched", "analytics.kMatched"],
+  ["reached", "analytics.kReached"], ["delivered", "analytics.kDelivered"],
+  ["clicks", "analytics.kClicks"], ["uniqueVisitors", "analytics.kVisitors"],
+  ["ctrPct", "analytics.kCtr", "pct"], ["conversionPct", "analytics.kConv", "pct"],
+];
+
+function renderKpis(el, totals) {
+  el.innerHTML = ANALYTICS_KPIS.map(([k, key, kind]) =>
+    `<div class="kpi"><div class="v">${kind === "pct" ? (totals[k] || 0) + "%" : (totals[k] ?? 0)}</div>
+     <div class="k">${esc(T(key))}</div></div>`).join("");
+}
+
+function analyticsDayLabel(d) {
+  const dt = new Date(d + "T00:00:00Z");
+  return dt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function renderAnalyticsChart(el, legendEl, series, keys) {
+  if (!series || !series.length) { el.innerHTML = `<div class="hint">${T("analytics.noData")}</div>`; if (legendEl) legendEl.textContent = ""; return; }
+  const max = Math.max(1, ...series.map((p) => Math.max(p[keys[0]] || 0, p[keys[1]] || 0)));
+  el.innerHTML = series.map((p) => {
+    const h1 = Math.round(((p[keys[0]] || 0) / max) * 118);
+    const h2 = Math.round(((p[keys[1]] || 0) / max) * 118);
+    return `<div class="col" title="${esc(p.day)}: ${p[keys[0]] || 0} / ${p[keys[1]] || 0}">
+      <div style="display:flex;align-items:flex-end;gap:3px;height:124px;width:100%;justify-content:center">
+        <div class="bar" style="height:${Math.max(h1, p[keys[0]] ? 4 : 2)}px"></div>
+        <div class="bar ${keys[1] === "clicks" ? "clk" : "eng"}" style="height:${Math.max(h2, 0)}px"></div>
+      </div><div class="day">${esc(analyticsDayLabel(p.day))}</div></div>`;
+  }).join("");
+  if (legendEl) legendEl.textContent = `■ ${T("analytics.sent")}  ■ ${T(keys[1] === "clicks" ? "analytics.kClicks" : "analytics.kMatched")}`;
+}
+
+function renderAnalyticsPosts(posts) {
+  const table = $("analyticsPosts");
+  if (!posts.length) { $("analyticsPostsWrap").style.display = "none"; return; }
+  $("analyticsPostsWrap").style.display = "";
+  const head = `<tr><th>{{POSTS}}</th><th>${esc(T("analytics.cComments"))}</th><th>${esc(T("analytics.cMatched"))}</th>
+    <th>${esc(T("analytics.cSent"))}</th><th>${esc(T("analytics.cDelivered"))}</th><th>${esc(T("analytics.cClicks"))}</th>
+    <th>${esc(T("analytics.cVisitors"))}</th><th>${esc(T("analytics.cCtr"))}</th></tr>`
+    .replace("{{POSTS}}", esc(T("analytics.cPost")));
+  table.innerHTML = head + posts.map((p) =>
+    `<tr class="post-row" data-post="${esc(p.postId || "")}">
+      <td class="pid">${p.postId ? esc(String(p.postId).slice(0, 16)) : esc(T("analytics.otherPost"))}</td>
+      <td>${p.comments}</td><td>${p.matched}</td><td>${p.sent}</td><td>${p.delivered}</td>
+      <td>${p.clicks}</td><td>${p.uniqueVisitors}</td><td>${p.ctrPct}%</td></tr>`).join("");
+  table.querySelectorAll("tr.post-row").forEach((tr) => {
+    tr.addEventListener("click", () => {
+      const pid = tr.getAttribute("data-post");
+      if (pid) openDrill(pid);
+    });
+  });
+}
+
+async function openDrill(postId) {
+  drillPostId = postId;
+  try {
+    const d = await fetch(`/api/analytics/post/${encodeURIComponent(postId)}?range=${statsRange}`).then((r) => r.json());
+    if (d.error) return;
+    $("analyticsPostsWrap").style.display = "none";
+    $("analyticsDrill").style.display = "";
+    $("drillTitle").textContent = `${T("analytics.postTitle")} · ${postId.slice(0, 20)}`;
+    renderKpis($("drillKpis"), d.totals || {});
+    renderAnalyticsChart($("drillChart"), $("drillLegend"), d.series, ["comments", "clicks"]);
+  } catch { /* keep list view */ }
+}
+
+$("analyticsBack").addEventListener("click", () => {
+  drillPostId = null;
+  $("analyticsDrill").style.display = "none";
+  $("analyticsPostsWrap").style.display = "";
+});
+
+async function refreshAnalytics() {
+  try {
+    const ov = await fetch("/api/analytics/overview?range=" + statsRange).then((r) => r.json());
+    if (ov.error) {
+      // 403 for non-Pro (or session gone) -> show the upsell, hide the body.
+      analyticsPlan = ov.plan || analyticsPlan;
+      $("analyticsLocked").style.display = "";
+      $("analyticsBody").style.display = "none";
+      analyticsLoaded = true;
+      return;
+    }
+    analyticsPlan = "pro";
+    $("analyticsLocked").style.display = "none";
+    $("analyticsBody").style.display = "";
+    $("analyticsRangeLabel").textContent = T("analytics.range." + statsRange);
+    renderKpis($("analyticsKpis"), ov.totals);
+    renderAnalyticsPosts(ov.posts || []);
+    const hasData = (ov.totals && ov.totals.reached > 0) || (ov.posts || []).length > 0;
+    $("analyticsEmpty").style.display = hasData ? "none" : "";
+    if (drillPostId) openDrill(drillPostId); // keep drill-down fresh on range change
+    analyticsLoaded = true;
+  } catch { /* analytics is optional; dashboard works without it */ }
+}
+
+/* ---------------- DM automations (flows) ---------------- */
+let flowsCache = [], editingFlow = null, editSteps = [];
+
+async function refreshFlows() {
+  try {
+    const r = await fetch("/api/flows").then((x) => x.json());
+    if (r.error) return;
+    flowsCache = r.flows || [];
+    const limit = r.limit || 1;
+    $("flowsLimit").style.display = flowsCache.length >= limit ? "" : "none";
+    $("flowsLimit").textContent = T("flows.limit", { count: limit });
+    const list = $("flowsList");
+    if (!flowsCache.length) { list.innerHTML = '<div class="hint">' + esc(T("flows.empty")) + "</div>"; return; }
+    list.innerHTML = flowsCache.map((f) => `
+      <div class="flow-row">
+        <span class="flow-status ${esc(f.status)}">${esc(f.status)}</span>
+        <span class="f-name">${esc(f.name)}</span>
+        <span class="f-kw">#${esc(f.keyword || "")} · ${esc(f.triggerType === "comment_keyword" ? T("flows.trigComment") : T("flows.trigDm"))}</span>
+        <span class="grow"></span>
+        <span class="f-kw">${(f.stats && f.stats.sessions) || 0} ${esc(T("flows.sessions"))}</span>
+        <button class="pill light" onclick="openFlow('${esc(f.id)}')">${esc(T("flows.edit"))}</button>
+        <button class="pill ghost" onclick="removeFlow('${esc(f.id)}')">✕</button>
+      </div>`).join("");
+  } catch { /* optional panel */ }
+}
+
+function openFlow(id) {
+  const f = flowsCache.find((x) => x.id === id);
+  if (!f) return;
+  editingFlow = f;
+  editSteps = JSON.parse(JSON.stringify(f.steps || []));
+  $("flowsList").style.display = "none";
+  $("newFlowBtn").style.display = "none";
+  $("flowEditor").style.display = "";
+  $("flowName").value = f.name;
+  $("flowKeyword").value = f.keyword || "";
+  $("flowTrigger").value = f.triggerType;
+  $("pauseFlowBtn").style.display = f.status === "live" ? "" : "none";
+  $("publishFlowBtn").textContent = T(f.status === "live" ? "flows.published" : "flows.publish");
+  renderFlowSteps();
+}
+function closeFlow() {
+  editingFlow = null;
+  $("flowEditor").style.display = "none";
+  $("flowsList").style.display = "";
+  $("newFlowBtn").style.display = "";
+  refreshFlows();
+}
+function renderFlowSteps() {
+  $("flowSteps").innerHTML = editSteps.map((s, i) => `
+    <div class="flow-step">
+      <button class="fs-del" onclick="delStep(${i})">✕</button>
+      <div class="fs-head"><span class="fs-num">${i + 1}</span>
+        <span class="f-kw">${esc(T("flows.step"))}</span></div>
+      <textarea oninput="editSteps[${i}].text=this.value;renderFlowPreview()" maxlength="1000" placeholder="${esc(T("flows.stepPh"))}">${esc(s.text || "")}</textarea>
+      <div class="fs-btns">${(s.buttons || []).map((b, bi) => `
+        <span class="fs-chip">${esc(b.label || b.payload)}
+          <button onclick="editSteps[${i}].buttons.splice(${bi},1);renderFlowSteps()" title="remove">×</button></span>`).join("")}
+        <span class="fs-chip" style="border-style:dashed;cursor:pointer" onclick="addStepButton(${i})">+ ${esc(T("flows.button"))}</span></div>
+      <div class="fs-tools">
+        <label><input type="checkbox" ${s.followGate ? "checked" : ""} onchange="editSteps[${i}].followGate=this.checked;renderFlowPreview()" /> ${esc(T("flows.followGate"))}</label>
+        <label><input type="checkbox" ${s.isEnd ? "checked" : ""} onchange="editSteps[${i}].isEnd=this.checked" /> ${esc(T("flows.endStep"))}</label>
+        <select onchange="moveStep(${i}, this.value)">
+          <option value="">${esc(T("flows.move"))}…</option>
+          <option value="up">↑</option><option value="down">↓</option>
+        </select>
+      </div>
+    </div>`).join("") || '<div class="hint">' + esc(T("flows.noSteps")) + "</div>";
+  renderFlowPreview();
+}
+function renderFlowPreview() {
+  $("flowChat").innerHTML = editSteps.map((s) => `
+    <div class="bub ${s.followGate ? "gate" : ""}">${esc(s.text || "…")}</div>
+    ${(s.buttons || []).length ? '<div class="chips">' + s.buttons.map((b) => '<span class="chip">' + esc(b.label || b.payload) + "</span>").join("") + "</div>" : ""}`).join("");
+}
+function addStep() { editSteps.push({ text: "", buttons: [], links: [], followGate: false, isEnd: false }); renderFlowSteps(); }
+function delStep(i) { editSteps.splice(i, 1); renderFlowSteps(); }
+function moveStep(i, dir) {
+  if (!dir) return;
+  const j = dir === "up" ? i - 1 : i + 1;
+  if (j < 0 || j >= editSteps.length) return;
+  [editSteps[i], editSteps[j]] = [editSteps[j], editSteps[i]];
+  renderFlowSteps();
+}
+function addStepButton(i) {
+  const label = prompt(T("flows.buttonPrompt"));
+  if (!label) return;
+  const target = prompt(T("flows.buttonTarget"), "");
+  const nextId = target !== null && target !== "" ? (editSteps[Number(target) - 1] || {}).id || null : null;
+  (editSteps[i].buttons = editSteps[i].buttons || []).push({
+    label: label.slice(0, 20), payload: label.slice(0, 20), nextStepId: nextId, end: !nextId });
+  renderFlowSteps();
+}
+async function saveFlow() {
+  if (!editingFlow) return;
+  const name = $("flowName").value.trim();
+  if (!name) return alert(T("flows.needName"));
+  await fetch(`/api/flows/${editingFlow.id}`, { method: "PUT", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, keyword: $("flowKeyword").value.trim(), triggerType: $("flowTrigger").value }) });
+  const r = await fetch(`/api/flows/${editingFlow.id}/steps`, { method: "PUT", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ steps: editSteps }) }).then((x) => x.json());
+  if (r.error) return alert(r.error);
+  alert(T("flows.saved"));
+  refreshFlows();
+}
+async function publishFlow(status) {
+  if (!editingFlow) return;
+  await saveFlow();
+  const r = await fetch(`/api/flows/${editingFlow.id}/publish`, { method: "POST",
+    headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status }) }).then((x) => x.json());
+  if (r.error) return alert(r.error);
+  closeFlow();
+}
+async function removeFlow(id) {
+  if (!confirm(T("flows.confirmDelete"))) return;
+  await fetch(`/api/flows/${id}`, { method: "DELETE" });
+  refreshFlows();
+}
+$("newFlowBtn").addEventListener("click", async () => {
+  const name = prompt(T("flows.newPrompt"), "");
+  if (!name) return;
+  const r = await fetch("/api/flows", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, keyword: "START", triggerType: "dm_keyword" }) }).then((x) => x.json());
+  if (r.error) return alert(r.error);
+  await refreshFlows();
+  openFlow(r.id);
+});
+$("flowBack").addEventListener("click", closeFlow);
+$("addStepBtn").addEventListener("click", addStep);
+$("saveFlowBtn").addEventListener("click", saveFlow);
+$("publishFlowBtn").addEventListener("click", () => publishFlow("live"));
+$("pauseFlowBtn").addEventListener("click", () => publishFlow("paused"));
+
+/* ---------------- audience: subscribers + broadcasts ---------------- */
+async function refreshAudience() {
+  try {
+    const [subs, bc] = await Promise.all([
+      fetch("/api/audience/subscribers").then((x) => x.json()),
+      fetch("/api/audience/broadcasts").then((x) => x.json())]);
+    if (!subs.error) {
+      $("subsCount").textContent = T("audience.subsN", { count: subs.count || 0 });
+      $("subsList").innerHTML = (subs.subscribers || []).slice(0, 50).map((s) => `
+        <div class="sub-row ${s.optedOut ? "out" : ""}"><span>@${esc(s.username || s.psid.slice(-8))}</span>
+        <span>${esc((s.lastSeen || "").slice(0, 10))}</span></div>`).join("")
+        || '<div class="hint">' + esc(T("audience.noSubs")) + "</div>";
+    }
+    if (!bc.error) {
+      $("bcTable").innerHTML = "<tr><th>" + esc(T("audience.bcName")) + "</th><th>" + esc(T("audience.thSent"))
+        + "</th><th>" + esc(T("audience.thStatus")) + "</th></tr>"
+        + (bc.broadcasts || []).map((b) => `<tr><td>${esc(b.name)}</td><td>${b.sent}/${b.sent + b.failed}</td>
+          <td><span class="flow-status ${b.status === "done" ? "live" : b.status === "sending" ? "paused" : "draft"}">${esc(b.status)}</span></td></tr>`).join("");
+    }
+  } catch { /* optional panel */ }
+}
+$("bcForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const r = await fetch("/api/audience/broadcasts", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: $("bcName").value.trim(), text: $("bcText").value.trim() }) }).then((x) => x.json());
+  if (r.error) { $("bcLimitMsg").style.display = ""; $("bcLimitMsg").textContent = r.error; return; }
+  $("bcLimitMsg").style.display = "none";
+  $("bcForm").reset();
+  refreshAudience();
+});
+
+/* ---------------- fan mode ---------------- */
+let fanTiers = [];
+async function refreshFan() {
+  try {
+    const cfg = await fetch("/api/fan/config").then((x) => x.json());
+    if (!cfg.pro) { $("fanLocked").style.display = ""; $("fanBody").style.display = "none"; return; }
+    $("fanLocked").style.display = "none";
+    $("fanBody").style.display = "";
+    $("fanEnabled").checked = !!cfg.enabled;
+    $("fanPerComment").value = cfg.pointsComment;
+    $("fanStreak").value = cfg.pointsStreak;
+    fanTiers = cfg.tiers || [];
+    renderFanTiers();
+    const lb = await fetch("/api/fan/leaderboard").then((x) => x.json());
+    $("fanBoard").innerHTML = "<tr><th>#</th><th>" + esc(T("fan.thFan")) + "</th><th>" + esc(T("fan.thPoints")) + "</th><th>" + esc(T("fan.thStreak")) + "</th></tr>"
+      + (lb.leaderboard || []).map((m) => `<tr><td>${m.rank}</td><td>@${esc(m.username)}</td><td>${m.points}</td><td>${m.streak}🔥</td></tr>`).join("");
+  } catch { /* optional panel */ }
+}
+function renderFanTiers() {
+  $("fanTiers").innerHTML = fanTiers.map((t, i) => `
+    <div class="fan-tier">
+      <input value="${esc(t.name || "")}" placeholder="${esc(T("fan.tierName"))}" oninput="fanTiers[${i}].name=this.value" />
+      <input type="number" value="${t.points || 0}" min="1" oninput="fanTiers[${i}].points=Number(this.value)" />
+      <input value="${esc(t.reward_text || "")}" placeholder="${esc(T("fan.tierReward"))}" oninput="fanTiers[${i}].reward_text=this.value" />
+      <button class="pill ghost" onclick="fanTiers.splice(${i},1);renderFanTiers()">✕</button>
+    </div>`).join("");
+}
+$("fanAddTier").addEventListener("click", () => { fanTiers.push({ name: "", points: (fanTiers.at(-1)?.points || 0) + 200, reward_text: "" }); renderFanTiers(); });
+$("fanSave").addEventListener("click", async () => {
+  const r = await fetch("/api/fan/config", { method: "PUT", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ enabled: $("fanEnabled").checked, pointsComment: Number($("fanPerComment").value),
+      pointsStreak: Number($("fanStreak").value), tiers: fanTiers }) }).then((x) => x.json());
+  if (r.error) return alert(r.error);
+  alert(T("flows.saved"));
+});
+
+/* ---------------- account health ---------------- */
+async function refreshHealth() {
+  try {
+    const h = await fetch("/api/stats/health").then((x) => x.json());
+    if (h.error) return;
+    const score = h.safetyScore ?? 100;
+    const el = $("healthScore");
+    el.textContent = score + "/100";
+    el.className = "health-score " + (score >= 90 ? "" : score >= 70 ? "warn" : "bad");
+    $("healthBody").innerHTML = `
+      <div class="health-cell"><div class="v">${h.sent ?? 0}</div><div class="k">${esc(T("health.sent"))}</div></div>
+      <div class="health-cell"><div class="v">${h.deliveryRate === null ? "–" : h.deliveryRate + "%"}</div><div class="k">${esc(T("health.delivery"))}</div></div>
+      <div class="health-cell"><div class="v">${h.failed ?? 0}</div><div class="k">${esc(T("health.failed"))}</div></div>
+      ${(h.accounts || []).map((a) => `<div class="health-cell"><div class="v">${a.tokenAgeDays === null ? "–" : a.tokenAgeDays + "d"}</div>
+        <div class="k">${esc(a.account)} · ${esc(T("health.token"))}</div></div>`).join("")}`;
+    $("healthTips").style.display = (h.tips || []).length ? "" : "none";
+    $("healthTips").textContent = (h.tips || []).join(" • ");
+  } catch { /* optional panel */ }
+}
+
 refresh();
 setInterval(refresh, 5000);
+refreshAnalytics();
+setInterval(refreshAnalytics, 30000);
 refreshBillingSummary();
 setInterval(refreshBillingSummary, 30000);
+refreshFlows();
+refreshAudience();
+setInterval(refreshAudience, 30000);
+refreshFan();
+refreshHealth();
+setInterval(refreshHealth, 60000);
 </script>
 </body>
 </html>

@@ -70,11 +70,9 @@ router.post("/", (req, res) => {
       }
     });
     (entry.messaging || []).forEach((msg) => {
-      try {
-        actions.handleDMEvent(msg);
-      } catch (err) {
-        logger.error({ err: err.message }, "[webhook] messaging handler error");
-      }
+      Promise.resolve(actions.handleDMEvent(msg, entry.id)).catch((err) =>
+        logger.error({ err: err.message }, "[webhook] messaging handler error")
+      );
     });
   }
 });

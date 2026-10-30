@@ -5,48 +5,10 @@ const store = require("./store");
 const meta = require("./meta");
 const config = require("./config");
 const logger = require("./logger");
+const flows = require("./flows");
+const { commentMatchesKeyword } = require("./keyword");
 
-// Keyword match, language-aware:
-//  - Both sides are NFKC-normalized (full-width "ＧＵＩＤＥ" -> "GUIDE") and
-//    lowercased with toLocaleLowerCase (correct for Turkish, Lithuanian, ...).
-//  - A second pass strips combining marks so "MENÚ" matches a comment that
-//    says "menu" (and vice versa).
-//  - Scripts that don't use spaces between words (Han / kana / Thai) match as
-//    a plain substring; everything else needs Unicode word boundaries, so
-//    "guider" does NOT match "guide" but "guide🙌" does (emoji is not a letter).
-// Scripts without word spacing: Han, Hiragana, Katakana, Thai. Tested on the
-// normalized keyword so full-width Latin letters don't trigger this path.
-const NO_SPACING_RE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Thai}]/u;
-
-// NFKC folds compatibility forms; NFKD + strip Mn + re-compose removes accents
-// (menú -> menu). Devanagari matras are also Mn, so the accent-stripped form
-// is only ever a SECOND pass — the exact form is tried first, which keeps
-// "मेनू" matching "मेनू".
-function normalizeForMatch(s, stripAccents) {
-  let n = String(s).normalize("NFKC").toLocaleLowerCase();
-  if (stripAccents) n = n.normalize("NFKD").replace(/\p{Mn}/gu, "").normalize("NFKC");
-  return n;
-}
-
-function commentMatchesKeyword(commentText, keyword) {
-  if (!commentText || !keyword) return false;
-  const kwRaw = String(keyword).trim();
-  if (!kwRaw) return false;
-  const substringMode = NO_SPACING_RE.test(normalizeForMatch(kwRaw, false));
-  for (const stripAccents of [false, true]) {
-    const comment = normalizeForMatch(commentText, stripAccents);
-    const kw = normalizeForMatch(kwRaw, stripAccents);
-    if (!kw) continue;
-    if (substringMode) {
-      if (comment.includes(kw)) return true;
-    } else {
-      const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const re = new RegExp(`(^|[^\\p{L}\\p{N}])${escaped}($|[^\\p{L}\\p{N}])`, "u");
-      if (re.test(comment)) return true;
-    }
-  }
-  return false;
-}
+// Re-exported for existing requires/tests; implementation lives in keyword.js.
 
 // Handle one `comments` change webhook payload.
 async function handleCommentEvent(accountId, value) {
@@ -62,6 +24,14 @@ async function handleCommentEvent(accountId, value) {
   if (value.comment_type === "comment" && value.from?.id === accountId) return;
 
   const account = store.getAccount(accountId);
+
+  // Analytics: log every comment we ever see (matched or not) so per-post
+  // comment totals are measurable without extra Meta permissions.
+  store.recordCommentEvent({
+    accountId, userId: account?.user_id ?? null, postId: mediaId,
+    commentId, commenterId, matched: false, // upgraded below on a real match
+  });
+
   let rules = store.rulesForAccount(accountId);
   if (rules.length === 0 && account === null) {
     rules = store.rulesForAccount("demo"); // dev fallback until an account is connected
@@ -78,6 +48,7 @@ async function handleCommentEvent(accountId, value) {
     logger.debug("[comment] no keyword match");
     return;
   }
+  store.markCommentMatched(commentId);
 
   // One DM per commenter per rule — dedupe repeat comments.
   for (const rule of matched) {
@@ -143,19 +114,9 @@ async function runRule({ account, rule, accountId, commenterId, commenterName, c
     `Sent you a DM! 📩 Check your inbox, ${commenterName}.`);
   logger.info({ comment: commentId, ok: replyRes.ok }, "[reply]");
 
-  // 3. Private DM with text + up to 3 link buttons. Addressed by comment_id
-  //    (Meta's "private reply"), which works before the commenter has ever
-  //    opened a conversation.
-  const message = meta.buildDMMessage(rule.dmText, rule.links, commenterName);
-  const dmRes = await meta.sendCommentDM(accessToken, igId, commentId, message);
-  logger.info({ to: commenterId, ok: dmRes.ok, dryRun: !!dmRes.dryRun }, "[dm]");
-  if (!dmRes.ok) {
-    // Failed after retries (or never retryable). Refund unless Meta might
-    // still deliver it later — a retryable-looking failure keeps the charge.
-    return { ok: false, refund: !meta.shouldRetry(dmRes) };
-  }
-
-  // 4. Record the conversation (+ when the reminder scheduler should fire).
+  // 3. Record the conversation FIRST (when the reminder scheduler should
+  //    fire). Its id seeds the /go/ click-tracking tokens in the DM links;
+  //    if the send ultimately fails the row is deleted again below.
   //    reminder_at is only set when the nudge would still land inside Meta's
   //    24h messaging window.
   let reminderAt = null;
@@ -173,8 +134,59 @@ async function runRule({ account, rule, accountId, commenterId, commenterName, c
     logger.debug({ commentId }, "[dedupe] duplicate comment_id (Meta retry), ignored");
     return { ok: true, refund: true }; // duplicate delivery: don't charge it twice
   }
+
+  // 4. Private DM with text + up to 3 link buttons. Addressed by comment_id
+  //    (Meta's "private reply"), which works before the commenter has ever
+  //    opened a conversation. Links are rewritten to /go/<token> so link
+  //    clicks are measurable (Instagram never reports them); dry-run keeps
+  //    the original URLs since nothing is actually delivered.
+  const trackedLinks = trackRuleLinks(conv, rule);
+  const message = meta.buildDMMessage(rule.dmText, trackedLinks, commenterName);
+  const dmRes = await meta.sendCommentDM(accessToken, igId, commentId, message);
+  logger.info({ to: commenterId, ok: dmRes.ok, dryRun: !!dmRes.dryRun }, "[dm]");
+  if (!dmRes.ok) {
+    store.deleteConversation(conv.id); // no DM delivered -> don't count it as reached
+    // Failed after retries (or never retryable). Refund unless Meta might
+    // still deliver it later — a retryable-looking failure keeps the charge.
+    return { ok: false, refund: !meta.shouldRetry(dmRes) };
+  }
   logger.info({ rule: rule.id, keyword: rule.keyword, commenter: commenterName, conv: conv.id }, "[MATCH]");
+
+  // Side effects that must never break the pipeline: broadcast opt-in and
+  // Fan Mode points for the commenter.
+  try {
+    if (rule.userId) {
+      store.upsertSubscriber({ userId: rule.userId, accountId, psid: commenterId,
+        igUsername: commenterName, source: "comment" });
+      const fan = store.getFanConfig(rule.userId);
+      if (fan.enabled) {
+        store.awardFanPoints({ userId: rule.userId, accountId, psid: commenterId,
+          igUsername: commenterName, kind: "comment", points: fan.pointsComment });
+      }
+    }
+  } catch (err) { logger.warn({ err: err.message }, "[fan/subs] side effect failed"); }
+
   return { ok: true, refund: false };
+}
+
+// Rewrite rule links through /go/<token> when click tracking is available
+// (PUBLIC_BASE_URL configured + an owning user). Falls back to raw links.
+function trackRuleLinks(conv, rule) {
+  const links = rule.links || [];
+  if (!links.length || !config.publicBaseUrl || !rule.userId) return links;
+  let base;
+  try { base = new URL(config.publicBaseUrl).origin; } catch { return links; }
+  return links.map((l) => {
+    try {
+      const u = new URL(l.url);
+      if (u.protocol !== "http:" && u.protocol !== "https:") return l;
+      const token = store.createGoLink({
+        convId: conv.id, userId: rule.userId, accountId: conv.accountId,
+        ruleId: rule.id, postId: conv.postId, url: u.toString(),
+      });
+      return { ...l, url: `${base}/go/${token}` };
+    } catch { return l; } // malformed URL — send as-is, Meta will reject it the same way
+  });
 }
 
 // Send the scheduled reminder for one conversation. Called by the scheduler.
@@ -193,11 +205,60 @@ async function sendReminder(conv) {
 // Dev fallback rules live in the store under accountId "demo" (seeded in server.js).
 
 // Handle an inbound DM (entry.messaging). Records clicks/emails.
-function handleDMEvent(event) {
-  if (!event.message) return;
+async function handleDMEvent(event, accountIdHint) {
+  // Delivery receipts (message_deliveries): mark the matching conversation as
+  // delivered. Only an actual delivery carries attachment metadata.
+  if (event.message_deliveries && Array.isArray(event.message_deliveries.metadata)) {
+    const recipientId = event.recipient?.id; // our IG business id
+    const psid = event.sender?.id;
+    if (recipientId && psid) {
+      const conv = store.lastConversationForPsid(psid);
+      if (conv && conv.accountId === String(recipientId)) store.markDelivered(conv.id);
+    }
+    // deliveries carry no message body; nothing else to do
+    return;
+  }
+
+  if (!event.message && !event.postback) return;
   const psid = event.sender?.id;
-  const text = event.message.text || "";
-  logger.info({ from: psid, text }, "[dm-in]");
+  const recipientId = String(event.recipient?.id || accountIdHint || "");
+  const text = event.message?.text || "";
+  // Quick-reply chips arrive as message.quick_reply.payload; Messenger-style
+  // postbacks arrive on event.postback.payload.
+  const payload = event.message?.quick_reply?.payload || event.postback?.payload || null;
+  logger.info({ from: psid, text, payload: payload || undefined }, "[dm-in]");
+
+  // Broadcast list building: anyone who DMs us is an addressable follower.
+  if (psid && recipientId) {
+    const acct = store.getAccount(recipientId);
+    if (acct && acct.user_id) {
+      try { store.upsertSubscriber({ userId: acct.user_id, accountId: recipientId, psid, source: "dm" }); } catch { /* non-fatal */ }
+    }
+  }
+
+  // Opt-out keyword: honor STOP/UNSUBSCRIBE for broadcast lists.
+  if (/^(stop|unsubscribe|opt\s*out)$/i.test(text.trim())) {
+    const acct = store.getAccount(recipientId);
+    if (acct && acct.user_id) {
+      store.optOutSubscriber(acct.user_id, recipientId, psid);
+      await meta.sendDM(acct.accessToken, psid, { text: "You're unsubscribed — no more broadcasts. Send START to rejoin. 🙏" }, acct.ig_user_id || recipientId);
+      return;
+    }
+  }
+
+  // Flow engine first: an active session (or a DM keyword trigger) owns the
+  // conversation and answers before anything else.
+  try {
+    const session = store.activeFlowSession(recipientId, psid);
+    if (session) {
+      const consumed = await flows.advanceFlow(session, { text, payload });
+      if (consumed) return;
+    } else if ((text || payload) && await flows.tryStartFromDm({ accountId: recipientId, psid, text: text || payload, name: "there" })) {
+      return;
+    }
+  } catch (err) {
+    logger.error({ err: err.message }, "[flow] handler error");
+  }
 
   // Email capture: if the last DM asked for an email and this looks like one.
   const emailMatch = text.match(/[\w.+-]+@[\w-]+\.[\w.-]+/);
