@@ -15,6 +15,8 @@
     if (!I) return;
 
     var wrap = document.createElement("span");
+    // class so page CSS can place the switcher in the mobile nav layout
+    wrap.className = "langWrap";
     wrap.style.position = "relative";
     wrap.style.display = "inline-flex";
 

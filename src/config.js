@@ -19,6 +19,12 @@ const config = {
   // Configurations in the Meta dashboard). When set, the login dialog is
   // driven by this id instead of META_APP_ID + scope list.
   metaConfigId: process.env.META_CONFIG_ID || "",
+  // Dialog display mode for the unified-login dialog ("popup", "page",
+  // "touch"). Defaults to "popup" to match the Login URL Meta generates.
+  metaDialogDisplay: process.env.META_DIALOG_DISPLAY || "popup",
+  // "prompt" for the unified-login dialog. "login" forces re-authentication;
+  // set META_LOGIN_PROMPT=none to omit the parameter entirely.
+  metaLoginPrompt: process.env.META_LOGIN_PROMPT === "none" ? "" : (process.env.META_LOGIN_PROMPT || "login"),
 
   // --- Meta Graph API endpoints (left empty for now; filled when you configure) ---
   // When empty, every Meta call runs in dry-run mode and is logged instead of sent.

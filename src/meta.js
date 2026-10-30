@@ -139,8 +139,11 @@ function buildOAuthUrl({ scope, state } = {}) {
     // Tells the dialog to honour response_type instead of the configuration's
     // default (which is often a token for popup flows).
     b.searchParams.set("override_default_response_type", "true");
+    // Same parameter set (and order) as the Login URL Meta generates in the
+    // dashboard, so the dialog behaves identically to the documented flow.
+    b.searchParams.set("display", config.metaDialogDisplay || "popup");
     b.searchParams.set("state", state);
-    b.searchParams.set("prompt", "login");
+    if (config.metaLoginPrompt) b.searchParams.set("prompt", config.metaLoginPrompt);
     return b.toString();
   }
   if (!config.metaAppId || !config.metaRedirectUri) {

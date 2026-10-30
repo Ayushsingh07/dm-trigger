@@ -43,6 +43,7 @@
   .logo .mark { width:28px; height:28px; border-radius:9px; background:linear-gradient(135deg,var(--acc),#ffb347);
                 color:#fff; display:grid; place-items:center; font-size:14px; box-shadow:0 4px 12px rgba(255,107,74,.35); }
   .nav-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  .badge.user .whoName { max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
   .badge { display:inline-flex; align-items:center; gap:7px; background:var(--peach); border:none;
            border-radius:999px; padding:6px 13px; font-size:12px; font-weight:600; color:var(--soft); }
@@ -184,6 +185,34 @@
   @keyframes bob { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-7px); } }
 
   @media (max-width:880px) { .phone-zone { display:none; } }
+
+  /* ---------- mobile nav ----------
+     Six controls never fit one pill-shaped row on a phone, so the bar becomes
+     a rounded card: identity row on top, actions on their own rows below.
+     Nothing is clipped and every control keeps a >=40px tap target. */
+  @media (max-width:720px) {
+    nav { position:sticky; top:8px; flex-direction:column; align-items:stretch;
+          gap:10px; border-radius:26px; padding:12px; }
+    .logo { justify-content:center; }
+    .nav-right { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .nav-right > * { min-width:0; }
+    /* row 1: status + identity */
+    #modeBadge { grid-column:1; grid-row:1; justify-self:start; }
+    #whoBadge { grid-column:2; grid-row:1; justify-self:end; }
+    /* row 2: primary action, full width */
+    .nav-right .pill.dark { grid-column:1 / -1; grid-row:2; justify-content:center; padding:12px 14px; }
+    /* row 3: language + sign out */
+    .nav-right .langWrap, .nav-right [data-lang-switcher] { grid-column:1; grid-row:3; display:flex; }
+    .nav-right .langWrap .pill { width:100%; justify-content:center; }
+    #signoutBtn { grid-column:2; grid-row:3; justify-content:center; }
+    /* row 4: destructive action, full width */
+    #deleteAccountBtn { grid-column:1 / -1; grid-row:4; justify-content:center; }
+    .nav-right .pill { padding:10px 12px; font-size:12.5px; min-height:40px; }
+    .badge.user { padding:6px 2px; }
+    .badge.user .whoName { display:none; }        /* avatar is enough on a phone */
+    .greet { padding:30px 0 4px; }
+    .wrap { padding:0 16px 70px; }
+  }
 </style>
 </head>
 <body>
@@ -422,7 +451,7 @@ fetch("/auth/me").then(r => r.json()).then(j => {
   const who = document.getElementById("whoBadge");
   who.style.display = "";
   const initial = j.user.email[0].toUpperCase();
-  who.innerHTML = `<span class="avatar">${esc(initial)}</span>${esc(j.user.email.split("@")[0])}${j.user.role === "admin" ? " · <a href='/admin' style='font-weight:800'>${T('admin.badge')}</a>" : ""}`;
+  who.innerHTML = `<span class="avatar">${esc(initial)}</span><span class="whoName">${esc(j.user.email.split("@")[0])}</span>${j.user.role === "admin" ? ` · <a href="/admin" style="font-weight:800">${T("admin.badge")}</a>` : ""}`;
   document.getElementById("signoutBtn").style.display = "";
   document.getElementById("deleteAccountBtn").style.display = "";
   const h = new Date().getHours();
