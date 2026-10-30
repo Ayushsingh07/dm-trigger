@@ -654,12 +654,14 @@ function Tutorial() {
         raf = 0;
         const mid = window.innerHeight * 0.5;
         const segs = el.querySelectorAll("[data-seg]");
-        let best = 0, bestDist = Infinity;
+        if (!segs.length) return;
+        /* active = number of segment-centres above the viewport middle,
+           clamped. Past the last segment the LAST step stays active
+           (previously it fell back to step 0). */
+        let best = 0;
         segs.forEach((s, i) => {
           const r = s.getBoundingClientRect();
-          const c = r.top + r.height / 2;
-          const d = Math.abs(c - mid);
-          if (r.top < mid && r.bottom > mid && d < bestDist) { best = i; bestDist = d; }
+          if (r.top + r.height / 2 <= mid) best = i;
         });
         setActive((a) => (a === best ? a : best));
       });
@@ -700,7 +702,7 @@ function Tutorial() {
         </Reveal>
       </div>
 
-      <div ref={trackRef} className="relative mx-auto max-w-6xl px-4 pb-20">
+      <div ref={trackRef} className="relative mx-auto max-w-6xl px-4 pb-[80vh]">
         {/* desktop: each column = a viewport-height sticky box + an identical
             segment track, so both columns are the same height and pin in sync */}
         <div className="hidden lg:grid lg:grid-cols-2 lg:gap-10">
@@ -729,10 +731,11 @@ function Tutorial() {
                 })}
               </ol>
             </div>
-            {/* scroll length (segments measured in the right column) */}
+            {/* scroll length — must match the right column's segments exactly
+                so both sticky boxes pin and unpin in sync */}
             <div className="pointer-events-none" aria-hidden="true">
               {steps.map((s, i) => (
-                <div key={s.t} className="h-screen" />
+                <div key={s.t} className="h-[80vh]" />
               ))}
             </div>
           </div>
