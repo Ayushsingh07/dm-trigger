@@ -441,7 +441,10 @@
     "planLine": "প্ল্যান {plan} · {total}-এর {used}টি পোস্ট ব্যবহৃত · পোস্টপ্রতি {replies}টি উত্তর",
     "daysLeft.one": "{count} দিন বাকি",
     "daysLeft.other": "{count} দিন বাকি",
-    "planUnavailable": "প্ল্যানের বিবরণ পাওয়া যায়নি।"
+    "planUnavailable": "প্ল্যানের বিবরণ পাওয়া যায়নি।",
+    "connectErrorTitle": "Instagram সংযোগে সমস্যা",
+    "connectOk": "Instagram সংযুক্ত হয়েছে।",
+    "connectDryRun": "ড্রাই রান: Meta শনাক্তকরণ তথ্য কনফিগার করা নেই, তাই অ্যাকাউন্ট প্রকৃতপক্ষে সংযুক্ত হয়নি।"
   },
   "admin": {
     "title": "অ্যাডমিন — {brand}",

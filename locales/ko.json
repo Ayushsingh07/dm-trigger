@@ -441,7 +441,10 @@
     "planLine": "플랜 {plan} · 게시물 {total}개 중 {used}개 사용 · 게시물당 답글 {replies}개",
     "daysLeft.one": "{count}일 남음",
     "daysLeft.other": "{count}일 남음",
-    "planUnavailable": "플랜 세부정보를 사용할 수 없습니다."
+    "planUnavailable": "플랜 세부정보를 사용할 수 없습니다.",
+    "connectErrorTitle": "Instagram 연결 문제",
+    "connectOk": "Instagram 연결 완료.",
+    "connectDryRun": "드라이 런: Meta 자격 증명이 설정되지 않아 계정이 실제로 연결되지 않았습니다."
   },
   "admin": {
     "title": "관리자 — {brand}",

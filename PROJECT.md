@@ -76,7 +76,15 @@ For creators/small brands who sell via comments; original product, not a DMFast 
 - ADMIN_EMAIL / ADMIN_PASSWORD — admin account created on first boot (optional once the admin exists).
 - META_APP_ID / META_APP_SECRET / META_REDIRECT_URI — Meta OAuth app creds.
   META_APP_SECRET also verifies X-Hub-Signature-256 + Meta signed_request.
+- META_OAUTH_FLOW — `instagram` (default) for "Instagram API with Instagram
+  Login" (login on instagram.com, tokens on graph.instagram.com) or `facebook`
+  for "Instagram API with Facebook Login" (login on facebook.com, tokens on
+  graph.facebook.com, IG account resolved via /me/accounts). Must match the
+  product added in the Meta app dashboard — the wrong value makes the login
+  dialog fail with "Invalid request: Request parameters are invalid: Invalid
+  platform app".
 - GRAPH_API_BASE / GRAPH_API_BETA_BASE — Graph API URLs; empty => DRY-RUN everything.
+  facebook flow needs GRAPH_API_BETA_BASE=https://graph.facebook.com/vXX.0.
 - PUBLIC_BASE_URL — public URL; when set, enables the cross-origin write check.
 - REMINDER_MINUTES — default reminder delay.
 - DATABASE_PATH — SQLite file (default data/replylo.db; /data/replylo.db on Fly).
@@ -168,7 +176,8 @@ DONE (billing): prepaid-pass data model (post_usage, purchases, pass columns), p
 - Meta limits: DM only within 24h window; button templates max 3; private replies need instagram_manage_engagement + instagram_manage_messages; isFollower needs beta Graph API (unverified exact path).
 - TOKEN_ENC_KEY: set before first OAuth connect; rotating it later orphans stored tokens (decrypt returns null -> dry-run token fallback).
 - UNIQUE(comment_id): demo events reuse fresh ids; NULL comment_id rows allowed (SQLite). createConversation returns null on duplicate — actions.js logs and skips.
-- OAuth callback redirects to /app with query flags (?connect=ok|dryrun|connect_error) — dashboard doesn't display them yet.
+- OAuth callback redirects to /app with query flags (?connect=ok|dryrun|connect_error) — the dashboard renders them in #connectBanner (localized titles in app.connectErrorTitle/connectOk/connectDryRun) and strips the query with history.replaceState. Meta's raw error message is passed through meta.metaErrorText so the real reason is visible.
+- "Invalid request: Request parameters are invalid: Invalid platform app" on Connect Instagram = META_OAUTH_FLOW does not match the Instagram product in the Meta app. `instagram` -> instagram.com/oauth/authorize + graph.instagram.com; `facebook` -> facebook.com/vXX/dialog/oauth + graph.facebook.com (and the IG account comes from /me/accounts, which requires the profile to be Business/Creator linked to a Page). Also: the app must be in Live mode and META_REDIRECT_URI must be listed under Valid OAuth Redirect URIs, character for character.
 - Static assets cached 1h: after `npm run build`, hard-reload (Ctrl+F5) to see changes locally.
 - node:sqlite `.get()` returns `undefined` (not null) when no row — store helpers that can miss must `|| null` (getRule/getUser*/getConversation/lastConversationForPsid do; tests assert this).
 - `node --test test/` fails on Windows (treated as a module path); use the npm script (`node --test "test/*.test.js"`).

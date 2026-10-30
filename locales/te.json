@@ -441,7 +441,10 @@
     "planLine": "ప్లాన్ {plan} · {total} పోస్ట్‌లలో {used} వాడారు · పోస్ట్‌కు {replies} రిప్లైలు",
     "daysLeft.one": "{count} రోజు మిగిలింది",
     "daysLeft.other": "{count} రోజులు మిగిలాయి",
-    "planUnavailable": "ప్లాన్ వివరాలు అందుబాటులో లేవు."
+    "planUnavailable": "ప్లాన్ వివరాలు అందుబాటులో లేవు.",
+    "connectErrorTitle": "Instagram కనెక్షన్‌లో సమస్య",
+    "connectOk": "Instagram కనెక్ట్ అయింది.",
+    "connectDryRun": "డ్రై రన్: Meta ఆధారాలు కాన్ఫిగర్ చేయలేదు, కాబట్టి ఖాతా వాస్తవానికి కనెక్ట్ కాలేదు."
   },
   "admin": {
     "title": "అడ్మిన్ — {brand}",

@@ -67,6 +67,10 @@ fly secrets set ADMIN_PASSWORD="<strong admin password>"   # only needed on firs
 fly secrets set META_APP_ID="<Meta app id>"
 fly secrets set META_APP_SECRET="<Meta app secret>"
 fly secrets set META_REDIRECT_URI="https://<app-name>.fly.dev/auth/callback"
+# Must match the Instagram product added in the Meta app dashboard.
+# instagram = "Instagram API with Instagram Login", facebook = "Instagram API with Facebook Login".
+# Wrong value => "Invalid platform app" on the login screen.
+fly secrets set META_OAUTH_FLOW="instagram"
 fly secrets set GRAPH_API_BASE="https://graph.instagram.com/v23.0"
 fly secrets set GRAPH_API_BETA_BASE="https://graph.facebook.com/v23.0"
 fly secrets set PUBLIC_BASE_URL="https://<app-name>.fly.dev"
@@ -173,6 +177,46 @@ fly scale show             # confirm 1 machine, shared-cpu-1x 256mb
 fly ssh console            # shell inside the machine
 fly secrets list           # names only, never values
 ```
+
+## Troubleshooting
+
+### "Invalid request: Request parameters are invalid: Invalid platform app"
+
+Meta rejects the login because the app on Meta's side does not offer the login
+product the app is asking for. Check these in order, in
+[developers.facebook.com](https://developers.facebook.com) -> your app:
+
+1. **Add the right Instagram product.** *Use cases* (or *App settings -> Basic*)
+   must show one of:
+   - **Instagram API with Instagram Login** -> set `META_OAUTH_FLOW=instagram`
+   - **Instagram API with Facebook Login** -> set `META_OAUTH_FLOW=facebook`
+
+   If the app only has "Instagram Graph API" (the old Business Manager product)
+   or nothing at all, the dialog fails exactly like this. Add the product, then
+   match `META_OAUTH_FLOW` to it and restart.
+2. **App mode must be Live**, not "Development". In development mode only
+   people listed under *App roles -> Roles* can log in.
+3. **Valid OAuth Redirect URI** must contain your callback character for
+   character: `https://<app-name>.fly.dev/auth/callback` (https, no trailing
+   slash). Same for *App settings -> Basic -> App domains*.
+4. **App ID / App Secret** in the secrets must belong to *this* app
+   (*App settings -> Basic*). A secret copied from a different app produces the
+   same class of error.
+
+Then re-apply the secret and restart:
+
+```powershell
+fly secrets set META_OAUTH_FLOW="facebook"
+fly logs
+```
+
+The dashboard now shows Meta's own message in a red banner under the nav after a
+failed connect, so you can read the exact reason instead of a blank page.
+
+### Connect Instagram shows JSON instead of the login page
+
+Fixed: `GET /auth/connect` 302-redirects when the browser asks for HTML and
+still returns `{ authorize_url, state }` for API clients.
 
 ## Webhook checklist (Meta App dashboard)
 

@@ -21,6 +21,15 @@ const config = {
   graphApiBase: process.env.GRAPH_API_BASE || "",     // e.g. "https://graph.instagram.com/v23.0"
   graphApiBetaBase: process.env.GRAPH_API_BETA_BASE || "", // e.g. "https://graph.facebook.com/v23.0"
 
+  // Which Instagram API integration the Meta app was created with:
+  //   "instagram" -> "Instagram API with Instagram Login"  (login on instagram.com,
+  //                 tokens work on graph.instagram.com)
+  //   "facebook"  -> "Instagram API with Facebook Login"   (login on facebook.com,
+  //                 tokens work on graph.facebook.com)
+  // Picking the wrong one makes Meta reject the dialog with
+  // "Invalid platform app". Must match the product added in the Meta dashboard.
+  metaOAuthFlow: (process.env.META_OAUTH_FLOW || "instagram").trim().toLowerCase(),
+
   // --- This server's public URL (ngrok etc.). Empty for now. ---
   publicBaseUrl: process.env.PUBLIC_BASE_URL || "",
 

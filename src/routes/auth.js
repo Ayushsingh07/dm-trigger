@@ -109,7 +109,7 @@ router.get("/callback", async (req, res) => {
   if (!stateEntry) return back("Unknown or expired state");
 
   const short = await meta.exchangeCode(code);
-  if (!short.ok) return back("Token exchange failed");
+  if (!short.ok) return back(meta.metaErrorText(short));
 
   if (short.dryRun) {
     store.trackEvent("connect_dry_run", stateEntry.user_id);
@@ -121,6 +121,7 @@ router.get("/callback", async (req, res) => {
   if (long.ok && long.access_token) accessToken = long.access_token;
 
   const profile = await meta.fetchIgProfile(accessToken);
+  if (!profile.ok) return back(meta.metaErrorText(profile));
 
   // Plan limit: max connected accounts.
   const limits = store.limitsForPlan(store.effectivePlan(store.getUserById(stateEntry.user_id)));

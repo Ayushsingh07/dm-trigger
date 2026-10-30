@@ -441,7 +441,10 @@
     "planLine": "प्लान {plan} · {total} में से {used} पोस्ट इस्तेमाल · हर पोस्ट पर {replies} रिप्लियाँ",
     "daysLeft.one": "{count} दिन बचा है",
     "daysLeft.other": "{count} दिन बचे हैं",
-    "planUnavailable": "प्लान का विवरण उपलब्ध नहीं।"
+    "planUnavailable": "प्लान का विवरण उपलब्ध नहीं।",
+    "connectErrorTitle": "Instagram कनेक्शन में समस्या",
+    "connectOk": "Instagram कनेक्ट हो गया।",
+    "connectDryRun": "ड्राई रन: Meta क्रेडेंशियल कॉन्फ़िगर नहीं हैं, इसलिए खाता वास्तव में कनेक्ट नहीं हुआ।"
   },
   "admin": {
     "title": "एडमिन — {brand}",

@@ -4,6 +4,7 @@
 process.env.META_APP_ID = "123456789012345";
 process.env.META_APP_SECRET = "test-app-secret";
 process.env.META_REDIRECT_URI = "http://localhost:3000/auth/callback";
+process.env.META_OAUTH_FLOW = "instagram"; // don't inherit the developer's .env
 
 const { test, before, after } = require("node:test");
 const assert = require("node:assert/strict");

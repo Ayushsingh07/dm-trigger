@@ -441,7 +441,10 @@
     "planLine": "Paket {plan} · {used} dari {total} postingan terpakai · {replies} balasan per postingan",
     "daysLeft.one": "{count} hari tersisa",
     "daysLeft.other": "{count} hari tersisa",
-    "planUnavailable": "Detail paket tidak tersedia."
+    "planUnavailable": "Detail paket tidak tersedia.",
+    "connectErrorTitle": "Masalah koneksi Instagram",
+    "connectOk": "Instagram terhubung.",
+    "connectDryRun": "Simulasi: kredensial Meta belum dikonfigurasi, akun tidak benar-benar terhubung."
   },
   "admin": {
     "title": "Admin — {brand}",

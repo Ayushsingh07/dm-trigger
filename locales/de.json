@@ -441,7 +441,10 @@
     "planLine": "Plan {plan} · {used} von {total} Beiträgen genutzt · {replies} Antworten pro Beitrag",
     "daysLeft.one": "noch {count} Tag",
     "daysLeft.other": "noch {count} Tage",
-    "planUnavailable": "Plan-Details nicht verfügbar."
+    "planUnavailable": "Plan-Details nicht verfügbar.",
+    "connectErrorTitle": "Problem bei der Instagram-Verbindung",
+    "connectOk": "Instagram verbunden.",
+    "connectDryRun": "Testlauf: Meta-Zugangsdaten sind nicht konfiguriert, das Konto wurde nicht wirklich verbunden."
   },
   "admin": {
     "title": "Admin — {brand}",

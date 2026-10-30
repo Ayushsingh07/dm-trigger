@@ -10,6 +10,15 @@ const logger = require("./logger");
 const GRAPH = () => config.graphApiBase.replace(/\/+$/, "");
 const GRAPH_BETA = () => (config.graphApiBetaBase || config.graphApiBase).replace(/\/+$/, "");
 
+// Two Instagram API integrations exist and are NOT interchangeable — using the
+// wrong login dialog makes Meta reply "Invalid platform app":
+//   instagram -> "Instagram API with Instagram Login"  (instagram.com login, graph.instagram.com)
+//   facebook  -> "Instagram API with Facebook Login"   (facebook.com login, graph.facebook.com)
+// Select with META_OAUTH_FLOW; it must match the product added in the app dashboard.
+const isFacebookFlow = () => config.metaOAuthFlow === "facebook";
+// Host that accepts our access token for API calls under the active flow.
+const GRAPH_API = () => (isFacebookFlow() ? GRAPH_BETA() : GRAPH());
+
 const MAX_ATTEMPTS = 3;          // 1 try + 2 retries
 const BASE_BACKOFF_MS = 500;
 
@@ -57,7 +66,7 @@ async function graphCall(name, url, { method = "POST", body } = {}) {
   // secret is configured.
   const token = body?.access_token || new URL(url).searchParams.get("access_token") || "";
   const placeholder = token === "" || token === "DRY_RUN_TOKEN";
-  if (!config.metaConfigured || !GRAPH() || placeholder) {
+  if (!config.metaConfigured || !GRAPH_API() || placeholder) {
     return dryRun(name, { url, method, body });
   }
   let result;
@@ -87,25 +96,52 @@ async function graphCall(name, url, { method = "POST", body } = {}) {
   return result;
 }
 
+// Extract a short, human-readable message from a Meta error payload so the
+// dashboard can show *why* a call failed instead of a generic "failed".
+function metaErrorText(result) {
+  const e = result?.error?.error || result?.error || {};
+  const msg = String(e.message || result?.error || "").trim();
+  const code = Number(e.code) || 0;
+  const hint = /invalid platform app/i.test(msg)
+    ? " — the app does not have this Instagram login product. In the Meta dashboard add the product, or set META_OAUTH_FLOW=facebook to match your app."
+    : "";
+  return (code ? `${msg} (code ${code})` : msg || `HTTP ${result?.status || "?"}`) + hint;
+}
+
 // ------------------------------------------------------------------ OAuth
-// Step 1: send the user to this URL to connect with Instagram/Facebook login.
-function buildOAuthUrl({ scope = "instagram_basic,instagram_manage_engagement,instagram_manage_messages", state } = {}) {
+// Login dialogs differ per integration (see isFacebookFlow above); using the
+// wrong one returns "Invalid platform app".
+const IG_SCOPES = "instagram_basic,instagram_manage_engagement,instagram_manage_messages";
+const FB_SCOPES = "instagram_basic,instagram_manage_engagement,instagram_manage_messages,pages_show_list";
+
+function buildOAuthUrl({ scope, state } = {}) {
   if (!config.metaAppId || !config.metaRedirectUri) {
     logger.warn("buildOAuthUrl — META_APP_ID / META_REDIRECT_URI not set yet");
     return null;
+  }
+  if (isFacebookFlow()) {
+    const version = (GRAPH_BETA().match(/v\d+(\.\d+)?/) || ["v23.0"])[0];
+    const u = new URL(`https://www.facebook.com/${version}/dialog/oauth`);
+    u.searchParams.set("client_id", config.metaAppId);
+    u.searchParams.set("redirect_uri", config.metaRedirectUri);
+    u.searchParams.set("state", state);
+    u.searchParams.set("scope", scope || FB_SCOPES);
+    return u.toString();
   }
   const u = new URL("https://www.instagram.com/oauth/authorize");
   u.searchParams.set("client_id", config.metaAppId);
   u.searchParams.set("redirect_uri", config.metaRedirectUri);
   u.searchParams.set("response_type", "code");
-  u.searchParams.set("scope", scope);
+  u.searchParams.set("scope", scope || IG_SCOPES);
   u.searchParams.set("state", state);
   return u.toString();
 }
 
 // Step 2: exchange the ?code= from the callback for a short-lived token.
+// Same path on both flows; the host must match whoever issued the login.
 async function exchangeCode(code) {
-  return graphCall("oauth.access_token", `${GRAPH()}/oauth/access_token`, {
+  const base = isFacebookFlow() ? GRAPH_BETA() : GRAPH();
+  return graphCall("oauth.access_token", `${base}/oauth/access_token`, {
     method: "POST",
     body: {
       client_id: config.metaAppId,
@@ -119,6 +155,14 @@ async function exchangeCode(code) {
 
 // Step 3: short-lived -> long-lived (60 days) token.
 async function exchangeLongLived(accessToken) {
+  if (isFacebookFlow()) {
+    const u = new URL(`${GRAPH_BETA()}/oauth/access_token`);
+    u.searchParams.set("grant_type", "fb_exchange_token");
+    u.searchParams.set("client_id", config.metaAppId);
+    u.searchParams.set("client_secret", config.metaAppSecret);
+    u.searchParams.set("fb_exchange_token", accessToken);
+    return graphCall("oauth.long_lived", u.toString(), { method: "GET" });
+  }
   const u = new URL(`${GRAPH()}/access_token`);
   u.searchParams.set("grant_type", "ig_exchange_token");
   u.searchParams.set("client_secret", config.metaAppSecret);
@@ -129,14 +173,34 @@ async function exchangeLongLived(accessToken) {
 // Refresh a long-lived token (valid for another 60 days). Meta's docs call
 // this with grant_type=ig_refresh_token against the same endpoint.
 async function refreshLongLived(accessToken) {
+  if (isFacebookFlow()) return exchangeLongLived(accessToken);
   const u = new URL(`${GRAPH()}/access_token`);
   u.searchParams.set("grant_type", "ig_refresh_token");
   u.searchParams.set("access_token", accessToken);
   return graphCall("oauth.refresh_long_lived", u.toString(), { method: "GET" });
 }
 
-// Fetch the connected IG user's profile (id + username).
+// Fetch the connected IG account's id + username.
 async function fetchIgProfile(accessToken) {
+  if (isFacebookFlow()) {
+    // Facebook login yields a user token; the IG account hangs off a Page, so
+    // resolve it through /me/accounts.
+    const u = new URL(`${GRAPH_BETA()}/me/accounts`);
+    u.searchParams.set("fields", "instagram_business_account{id,username},name");
+    u.searchParams.set("access_token", accessToken);
+    const res = await graphCall("me.accounts", u.toString(), { method: "GET" });
+    if (!res.ok) return res;
+    const pages = Array.isArray(res.data) ? res.data : [];
+    const page = pages.find((p) => p && p.instagram_business_account);
+    if (!page) {
+      return {
+        ok: false,
+        status: 400,
+        error: { error: { message: "No Instagram Business account linked to a Facebook Page" } },
+      };
+    }
+    return { ok: true, ...page.instagram_business_account };
+  }
   const u = new URL(`${GRAPH()}/me`);
   u.searchParams.set("fields", "user_id,username");
   u.searchParams.set("access_token", accessToken);
@@ -146,7 +210,7 @@ async function fetchIgProfile(accessToken) {
 // ------------------------------------------------------------------ Actions
 // Public reply under a comment: POST /{comment-id}/replies
 async function sendPrivateReply(accessToken, commentId, message) {
-  return graphCall(`replies(${commentId})`, `${GRAPH()}/${commentId}/replies`, {
+  return graphCall(`replies(${commentId})`, `${GRAPH_API()}/${commentId}/replies`, {
     method: "POST",
     body: { message, access_token: accessToken },
   });
@@ -156,7 +220,7 @@ async function sendPrivateReply(accessToken, commentId, message) {
 // recipient = { recipient: { id: <ig_scoped_user_id> } }, message = { text }
 // or message = { attachment: { type: "template", payload: {...} } } for buttons/cards.
 async function sendDM(accessToken, recipientId, message) {
-  return graphCall(`messages(${recipientId})`, `${GRAPH()}/me/messages`, {
+  return graphCall(`messages(${recipientId})`, `${GRAPH_API()}/me/messages`, {
     method: "POST",
     body: {
       recipient: { id: recipientId },
@@ -230,5 +294,5 @@ function parseSignedRequest(signedRequest) {
 module.exports = {
   buildOAuthUrl, exchangeCode, exchangeLongLived, refreshLongLived, fetchIgProfile,
   sendPrivateReply, sendDM, buildDMMessage, isFollower, parseSignedRequest,
-  shouldRetry,
+  shouldRetry, metaErrorText,
 };
