@@ -187,31 +187,34 @@
   @media (max-width:880px) { .phone-zone { display:none; } }
 
   /* ---------- mobile nav ----------
-     Six controls never fit one pill-shaped row on a phone, so the bar becomes
-     a rounded card: identity row on top, actions on their own rows below.
-     Nothing is clipped and every control keeps a >=40px tap target. */
+     The bar is sticky, so it must stay short — a tall card would hide the
+     page while scrolling. Layout on a phone:
+       row 1  ⚡ ReplyLo        Live  (A)  English ▾
+       row 2  [ Connect Instagram            ]   (the one real action)
+       row 3  Delete            Sign out   (quiet text links)
+     Total height ~110px instead of the ~250px a stacked card produced. */
   @media (max-width:720px) {
-    nav { position:sticky; top:8px; flex-direction:column; align-items:stretch;
-          gap:10px; border-radius:26px; padding:12px; }
-    .logo { justify-content:center; }
-    .nav-right { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .nav-right > * { min-width:0; }
-    /* row 1: status + identity */
-    #modeBadge { grid-column:1; grid-row:1; justify-self:start; }
-    #whoBadge { grid-column:2; grid-row:1; justify-self:end; }
-    /* row 2: primary action, full width */
-    .nav-right .pill.dark { grid-column:1 / -1; grid-row:2; justify-content:center; padding:12px 14px; }
-    /* row 3: language + sign out */
-    .nav-right .langWrap, .nav-right [data-lang-switcher] { grid-column:1; grid-row:3; display:flex; }
-    .nav-right .langWrap .pill { width:100%; justify-content:center; }
-    #signoutBtn { grid-column:2; grid-row:3; justify-content:center; }
-    /* row 4: destructive action, full width */
-    #deleteAccountBtn { grid-column:1 / -1; grid-row:4; justify-content:center; }
-    .nav-right .pill { padding:10px 12px; font-size:12.5px; min-height:40px; }
-    .badge.user { padding:6px 2px; }
+    nav { position:sticky; top:8px; flex-wrap:wrap; gap:8px;
+          border-radius:22px; padding:9px 12px 7px; margin-top:12px; }
+    /* flatten the group so its controls join the nav's own flex rows */
+    .nav-right { display:contents; }
+    .logo { font-size:15px; gap:8px; }
+    .logo .mark { width:26px; height:26px; border-radius:8px; font-size:13px; }
+    /* row 1: logo left; status chip + avatar + language inline on the right */
+    #modeBadge { margin-inline-start:auto; padding:4px 9px; font-size:11px; gap:5px; }
+    .badge.user { padding:0; }
     .badge.user .whoName { display:none; }        /* avatar is enough on a phone */
-    .greet { padding:30px 0 4px; }
-    .wrap { padding:0 16px 70px; }
+    .badge.user .avatar { width:28px; height:28px; font-size:12px; }
+    .nav-right .langWrap, .nav-right [data-lang-switcher] { display:flex; flex:none; }
+    .nav-right .langWrap .pill { padding:7px 10px; font-size:12px; }
+    /* row 2: primary action, with the quiet text links tucked beside it */
+    .nav-right .pill.dark { flex:1 1 auto; order:5; justify-content:center; padding:11px 14px; font-size:13.5px; }
+    #signoutBtn, #deleteAccountBtn { order:6; background:none; border:none; padding:4px 6px 6px;
+          flex:0 0 auto; min-height:28px; font-size:12px; font-weight:600; color:var(--faint);
+          text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
+    #deleteAccountBtn { color:#c98f8f; }
+    .greet { padding:24px 0 4px; }
+    .wrap { padding:0 14px 70px; }
   }
 </style>
 </head>

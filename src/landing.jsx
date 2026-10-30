@@ -65,9 +65,29 @@ function LanguageSwitcher({ dark = false, up = false }) {
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, []);
+  // Keep the menu inside the viewport on phones: the button sits near a screen
+  // edge there, so anchor the open menu with fixed coords clamped to the edges.
+  const btnRef = useRef(null);
+  const [pos, setPos] = useState(null);
+  useEffect(() => {
+    if (!open || !btnRef.current) return;
+    const r = btnRef.current.getBoundingClientRect();
+    const vw = document.documentElement.clientWidth;
+    const vh = document.documentElement.clientHeight;
+    const w = Math.min(300, vw - 16);
+    const left = Math.max(8, Math.min(r.right - w, vw - w - 8));
+    const flipUp = !up && r.bottom + 320 > vh;
+    setPos({ left, width: w,
+             top: up ? undefined : (flipUp ? undefined : r.bottom + 8),
+             bottom: up ? (vh - r.top + 8) : (flipUp ? vh - r.bottom + 8 : undefined) });
+    const onScroll = () => setOpen(false);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [open, up]);
   return (
     <div ref={ref} className="relative">
       <button
+        ref={btnRef}
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
@@ -81,7 +101,8 @@ function LanguageSwitcher({ dark = false, up = false }) {
       {open && (
         <ul
           role="listbox"
-          className={`absolute end-0 z-50 grid w-max grid-cols-2 gap-x-1 rounded-2xl border border-line bg-white p-1.5 shadow-lift ${up ? "bottom-full mb-2" : "mt-2"}`}
+          style={pos ? { position: "fixed", left: pos.left, top: pos.top, bottom: pos.bottom, width: pos.width } : undefined}
+          className={`z-50 grid grid-cols-1 gap-x-1 overflow-x-hidden rounded-2xl border border-line bg-white p-1.5 shadow-lift sm:grid-cols-2 ${pos ? "" : `absolute end-0 mt-2 ${up ? "bottom-full mb-2" : ""}`}`}
         >
           {locales.map((loc) => (
             <li key={loc}>
