@@ -393,22 +393,3 @@ export function AvatarStack({ emojis = ["🧑‍🍳", "👨‍🎨", "👩‍�
     </div>
   );
 }
-
-/* ============================ KeywordMarquee ============================ */
-/* Slow infinite CSS marquee; duplicated row for a seamless loop. */
-export function KeywordMarquee({ words = ["GUIDE", "PRICE", "MENU", "BOOK", "COACH", "DIET", "CATALOG", "QUOTE", "DESIGN", "PLAN", "TRIAL", "LINK"] }) {
-  const row = [...words, ...words];
-  return (
-    <div className="relative overflow-hidden" aria-hidden="true">
-      <div className="pointer-events-none absolute inset-y-0 start-0 z-10 w-16 bg-linear-to-r from-mist to-transparent" />
-      <div className="pointer-events-none absolute inset-y-0 end-0 z-10 w-16 bg-linear-to-l from-mist to-transparent" />
-      <div className="v-marquee flex w-max gap-3 py-1">
-        {row.map((w, i) => (
-          <span key={i} className={`rounded-full border px-4 py-1.5 text-[13px] font-extrabold tracking-wide ${i % 3 === 0 ? "border-teal/30 bg-teal-soft text-teal-dark" : i % 3 === 1 ? "border-amber/30 bg-amber/10 text-amber" : "border-line bg-white text-slateInk"}`}>
-            {w}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}

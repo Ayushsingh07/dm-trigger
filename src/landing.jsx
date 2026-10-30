@@ -1,6 +1,6 @@
 import React from "react";
 import * as ReactDOM from "react-dom/client";
-import { ImageSlot, AvatarStack, CommentToDM, KeywordChips, MessageEditor, ResultsBars, KeywordMarquee, MockConnected, MockPickPost, MockReplyEditor, MockEveryComment, MockResults, ChatMock, Bubble, LinkCard } from "./visuals";
+import { ImageSlot, AvatarStack, CommentToDM, KeywordChips, MessageEditor, ResultsBars, MockConnected, MockPickPost, MockReplyEditor, MockEveryComment, MockResults, ChatMock, Bubble, LinkCard } from "./visuals";
 
 const { useState, useRef, useEffect } = React;
 
@@ -53,7 +53,7 @@ function Reveal({ children, delay = 0, className = "" }) {
 }
 
 /* ---------------- language switcher ---------------- */
-function LanguageSwitcher({ dark = false }) {
+function LanguageSwitcher({ dark = false, up = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const i = I18N();
@@ -79,7 +79,10 @@ function LanguageSwitcher({ dark = false }) {
         {names[current] || "English"}
       </button>
       {open && (
-        <ul role="listbox" className="absolute end-0 z-50 mt-2 max-h-72 w-max min-w-44 overflow-y-auto overscroll-contain rounded-2xl border border-line bg-white py-1 shadow-lift">
+        <ul
+          role="listbox"
+          className={`absolute end-0 z-50 grid w-max grid-cols-2 gap-x-1 rounded-2xl border border-line bg-white p-1.5 shadow-lift ${up ? "bottom-full mb-2" : "mt-2"}`}
+        >
           {locales.map((loc) => (
             <li key={loc}>
               <button
@@ -87,7 +90,7 @@ function LanguageSwitcher({ dark = false }) {
                 role="option"
                 aria-selected={loc === current}
                 onClick={() => { setOpen(false); if (loc !== current) I18N().switchTo(loc); }}
-                className={`block w-full px-4 py-2 text-start text-[13px] font-semibold transition hover:bg-mist ${loc === current ? "text-teal-dark" : "text-slateInk"}`}
+                className={`block w-full whitespace-nowrap rounded-xl px-3 py-1.5 text-start text-[13px] font-semibold transition hover:bg-mist ${loc === current ? "bg-mist text-teal-dark" : "text-slateInk"}`}
               >
                 {names[loc] || loc}
               </button>
@@ -606,12 +609,6 @@ function HowItWorks() {
         ))}
       </div>
 
-      {/* keyword marquee */}
-      <Reveal delay={120}>
-        <div className="mt-10">
-          <KeywordMarquee />
-        </div>
-      </Reveal>
     </section>
   );
 }
@@ -907,7 +904,7 @@ function CtaFooter() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-[13px] text-slate-400 sm:flex-row sm:flex-wrap">
           <span className="flex items-center gap-2 font-extrabold text-ink"><span className="grid h-6 w-6 place-items-center rounded-lg bg-teal text-[11px] text-white">⚡</span>ReplyLo</span>
           <span>{t("landing.demo.metaNote")}</span>
-          <LanguageSwitcher />
+          <LanguageSwitcher up />
           <a href="/app" className="font-semibold text-slateInk transition hover:text-ink">{t("landing.demo.dashboardLink")}</a>
         </div>
       </footer>

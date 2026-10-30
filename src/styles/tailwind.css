@@ -36,7 +36,6 @@
   --animate-slideup: slideup 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.1) both;
   --animate-kenburns: kenburns 7s ease-in-out infinite alternate;
   --animate-marquee: marquee 9s linear infinite;
-  --animate-marquee-slow: marquee 30s linear infinite;
   --animate-spin-slow: spin 4s linear infinite;
   --animate-blob1: blob1 8s ease-in-out infinite alternate;
   --animate-blob2: blob2 10s ease-in-out infinite alternate;
@@ -101,7 +100,6 @@ html[lang="ko"] .font-display { font-style: normal; }
 .reveal.in { animation: fadeup 0.7s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
 
 /* ---- src/visuals.jsx helpers ---- */
-.v-marquee { animation: marquee 30s linear infinite; }
 /* CommentToDM loop: appear with a pop, hold, then fade out (9s cycle).
    Keyframes live here (not in @theme) because CommentToDM references them
    from inline styles, and Tailwind only emits @theme keyframes used by
@@ -132,7 +130,6 @@ html[lang="ko"] .font-display { font-style: normal; }
 
 /* Reduced motion: stop loops, show final states (CommentToDM keeps all steps visible) */
 @media (prefers-reduced-motion: reduce) {
-  .v-marquee { animation: none; }
   .v-bar { animation: none; }
   .v-caret { animation: none; opacity: 0; }
   .v-step { animation: none !important; opacity: 1 !important; transform: none !important; }

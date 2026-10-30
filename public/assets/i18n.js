@@ -8,7 +8,7 @@
   var SUPPORTED = ["en", "es", "pt-BR", "fr", "de", "ja", "hi", "id", "bn", "ta", "te", "mr", "ko"];
   var NATIVE = {
     "en": "English", "es": "Español", "pt-BR": "Português", "fr": "Français",
-    "de": "Deutsch", "ja": "日本語", "hi": "हिन्दী", "id": "Bahasa Indonesia",
+    "de": "Deutsch", "ja": "日本語", "hi": "हिन्दी", "id": "Bahasa Indonesia",
     "bn": "বাংলা", "ta": "தமிழ்", "te": "తెలుగు", "mr": "मराठी", "ko": "한국어",
   };
 

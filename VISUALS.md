@@ -26,9 +26,7 @@ Plan only. No code changed yet. Built from PROJECT.md, DESIGN-BRIEF.md, src/land
 - **Weight:** 2 photos ≈ 240 KB total (after WebP).
 
 ## 3. Logo strip
-- **Current:** six text names.
-- **Visual:** replace with **(f) KeywordMarquee** — a slow-scrolling single row of example keywords as chips (`GUIDE · PRICE · MENU · BOOK · COACH · DIET · CATALOG · QUOTE …`), amber/teal tinted. Keeps the "who uses this" feeling, adds motion, zero weight.
-- **Caption:** "Keywords our users are live on right now"
+- **Current:** removed — the keyword chip strip (formerly a marquee, then a static cloud) was taken out at the owner's request. The section below flows directly after the hero.
 
 ## 4. How it works (`#how`)
 - **Current:** 3 text cards with emoji + 2-sentence descriptions.
@@ -105,6 +103,6 @@ Plan only. No code changed yet. Built from PROJECT.md, DESIGN-BRIEF.md, src/land
 
 ## Build order (matches the agreed prompts)
 1. ✅ this file
-2. `src/visuals.jsx` — ImageSlot, PhoneFrame, CommentToDM, StatCard, MiniUI set, AvatarStack, KeywordMarquee (no new npm deps)
+2. `src/visuals.jsx` — ImageSlot, PhoneFrame, CommentToDM, StatCard, MiniUI set, AvatarStack (no new npm deps)
 3. Section-by-section rebuild of `src/landing.jsx` (hero → how → who → features → results → pricing → CTA), `npm run build` after each
 4. Polish pass: alt/width/height/lazy audit, long-cache for `/assets/img`, 360px check, reduced-motion check, weight report, new og-image (1200×630, teal/amber, supplied by you)
