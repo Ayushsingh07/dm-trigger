@@ -264,6 +264,103 @@
       "sub": "Configure em cinco minutos. Grátis para começar, sem cartão — e a demonstração acima já provou que funciona.",
       "button": "Começar grátis →",
       "openDashboard": "Abrir painel"
+    },
+    "flow": {
+      "kicker": "Demonstração ao vivo",
+      "titleA": "Veja um comentário",
+      "titleAccent": "virar cliente",
+      "titleB": "em quatro passos.",
+      "sub": "Escolha um cenário. O celular mostra exatamente o que seu público vê — comentário, resposta pública, DM, clique. Uma simulação, nada é enviado.",
+      "tabsAria": "Cenários da demonstração",
+      "cta": "Comece grátis — configure em minutos",
+      "tabs": {
+        "commentDm": "Comentário → DM",
+        "followers": "Só seguidores",
+        "emails": "Capturar e-mails",
+        "reminder": "Lembrete",
+        "limits": "Limites por post",
+        "language": "Qualquer idioma"
+      },
+      "commentDm": {
+        "s1t": "Comentam sua palavra-chave",
+        "s1d": "Basta uma palavra no post — sem abrir nenhum app.",
+        "s2t": "A resposta pública sobe",
+        "s2d": "Todos veem que você respondeu, e isso atrai mais comentários.",
+        "s3t": "A DM chega na caixa de entrada",
+        "s3d": "Sua mensagem mais até 3 botões — guia, loja, agendamento.",
+        "s4t": "Eles tocam, você acompanha",
+        "s4d": "Entrega confirmada em menos de um segundo, clique contado no painel."
+      },
+      "followers": {
+        "s1t": "Um não seguidor comenta",
+        "s1d": "A palavra-chave bateu, mas a barreira de seguidores está ativa nesta regra.",
+        "s2t": "Ele recebe um aviso gentil",
+        "s2d": "Uma resposta pública convida a seguir primeiro — educado, nunca insistente.",
+        "s3t": "Ele segue",
+        "s3d": "A barreira abre sozinha. Sem espera, sem checagem manual.",
+        "s4t": "A DM chega",
+        "s4d": "A mesma mensagem que você escreveu para seguidores — entregue na hora."
+      },
+      "emails": {
+        "s1t": "A DM pede um e-mail",
+        "s1d": "Você ativou a captura de e-mails — a DM pergunta dentro da janela de 24 h.",
+        "s2t": "Ele responde com o endereço",
+        "s2d": "Uma resposta normal na conversa. O ReplyLo escuta.",
+        "s3t": "Você confirma e envia o link",
+        "s3d": "A DM de acompanhamento leva seu cartão de link como sempre.",
+        "s4t": "O e-mail é salvo",
+        "s4d": "Marcado como capturado, exportável em CSV — é seu."
+      },
+      "reminder": {
+        "s1t": "A primeira DM sai",
+        "s1d": "Palavra-chave encontrada, DM entregue, botões prontos para tocar.",
+        "s2t": "Sem toque — o relógio corre",
+        "s2d": "Você define a espera (digamos 3 horas). Sobrevive a reinícios.",
+        "s3t": "Um lembrete gentil acompanha",
+        "s3d": "Sempre dentro da janela de 24 horas da Meta, sempre só uma vez.",
+        "s4t": "Segunda chance, clique contado",
+        "s4d": "Lembretes recuperam uma parcela real das aberturas silenciosas."
+      },
+      "limits": {
+        "s1t": "Cada resposta conta para o post",
+        "s1d": "As respostas são medidas por post, por período de 30 dias.",
+        "s2t": "O contador sobe",
+        "s2d": "Você vê o uso por post na página de cobrança, ao vivo.",
+        "s3t": "O limite é atingido",
+        "s3d": "As respostas pausam naquele post — nada quebra, nada gasta a mais.",
+        "s4t": "Recarregue e continue",
+        "s4d": "Uma recarga de 100 respostas desbloqueia o mesmo post na hora."
+      },
+      "language": {
+        "s1t": "Um comentário no seu idioma",
+        "s1d": "A palavra-chave no seu próprio alfabeto ainda corresponde à sua regra.",
+        "s2t": "Japonês, espanhol, emoji — tudo corresponde",
+        "s2d": "A correspondência entende idiomas: acentos unificados, emojis ignorados.",
+        "s3t": "Cada fã recebe a resposta certa",
+        "s3d": "Uma regra, todos os idiomas em que seu público escreve.",
+        "s4t": "Sem falsos positivos",
+        "s4d": "\"guilt\" nunca ativa \"GUIDE\" — a correspondência por palavra inteira vale em todo lugar."
+      },
+      "phone": {
+        "activeNow": "Online agora",
+        "aria": "Conversa simulada do Instagram",
+        "replyBadge": "Resposta",
+        "sent": "Enviado · {ms}",
+        "counter": "{used} / {cap} respostas",
+        "repliesLeft.one": "",
+        "repliesLeft.other": "",
+        "limitReached": "Limite atingido",
+        "topup": "Recarregar",
+        "repliesLeft": {
+          "one": "{count} resposta restante",
+          "other": "{count} respostas restantes"
+        }
+      },
+      "langDemo": {
+        "fan": "ana.cria",
+        "keyword": "GUIA 🙌",
+        "guide": "Aqui está o guia 👇"
+      }
     }
   },
   "pricing": {

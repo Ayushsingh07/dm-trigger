@@ -264,6 +264,103 @@
       "sub": "In fünf Minuten eingerichtet. Kostenlos starten, ohne Karte — und die Demo oben hat schon bewiesen, dass es funktioniert.",
       "button": "Kostenlos starten →",
       "openDashboard": "Dashboard öffnen"
+    },
+    "flow": {
+      "kicker": "Live-Demo",
+      "titleA": "Sieh einen Kommentar",
+      "titleAccent": "zum Kunden werden",
+      "titleB": "in vier Schritten.",
+      "sub": "Szenario wählen. Das Handy zeigt genau, was dein Publikum sieht — Kommentar, öffentliche Antwort, DM, Klick. Eine Simulation, nichts wird gesendet.",
+      "tabsAria": "Demo-Szenarien",
+      "cta": "Kostenlos starten — in Minuten eingerichtet",
+      "tabs": {
+        "commentDm": "Kommentar → DM",
+        "followers": "Nur Follower",
+        "emails": "E-Mails sammeln",
+        "reminder": "Erinnerung",
+        "limits": "Limits pro Post",
+        "language": "Jede Sprache"
+      },
+      "commentDm": {
+        "s1t": "Sie kommentieren dein Keyword",
+        "s1d": "Ein Wort unter dem Post genügt — ohne App zu öffnen.",
+        "s2t": "Eine öffentliche Antwort erscheint",
+        "s2d": "Alle sehen deine Antwort, was mehr Kommentare anzieht.",
+        "s3t": "Die DM landet im Postfach",
+        "s3d": "Deine Nachricht plus bis zu 3 Buttons — Guide, Shop, Buchung.",
+        "s4t": "Sie tippen, du misst es",
+        "s4d": "Zustellung in unter einer Sekunde bestätigt, Klick im Dashboard gezählt."
+      },
+      "followers": {
+        "s1t": "Ein Nicht-Follower kommentiert",
+        "s1d": "Keyword getroffen, aber die Follower-Hürde ist bei dieser Regel aktiv.",
+        "s2t": "Er bekommt einen freundlichen Hinweis",
+        "s2d": "Eine öffentliche Antwort lädt zum Folgen ein — höflich, nie aufdringlich.",
+        "s3t": "Er folgt",
+        "s3d": "Die Hürde öffnet sich automatisch. Kein Warten, keine manuelle Prüfung.",
+        "s4t": "Die DM kommt an",
+        "s4d": "Dieselbe Nachricht, die du für Follower geschrieben hast — sofort zugestellt."
+      },
+      "emails": {
+        "s1t": "Die DM fragt nach einer E-Mail",
+        "s1d": "E-Mail-Erfassung ist an — die DM fragt im 24-Stunden-Fenster.",
+        "s2t": "Er antwortet mit seiner Adresse",
+        "s2d": "Eine normale Antwort im Thread. ReplyLo hört sie.",
+        "s3t": "Du bestätigst und schickst den Link",
+        "s3d": "Die Folge-DM enthält wie immer deine Link-Karte.",
+        "s4t": "Die E-Mail wird gespeichert",
+        "s4d": "Als erfasst markiert, als CSV exportierbar — gehört dir."
+      },
+      "reminder": {
+        "s1t": "Die erste DM geht raus",
+        "s1d": "Keyword gefunden, DM zugestellt, Buttons bereit zum Tippen.",
+        "s2t": "Kein Tipp — die Uhr läuft",
+        "s2d": "Du setzt die Wartezeit (sagen wir 3 Stunden). Sie übersteht Neustarts.",
+        "s3t": "Eine sanfte Erinnerung folgt",
+        "s3d": "Immer innerhalb von Metas 24-Stunden-Fenster, immer nur einmal.",
+        "s4t": "Zweite Chance, Klick gezählt",
+        "s4d": "Erinnerungen holen einen echten Teil der stillen Öffnungen zurück."
+      },
+      "limits": {
+        "s1t": "Jede Antwort zählt für deinen Post",
+        "s1d": "Antworten werden pro Post und pro 30-Tage-Zeitraum gemessen.",
+        "s2t": "Der Zähler steigt",
+        "s2d": "Du siehst die Nutzung pro Post live auf der Billing-Seite.",
+        "s3t": "Das Limit ist erreicht",
+        "s3d": "Antworten pausieren für diesen Post — nichts bricht, nichts wird überschritten.",
+        "s4t": "Aufladen und weiter",
+        "s4d": "Ein Top-up über 100 Antworten schaltet denselben Post sofort frei."
+      },
+      "language": {
+        "s1t": "Ein Kommentar in deiner Sprache",
+        "s1d": "Das Keyword in deiner eigenen Schrift trifft deine Regel trotzdem.",
+        "s2t": "Japanisch, Spanisch, Emojis — alles trifft",
+        "s2d": "Das Matching ist sprachbewusst: Akzente ausgeglichen, Emojis ignoriert.",
+        "s3t": "Jeder Fan bekommt die richtige Antwort",
+        "s3d": "Eine Regel, jede Sprache, in der dein Publikum schreibt.",
+        "s4t": "Keine Fehltreffer",
+        "s4d": "„guilt“ löst nie „GUIDE“ aus — die Wortgrenzen-Prüfung hält überall."
+      },
+      "phone": {
+        "activeNow": "Jetzt aktiv",
+        "aria": "Simulierte Instagram-Unterhaltung",
+        "replyBadge": "Antwort",
+        "sent": "Gesendet · {ms}",
+        "counter": "{used} / {cap} Antworten",
+        "repliesLeft.one": "",
+        "repliesLeft.other": "",
+        "limitReached": "Limit erreicht",
+        "topup": "Aufladen",
+        "repliesLeft": {
+          "one": "{count} Antwort übrig",
+          "other": "{count} Antworten übrig"
+        }
+      },
+      "langDemo": {
+        "fan": "lena.macht",
+        "keyword": "LEITFADEN 🙌",
+        "guide": "Hier ist der Leitfaden 👇"
+      }
     }
   },
   "pricing": {

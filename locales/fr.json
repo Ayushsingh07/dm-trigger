@@ -264,6 +264,103 @@
       "sub": "Configuration en cinq minutes. Gratuit pour commencer, sans carte — et la démo ci-dessus a déjà prouvé que ça marche.",
       "button": "Commencer gratuitement →",
       "openDashboard": "Ouvrir le tableau de bord"
+    },
+    "flow": {
+      "kicker": "Démo en direct",
+      "titleA": "Regardez un commentaire",
+      "titleAccent": "devenir un client",
+      "titleB": "en quatre étapes.",
+      "sub": "Choisissez un scénario. Le téléphone montre exactement ce que votre audience voit — commentaire, réponse publique, MP, clic. Une simulation, rien n'est envoyé.",
+      "tabsAria": "Scénarios de démo",
+      "cta": "Commencez gratuitement — prêt en quelques minutes",
+      "tabs": {
+        "commentDm": "Commentaire → MP",
+        "followers": "Abonnés uniquement",
+        "emails": "Collecter des e-mails",
+        "reminder": "Rappel",
+        "limits": "Limites par post",
+        "language": "Toutes les langues"
+      },
+      "commentDm": {
+        "s1t": "Ils commentent votre mot-clé",
+        "s1d": "Un seul mot sur le post suffit — sans ouvrir d'application.",
+        "s2t": "Une réponse publique apparaît",
+        "s2d": "Tout le monde voit que vous avez répondu, ce qui attire plus de commentaires.",
+        "s3t": "Le MP arrive dans la boîte",
+        "s3d": "Votre message plus jusqu'à 3 boutons — guide, boutique, réservation.",
+        "s4t": "Ils cliquent, vous suivez",
+        "s4d": "Remise confirmée en moins d'une seconde, clic compté sur votre tableau de bord."
+      },
+      "followers": {
+        "s1t": "Un non-abonné commente",
+        "s1d": "Le mot-clé correspond, mais la barrière abonnés est active sur cette règle.",
+        "s2t": "Il reçoit une invitation polie",
+        "s2d": "Une réponse publique l'invite à s'abonner d'abord — poli, jamais insistant.",
+        "s3t": "Il s'abonne",
+        "s3d": "La barrière s'ouvre automatiquement. Sans attente ni vérification manuelle.",
+        "s4t": "Le MP arrive",
+        "s4d": "Le même message écrit pour vos abonnés — livré instantanément."
+      },
+      "emails": {
+        "s1t": "Le MP demande un e-mail",
+        "s1d": "Vous avez activé la collecte — le MP demande dans la fenêtre de 24 h.",
+        "s2t": "Il répond avec son adresse",
+        "s2d": "Une réponse normale dans la conversation. ReplyLo l'écoute.",
+        "s3t": "Vous confirmez et envoyez le lien",
+        "s3d": "Le MP de suivi contient votre carte de lien comme d'habitude.",
+        "s4t": "L'e-mail est enregistré",
+        "s4d": "Marqué collecté, exportable en CSV — il vous appartient."
+      },
+      "reminder": {
+        "s1t": "Le premier MP part",
+        "s1d": "Mot-clé trouvé, MP remis, boutons prêts à cliquer.",
+        "s2t": "Aucun clic — le chrono tourne",
+        "s2d": "Vous fixez l'attente (disons 3 heures). Elle survit aux redémarrages.",
+        "s3t": "Un rappel doux suit",
+        "s3d": "Toujours dans la fenêtre de 24 heures de Meta, toujours une seule fois.",
+        "s4t": "Seconde chance, clic compté",
+        "s4d": "Les rappels récupèrent une part réelle des ouvertures silencieuses."
+      },
+      "limits": {
+        "s1t": "Chaque réponse compte pour le post",
+        "s1d": "Les réponses sont comptées par post et par période de 30 jours.",
+        "s2t": "Le compteur monte",
+        "s2d": "Vous voyez l'usage par post sur la page de facturation, en direct.",
+        "s3t": "Le plafond est atteint",
+        "s3d": "Les réponses se mettent en pause pour ce post — rien ne casse, rien ne surconsomme.",
+        "s4t": "Rechargez et reprenez",
+        "s4d": "Un recharge de 100 réponses débloque le même post instantanément."
+      },
+      "language": {
+        "s1t": "Un commentaire dans votre langue",
+        "s1d": "Le mot-clé écrit dans votre propre alphabet correspond toujours à votre règle.",
+        "s2t": "Japonais, espagnol, émojis — tout correspond",
+        "s2d": "La correspondance est multilingue : accents normalisés, émojis ignorés.",
+        "s3t": "Chaque fan reçoit la bonne réponse",
+        "s3d": "Une règle, toutes les langues dans lesquelles votre audience écrit.",
+        "s4t": "Aucun faux positif",
+        "s4d": "« guilt » ne déclenche jamais « GUIDE » — la correspondance par mot entier tient partout."
+      },
+      "phone": {
+        "activeNow": "En ligne maintenant",
+        "aria": "Conversation Instagram simulée",
+        "replyBadge": "Réponse",
+        "sent": "Envoyé · {ms}",
+        "counter": "{used} / {cap} réponses",
+        "repliesLeft.one": "",
+        "repliesLeft.other": "",
+        "limitReached": "Limite atteinte",
+        "topup": "Recharger",
+        "repliesLeft": {
+          "one": "{count} réponse restante",
+          "other": "{count} réponses restantes"
+        }
+      },
+      "langDemo": {
+        "fan": "lea.creates",
+        "keyword": "GUIDE 🙌",
+        "guide": "Voici le guide 👇"
+      }
     }
   },
   "pricing": {

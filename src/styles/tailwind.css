@@ -126,6 +126,9 @@ html[lang="ko"] .font-display { font-style: normal; }
 @keyframes bar-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 @keyframes fade-up { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
 .v-fade-up { animation: fade-up 0.5s ease-out both; }
+/* typing dots in the flow-demo phone (src/flowDemo.jsx) */
+@keyframes fd-bounce { 0%, 60%, 100% { transform: translateY(0); opacity: .5; } 30% { transform: translateY(-4px); opacity: 1; } }
+.fd-dot { animation: fd-bounce 0.9s infinite; }
 @keyframes caret-blink { 0%, 60%, 100% { opacity: 1; } 30% { opacity: 0; } }
 
 /* Reduced motion: stop loops, show final states (CommentToDM keeps all steps visible) */
@@ -134,6 +137,7 @@ html[lang="ko"] .font-display { font-style: normal; }
   .v-caret { animation: none; opacity: 0; }
   .v-step { animation: none !important; opacity: 1 !important; transform: none !important; }
   .v-fade-up { animation: none !important; }
+  .fd-dot { animation: none !important; }
   .reveal { opacity: 1; }
   .reveal.in { animation: none; }
 }

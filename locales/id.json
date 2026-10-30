@@ -264,6 +264,103 @@
       "sub": "Atur dalam lima menit. Gratis untuk mulai, tanpa kartu — dan demo di atas sudah membuktikan ini berhasil.",
       "button": "Mulai gratis →",
       "openDashboard": "Buka dasbor"
+    },
+    "flow": {
+      "kicker": "Demo langsung",
+      "titleA": "Lihat komentar",
+      "titleAccent": "jadi pelanggan",
+      "titleB": "dalam empat langkah.",
+      "sub": "Pilih skenario. Ponsel menampilkan persis apa yang dilihat audiens Anda — komentar, balasan publik, DM, klik. Simulasi saja, tidak ada yang dikirim.",
+      "tabsAria": "Skenario demo",
+      "cta": "Mulai gratis — atur dalam hitungan menit",
+      "tabs": {
+        "commentDm": "Komentar → DM",
+        "followers": "Hanya pengikut",
+        "emails": "Kumpulkan email",
+        "reminder": "Pengingat",
+        "limits": "Batas per kiriman",
+        "language": "Bahasa apa pun"
+      },
+      "commentDm": {
+        "s1t": "Mereka mengomentari kata kunci Anda",
+        "s1d": "Satu kata di kiriman sudah cukup — tanpa membuka aplikasi.",
+        "s2t": "Balasan publik terkirim",
+        "s2d": "Semua orang melihat Anda membalas, dan itu menarik lebih banyak komentar.",
+        "s3t": "DM masuk ke kotak masuk mereka",
+        "s3d": "Pesan Anda plus hingga 3 tombol — panduan, toko, pemesanan.",
+        "s4t": "Mereka ketuk, Anda pantau",
+        "s4d": "Pengiriman dikonfirmasi dalam kurang dari satu detik, klik tercatat di dasbor."
+      },
+      "followers": {
+        "s1t": "Bukan pengikut berkomentar",
+        "s1d": "Kata kunci cocok, tapi syarat pengikut aktif untuk aturan ini.",
+        "s2t": "Mereka diingatkan dengan ramah",
+        "s2d": "Balasan publik mengundang mereka untuk mengikuti dulu — sopan, tidak memaksa.",
+        "s3t": "Mereka mengikuti",
+        "s3d": "Syarat terbuka otomatis. Tanpa menunggu, tanpa cek manual.",
+        "s4t": "DM tiba",
+        "s4d": "Pesan yang sama seperti untuk pengikut — terkirim seketika."
+      },
+      "emails": {
+        "s1t": "DM meminta email",
+        "s1d": "Anda mengaktifkan penangkapan email — DM bertanya dalam jendela 24 jam.",
+        "s2t": "Mereka membalas dengan alamatnya",
+        "s2d": "Balasan biasa di thread. ReplyLo mendengarkannya.",
+        "s3t": "Anda konfirmasi dan kirim tautan",
+        "s3d": "DM lanjutan membawa kartu tautan Anda seperti biasa.",
+        "s4t": "Email tersimpan",
+        "s4d": "Ditandai terkumpul, bisa diekspor CSV — milik Anda."
+      },
+      "reminder": {
+        "s1t": "DM pertama terkirim",
+        "s1d": "Kata kunci cocok, DM terkirim, tombol siap diketuk.",
+        "s2t": "Belum ada ketukan — waktu berjalan",
+        "s2d": "Anda atur tunggu (misal 3 jam). Tetap jalan setelah restart.",
+        "s3t": "Satu pengingat lembut menyusul",
+        "s3d": "Selalu dalam jendela 24 jam Meta, selalu hanya sekali.",
+        "s4t": "Kesempatan kedua, klik tercatat",
+        "s4d": "Pengingat memulihkan sebagian nyata dari opening tanpa respons."
+      },
+      "limits": {
+        "s1t": "Setiap balasan dihitung per kiriman",
+        "s1d": "Balasan dihitung per kiriman, per periode 30 hari.",
+        "s2t": "Penghitung naik",
+        "s2d": "Pemakaian per kiriman terlihat langsung di halaman penagihan.",
+        "s3t": "Batas tercapai",
+        "s3d": "Balasan jeda untuk kiriman itu — tidak ada yang rusak, tidak ada yang berlebih.",
+        "s4t": "Isi ulang dan lanjut",
+        "s4d": "Isi ulang 100 balasan membuka kiriman yang sama seketika."
+      },
+      "language": {
+        "s1t": "Komentar dalam bahasamu",
+        "s1d": "Kata kunci dalam aksaramu sendiri tetap cocok dengan aturan Anda.",
+        "s2t": "Jepang, Spanyol, emoji — semua cocok",
+        "s2d": "Pencocokan paham bahasa: aksen diseragamkan, emoji diabaikan.",
+        "s3t": "Setiap penggemar dapat balasan tepat",
+        "s3d": "Satu aturan, semua bahasa yang dipakai audiens Anda.",
+        "s4t": "Tanpa salah cocok",
+        "s4d": "\"guilt\" tidak pernah memicu \"GUIDE\" — pencocokan kata utuh berlaku di mana pun."
+      },
+      "phone": {
+        "activeNow": "Aktif sekarang",
+        "aria": "Percakapan Instagram simulasi",
+        "replyBadge": "Balasan",
+        "sent": "Terkirim · {ms}",
+        "counter": "{used} / {cap} balasan",
+        "repliesLeft.one": "",
+        "repliesLeft.other": "",
+        "limitReached": "Batas tercapai",
+        "topup": "Isi ulang",
+        "repliesLeft": {
+          "one": "{count} balasan tersisa",
+          "other": "{count} balasan tersisa"
+        }
+      },
+      "langDemo": {
+        "fan": "dinda.craft",
+        "keyword": "PANDUAN 🙌",
+        "guide": "Ini panduannya 👇"
+      }
     }
   },
   "pricing": {

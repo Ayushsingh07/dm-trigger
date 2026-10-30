@@ -1,6 +1,7 @@
 import React from "react";
 import * as ReactDOM from "react-dom/client";
 import { ImageSlot, AvatarStack, CommentToDM, KeywordChips, MessageEditor, ResultsBars, MockConnected, MockPickPost, MockReplyEditor, MockEveryComment, MockResults, ChatMock, Bubble, LinkCard } from "./visuals";
+import { FlowDemo } from "./flowDemo";
 
 const { useState, useRef, useEffect } = React;
 
@@ -968,6 +969,7 @@ function App() {
       <Nav />
       <main>
         <Hero />
+        <FlowDemo />
         <HowItWorks />
         <Tutorial />
         <UseCases />

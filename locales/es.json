@@ -264,6 +264,103 @@
       "sub": "Configúralo en cinco minutos. Gratis para empezar, sin tarjeta — y la demo de arriba ya probó que funciona.",
       "button": "Empieza gratis →",
       "openDashboard": "Abrir panel"
+    },
+    "flow": {
+      "kicker": "Demo en vivo",
+      "titleA": "Mira un comentario",
+      "titleAccent": "convertirse en cliente",
+      "titleB": "en cuatro pasos.",
+      "sub": "Elige un escenario. El teléfono muestra exactamente lo que ve tu audiencia: comentario, respuesta pública, DM, clic. Una simulación, nada se envía.",
+      "tabsAria": "Escenarios de demo",
+      "cta": "Empieza gratis — configúralo en minutos",
+      "tabs": {
+        "commentDm": "Comentario → DM",
+        "followers": "Solo seguidores",
+        "emails": "Captar correos",
+        "reminder": "Recordatorio",
+        "limits": "Límites por post",
+        "language": "Cualquier idioma"
+      },
+      "commentDm": {
+        "s1t": "Comentan tu palabra clave",
+        "s1d": "Basta una palabra en el post — sin abrir ninguna app.",
+        "s2t": "Aparece una respuesta pública",
+        "s2d": "Todos ven que respondiste, y eso atrae más comentarios.",
+        "s3t": "El DM llega a su bandeja",
+        "s3d": "Tu mensaje más hasta 3 botones: guía, tienda, reserva.",
+        "s4t": "Tocan y tú lo mides",
+        "s4d": "Entrega confirmada en menos de un segundo, clic contado en tu panel."
+      },
+      "followers": {
+        "s1t": "Comenta alguien que no te sigue",
+        "s1d": "La palabra clave coincide, pero el filtro de seguidores está activo en esta regla.",
+        "s2t": "Recibe un aviso amable",
+        "s2d": "Una respuesta pública le invita a seguirte primero — educado, nunca insistente.",
+        "s3t": "Te sigue",
+        "s3d": "El filtro se abre solo. Sin esperas ni revisiones manuales.",
+        "s4t": "El DM llega",
+        "s4d": "El mismo mensaje que escribiste para seguidores — entregado al instante."
+      },
+      "emails": {
+        "s1t": "El DM pide un correo",
+        "s1d": "Activaste la captura de correos — el DM pregunta dentro de la ventana de 24 h.",
+        "s2t": "Responden con su dirección",
+        "s2d": "Una respuesta normal en el hilo. ReplyLo la escucha.",
+        "s3t": "Confirmas y envías el enlace",
+        "s3d": "El DM de seguimiento lleva tu tarjeta de enlace como siempre.",
+        "s4t": "El correo queda guardado",
+        "s4d": "Marcado como capturado, exportable en CSV — tuyo para siempre."
+      },
+      "reminder": {
+        "s1t": "El primer DM sale",
+        "s1d": "Palabra clave coincidente, DM entregado, botones listos para tocar.",
+        "s2t": "Sin clics — corre el reloj",
+        "s2d": "Tú fijas la espera (digamos 3 horas). Sobrevive a los reinicios.",
+        "s3t": "Llega un recordatorio suave",
+        "s3d": "Siempre dentro de la ventana de 24 horas de Meta, siempre solo una vez.",
+        "s4t": "Segunda oportunidad, clic contado",
+        "s4d": "Los recordatorios recuperan una parte real de las aperturas silenciosas."
+      },
+      "limits": {
+        "s1t": "Cada respuesta cuenta para tu post",
+        "s1d": "Las respuestas se miden por post y por período de 30 días.",
+        "s2t": "El contador sube",
+        "s2d": "Ves el uso por post en la página de facturación, en vivo.",
+        "s3t": "Se alcanza el límite",
+        "s3d": "Las respuestas se pausan en ese post — nada se rompe, nada se gasta de más.",
+        "s4t": "Recarga y continúa",
+        "s4d": "Una recarga de 100 respuestas desbloquea el mismo post al instante."
+      },
+      "language": {
+        "s1t": "Un comentario en tu idioma",
+        "s1d": "La palabra clave en tu propio alfabeto sigue coincidiendo con tu regla.",
+        "s2t": "Japonés, español, emojis — todo coincide",
+        "s2d": "La coincidencia entiende idiomas: acentos plegados, emojis ignorados.",
+        "s3t": "Cada fan recibe la respuesta correcta",
+        "s3d": "Una regla, todos los idiomas en que escribe tu audiencia.",
+        "s4t": "Sin falsos positivos",
+        "s4d": "\"guilt\" nunca activa \"GUIDE\" — la coincidencia de palabra completa funciona en todos lados."
+      },
+      "phone": {
+        "activeNow": "En línea ahora",
+        "aria": "Conversación simulada de Instagram",
+        "replyBadge": "Respuesta",
+        "sent": "Enviado · {ms}",
+        "counter": "{used} / {cap} respuestas",
+        "repliesLeft.one": "",
+        "repliesLeft.other": "",
+        "limitReached": "Límite alcanzado",
+        "topup": "Recargar",
+        "repliesLeft": {
+          "one": "{count} respuesta restante",
+          "other": "{count} respuestas restantes"
+        }
+      },
+      "langDemo": {
+        "fan": "sofia.arte",
+        "keyword": "GUÍA 🙌",
+        "guide": "Aquí tienes la guía 👇"
+      }
     }
   },
   "pricing": {

@@ -264,6 +264,99 @@
       "sub": "Set up in five minutes. Free to start, no card — and the demo above already proved it works.",
       "button": "Start free →",
       "openDashboard": "Open dashboard"
+    },
+    "flow": {
+      "kicker": "Live demo",
+      "titleA": "Watch a comment",
+      "titleAccent": "become a customer",
+      "titleB": "in four steps.",
+      "sub": "Pick a scenario. The phone plays exactly what your audience sees — comment, public reply, DM, click. A simulation, nothing is sent.",
+      "tabsAria": "Demo scenarios",
+      "cta": "Start free — set it up in minutes",
+      "tabs": {
+        "commentDm": "Comment → DM",
+        "followers": "Followers only",
+        "emails": "Collect emails",
+        "reminder": "Reminder",
+        "limits": "Post limits",
+        "language": "Any language"
+      },
+      "commentDm": {
+        "s1t": "They comment your keyword",
+        "s1d": "One word on the post is all it takes — no app to open.",
+        "s2t": "A public reply goes up",
+        "s2d": "Everyone sees you answered, which pulls more comments in.",
+        "s3t": "The DM lands in their inbox",
+        "s3d": "Your message plus up to 3 buttons — guide, shop, booking.",
+        "s4t": "They tap, you track it",
+        "s4d": "Delivery confirmed in under a second, click counted on your dashboard."
+      },
+      "followers": {
+        "s1t": "A non-follower comments",
+        "s1d": "Keyword hit, but the follower gate is on for this rule.",
+        "s2t": "They get a friendly nudge",
+        "s2d": "A public reply invites them to follow first — polite, never pushy.",
+        "s3t": "They follow",
+        "s3d": "The gate opens automatically. No waiting, no manual check.",
+        "s4t": "The DM arrives",
+        "s4d": "Same message you wrote for followers — delivered instantly."
+      },
+      "emails": {
+        "s1t": "The DM asks for an email",
+        "s1d": "You turned on email capture — the DM asks inside the 24h window.",
+        "s2t": "They reply with their address",
+        "s2d": "A normal reply in the thread. ReplyLo listens for it.",
+        "s3t": "You confirm and send the link",
+        "s3d": "The follow-up DM carries your link card as usual.",
+        "s4t": "The email is saved",
+        "s4d": "Marked collected, exportable as CSV — yours to keep."
+      },
+      "reminder": {
+        "s1t": "The first DM goes out",
+        "s1d": "Keyword matched, DM delivered, buttons ready to tap.",
+        "s2t": "No tap — the timer runs",
+        "s2d": "You set the wait (say 3 hours). It survives restarts.",
+        "s3t": "One gentle reminder follows",
+        "s3d": "Always inside Meta's 24-hour window, always just once.",
+        "s4t": "Second chance, click counted",
+        "s4d": "Reminders recover a real share of silent opens."
+      },
+      "limits": {
+        "s1t": "Every reply counts against your post",
+        "s1d": "Replies are metered per post, per 30-day period.",
+        "s2t": "The counter climbs",
+        "s2d": "You see usage per post on the billing page, live.",
+        "s3t": "The cap is reached",
+        "s3d": "Replies pause for that post — nothing breaks, nothing overspends.",
+        "s4t": "Top up and resume",
+        "s4d": "A 100-reply top-up unlocks the same post instantly."
+      },
+      "language": {
+        "s1t": "A comment in your language",
+        "s1d": "The keyword written in your own script still matches your rule.",
+        "s2t": "Japanese, Spanish, emoji — all match",
+        "s2d": "Matching is language-aware: accents folded, emoji ignored.",
+        "s3t": "Each fan gets the right reply",
+        "s3d": "One rule, every language your audience writes in.",
+        "s4t": "No false matches",
+        "s4d": "\"guilt\" never fires \"GUIDE\" — whole-word matching holds everywhere."
+      },
+      "phone": {
+        "activeNow": "Active now",
+        "aria": "Simulated Instagram conversation",
+        "replyBadge": "Reply",
+        "sent": "Sent · {ms}",
+        "counter": "{used} / {cap} replies",
+        "repliesLeft.one": "{count} reply left",
+        "repliesLeft.other": "{count} replies left",
+        "limitReached": "Limit reached",
+        "topup": "Top up"
+      },
+      "langDemo": {
+        "fan": "simran.kaur",
+        "keyword": "GUIDE 🙌",
+        "guide": "Here's the guide 👇"
+      }
     }
   },
   "pricing": {
