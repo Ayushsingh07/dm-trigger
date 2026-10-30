@@ -178,13 +178,13 @@ export const SCENARIOS = [
           { kind: "comment", who: "riya.home", text: "LINK" },
           { kind: "dm", text: "Everything from this drop, in one link 👇" },
           { kind: "buttons", buttons: ["Shop the drop"] },
-          { kind: "counter", used: 12 },
+          { kind: "counter", used: 36 },
         ],
       },
       {
         title: { k: "landing.flow.limits.s2t" },
         desc: { k: "landing.flow.limits.s2d" },
-        items: [{ kind: "counter", used: 38 }],
+        items: [{ kind: "counter", used: 114 }],
       },
       {
         title: { k: "landing.flow.limits.s3t" },

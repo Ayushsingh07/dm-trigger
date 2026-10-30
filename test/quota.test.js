@@ -44,11 +44,12 @@ test("new post within limit is allowed and recorded", () => {
   assert.equal(row.extra_replies, 0);
 });
 
-test("the 3rd new post on free is blocked; the 16th on starter is blocked", () => {
+test("the 4th new post on free is blocked; the 16th on starter is blocked", () => {
   const u = makeUser();
   assert.equal(store.tryConsumeReply(u.id, "p1").ok, true);
   assert.equal(store.tryConsumeReply(u.id, "p2").ok, true);
-  const r = store.tryConsumeReply(u.id, "p3");
+  assert.equal(store.tryConsumeReply(u.id, "p3").ok, true);
+  const r = store.tryConsumeReply(u.id, "p4");
   assert.equal(r.ok, false);
   assert.equal(r.reason, "post_limit");
 
@@ -62,7 +63,7 @@ test("the 3rd new post on free is blocked; the 16th on starter is blocked", () =
   assert.equal(r2.reason, "post_limit");
 });
 
-test("the 101st reply on a 100-cap post is blocked", () => {
+test("one reply past the plan cap on a post is blocked", () => {
   const u = makeUser();
   setPass(u.id, "growth", 10);
   for (let i = 1; i <= PLANS.growth.repliesPerPost; i++) {
@@ -75,7 +76,7 @@ test("the 101st reply on a 100-cap post is blocked", () => {
 
 test("extra_replies raises only that post's cap", () => {
   const u = makeUser();
-  setPass(u.id, "starter", 10); // cap 50
+  setPass(u.id, "starter", 10); // cap 150
   for (let i = 0; i < PLANS.starter.repliesPerPost; i++) store.tryConsumeReply(u.id, "capA");
   assert.equal(store.tryConsumeReply(u.id, "capA").reason, "reply_limit");
 
@@ -95,10 +96,11 @@ test("expired pass falls back to free limits", () => {
   expirePass(u.id);
 
   assert.equal(store.getPeriod(store.getUserById(u.id)).plan, "free");
-  // free allows 2 posts per period; x1 belongs to the old (growth) period
+  // free allows 3 posts per period; x1 belongs to the old (growth) period
   assert.equal(store.tryConsumeReply(u.id, "x2").ok, true);
   assert.equal(store.tryConsumeReply(u.id, "x3").ok, true);
-  assert.equal(store.tryConsumeReply(u.id, "x4").reason, "post_limit");
+  assert.equal(store.tryConsumeReply(u.id, "x4").ok, true);
+  assert.equal(store.tryConsumeReply(u.id, "x5").reason, "post_limit");
 });
 
 test("trial uses growth limits until trial_ends_at", () => {

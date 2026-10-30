@@ -4,6 +4,7 @@
 const fs = require("fs");
 const path = require("path");
 const logger = require("./logger");
+const { PLANS, TOPUP } = require("./pricing");
 
 const log = logger.child({ module: "i18n" });
 
@@ -14,6 +15,17 @@ const COOKIE = "rf_lang";
 const LOCALE_DIR = path.join(__dirname, "..", "locales");
 
 // ------------------------------------------------------------------ catalog
+// Plan numbers live only in pricing.js; locale files carry {placeholders}.
+const PLAN_VARS = {
+  starter: PLANS.starter.repliesPerPost,
+  growth: PLANS.growth.repliesPerPost,
+  pro: PLANS.pro.repliesPerPost,
+  freeReplies: PLANS.free.repliesPerPost,
+  freePosts: PLANS.free.postsPerPeriod,
+  growthReplies: PLANS.growth.repliesPerPost,
+  topup: TOPUP.replies,
+};
+
 const catalogs = {}; // locale -> flat { key: string }
 function loadCatalog(locale) {
   if (catalogs[locale]) return catalogs[locale];
@@ -21,6 +33,7 @@ function loadCatalog(locale) {
   try {
     const raw = JSON.parse(fs.readFileSync(path.join(LOCALE_DIR, `${locale}.json`), "utf8"));
     flat = flatten(raw);
+    for (const [k, v] of Object.entries(flat)) flat[k] = interpolate(v, PLAN_VARS);
   } catch (err) {
     log.warn({ locale, err: err.message }, "locale file missing or invalid");
   }

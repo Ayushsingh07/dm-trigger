@@ -15,19 +15,22 @@ const CURRENCY_EXPONENT = { INR: 2, USD: 2, EUR: 2, GBP: 2, JPY: 0, BRL: 2, IDR:
 const CURRENCIES = Object.keys(CURRENCY_EXPONENT);
 
 // Default billing currency for each UI locale (users can override in the UI).
+// Only INR and USD are priced today, so every locale whose local currency is
+// still unpriced (EUR/BRL/JPY/IDR/...) defaults to USD until that currency
+// gets real prices in PLAN_PRICES_MINOR. Indian-language locales keep INR.
 const LOCALE_CURRENCY = {
-  en: "INR", es: "EUR", "pt-BR": "BRL", fr: "EUR", de: "EUR",
-  ja: "JPY", hi: "INR", id: "IDR",
+  en: "INR", es: "USD", "pt-BR": "USD", fr: "USD", de: "USD",
+  ja: "USD", hi: "INR", id: "USD",
   bn: "INR", ta: "INR", te: "INR", mr: "INR", ko: "USD", // ko -> USD until KRW is priced
 };
 const currencyFromLocale = (lang) => LOCALE_CURRENCY[String(lang || "").trim()] || "USD";
 
-// Limits per plan (UNCHANGED by multi-currency work; prices moved below).
+// Limits per plan (per 30-day pass; prices moved below).
 const PLANS = {
-  free:    { repliesPerPost: 20,  postsPerPeriod: 2,  rank: 0 },
-  starter: { repliesPerPost: 50,  postsPerPeriod: 15, rank: 1 },
-  growth:  { repliesPerPost: 100, postsPerPeriod: 15, rank: 2 },
-  pro:     { repliesPerPost: 250, postsPerPeriod: 15, rank: 3 },
+  free:    { repliesPerPost: 50,   postsPerPeriod: 3,  rank: 0 },
+  starter: { repliesPerPost: 150,  postsPerPeriod: 15, rank: 1 },
+  growth:  { repliesPerPost: 400,  postsPerPeriod: 15, rank: 2 },
+  pro:     { repliesPerPost: 1000, postsPerPeriod: 15, rank: 3 },
 };
 
 // Passes and free "periods" both span this many days.
@@ -42,9 +45,9 @@ const TOPUP = { replies: 300 };
 // INR and USD have real numbers (owner-approved price list). Fill the rest
 // with real local prices (rounded nicely for the market) before enabling.
 const PLAN_PRICES_MINOR = {
-  starter: { INR: 19900, USD: 500, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ },
-  growth:  { INR: 34900, USD: 900, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ },
-  pro:     { INR: 69900, USD: 1900, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ },
+  starter: { INR: 19900, USD: 600, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ },
+  growth:  { INR: 24900, USD: 900, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ },
+  pro:     { INR: 44900, USD: 1500, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ },
 };
 // Top-up price per currency, minor units (INR ₹79 = 7900 paise; USD $4).
 const TOPUP_PRICE_MINOR = { INR: 7900, USD: 400, EUR: null /* TODO-PRICE */, GBP: null /* TODO-PRICE */, JPY: null /* TODO-PRICE */, BRL: null /* TODO-PRICE */, IDR: null /* TODO-PRICE */ };

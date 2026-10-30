@@ -13,6 +13,7 @@ const provider = require("../src/billing/provider");
 const { grantPurchase } = require("../src/billing/grant");
 const {
   PLANS, TOPUP, priceMinor, topupPriceMinor, exponentOf, toMajor,
+  CURRENCIES, LOCALE_CURRENCY, currencyFromLocale,
 } = require("../src/pricing");
 
 const DAY = 864e5;
@@ -124,9 +125,9 @@ test("JPY and IDR use exponent 0; USD/EUR/GBP/BRL use 2", () => {
   assert.equal(exponentOf("IDR"), 0);
   assert.equal(exponentOf("USD"), 2);
   assert.equal(exponentOf("INR"), 2);
-  // JPY minor units ARE major units: 34900 minor -> 34900 yen, not 349.00
-  assert.equal(toMajor(34900, "JPY"), 34900);
-  assert.equal(toMajor(34900, "USD"), 349);
+  // JPY minor units ARE major units: 24900 minor -> 24900 yen, not 249.00
+  assert.equal(toMajor(24900, "JPY"), 24900);
+  assert.equal(toMajor(24900, "USD"), 249);
 });
 
 test("mock provider is disabled in production even when forced", () => {
@@ -326,4 +327,30 @@ test("GET /api/billing/history lists only this user's purchases", async () => {
   assert.equal(purchases.length, 1);
   assert.equal(purchases[0].razorpay_order_id, mine);
   assert.equal(purchases[0].status, "paid");
+});
+
+// ---------------------------------------------------------------- price table
+test("priceMinor returns the priced INR/USD values and null for unpriced currencies", () => {
+  assert.equal(priceMinor("starter", "INR"), 19900);
+  assert.equal(priceMinor("growth", "INR"), 24900);
+  assert.equal(priceMinor("pro", "INR"), 44900);
+  assert.equal(topupPriceMinor("INR"), 7900);
+  assert.equal(priceMinor("starter", "USD"), 600);
+  assert.equal(priceMinor("growth", "USD"), 900);
+  assert.equal(priceMinor("pro", "USD"), 1500);
+  assert.equal(topupPriceMinor("USD"), 400);
+  assert.equal(priceMinor("growth", "EUR"), null, "EUR stays unpriced");
+  assert.equal(topupPriceMinor("EUR"), null);
+});
+
+test("LOCALE_CURRENCY never defaults a user to an unpriced currency", () => {
+  const priced = new Set(["INR", "USD"]); // currencies with real numbers today
+  for (const cur of Object.values(LOCALE_CURRENCY)) assert.ok(priced.has(cur), `${cur} unpriced`);
+  for (const cur of CURRENCIES) {
+    if (priced.has(cur)) continue;
+    assert.ok(!Object.values(LOCALE_CURRENCY).includes(cur), `${cur} must not be a default`);
+  }
+  // every supported locale resolves to a priced currency
+  const { SUPPORTED } = require("../src/i18n");
+  for (const locale of SUPPORTED) assert.ok(priced.has(currencyFromLocale(locale)), locale);
 });

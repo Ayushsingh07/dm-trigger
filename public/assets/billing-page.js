@@ -99,10 +99,10 @@ function render(usage) {
       panel.style.display = "";
       $("upgradeTitle").textContent = curRank > 0 ? T("billing.renewUpgrade") : T("billing.choosePlan");
       pick.innerHTML = options.map((p) => {
-        const cur = usage.passPlan === p.id;
-        const label = p.rank > curRank ? T("billing.upgrade") : (cur ? T("billing.renew") : T("billing.choose"));
-        return '<div class="planopt' + (cur ? " cur" : "") + '">'
-          + '<div class="pname">' + p.id[0].toUpperCase() + p.id.slice(1) + (cur ? " " + T("billing.current") : "") + "</div>"
+        const isCurrent = usage.passPlan === p.id; // NOTE: do not name this `cur` — it shadowed the currency
+        const label = p.rank > curRank ? T("billing.upgrade") : (isCurrent ? T("billing.renew") : T("billing.choose"));
+        return '<div class="planopt' + (isCurrent ? " cur" : "") + '">'
+          + '<div class="pname">' + p.id[0].toUpperCase() + p.id.slice(1) + (isCurrent ? " " + T("billing.current") : "") + "</div>"
           + '<div class="pprice">' + priceIn(p.prices, cur) + " <small>" + T("billing.per30") + "</small></div>"
           + '<div class="pdesc">' + T("billing.planDesc", { replies: p.repliesPerPost, posts: p.postsPerPeriod }) + "</div>"
           + '<button class="pill ' + (cur ? "light" : "dark") + '" onclick="buyPass(\'' + p.id + '\')">' + label + "</button>"
