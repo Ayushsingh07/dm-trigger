@@ -68,9 +68,15 @@ fly secrets set META_APP_ID="<Meta app id>"
 fly secrets set META_APP_SECRET="<Meta app secret>"
 fly secrets set META_REDIRECT_URI="https://<app-name>.fly.dev/auth/callback"
 # Must match the Instagram product added in the Meta app dashboard.
-# instagram = "Instagram API with Instagram Login", facebook = "Instagram API with Facebook Login".
+# business = unified login ("Facebook Login for Business" with a configuration)
+#            -> also set META_CONFIG_ID below. Recommended.
+# facebook = "Instagram API with Facebook Login", instagram = legacy Instagram Login.
 # Wrong value => "Invalid platform app" on the login screen.
-fly secrets set META_OAUTH_FLOW="instagram"
+fly secrets set META_OAUTH_FLOW="business"
+# Configuration id from Meta dashboard -> Account Authorization -> Configurations.
+# Add https://<app-name>.fly.dev/auth/callback to that configuration's
+# "Allowed URLs for login from the web".
+fly secrets set META_CONFIG_ID="<login config id>"
 fly secrets set GRAPH_API_BASE="https://graph.instagram.com/v23.0"
 fly secrets set GRAPH_API_BETA_BASE="https://graph.facebook.com/v23.0"
 fly secrets set PUBLIC_BASE_URL="https://<app-name>.fly.dev"
@@ -178,6 +184,63 @@ fly ssh console            # shell inside the machine
 fly secrets list           # names only, never values
 ```
 
+## Local setup with ngrok
+
+Use this when the Meta app's redirect URI / webhook must be publicly reachable
+(`instagram.com` and `graph.facebook.com` reject `localhost` callbacks for most
+app types).
+
+```powershell
+cd c:\Users\ayush.kumar\dm-automation\dm-trigger
+npm install
+npm run build
+node server.js                 # http://localhost:3000
+
+# in a second terminal
+ngrok http 3000                # copy the https://<random>.ngrok-free.dev URL
+```
+
+Put that URL into `.env` (never commit `.env`):
+
+```ini
+PUBLIC_BASE_URL=https://<random>.ngrok-free.dev
+META_REDIRECT_URI=https://<random>.ngrok-free.dev/auth/callback
+META_OAUTH_FLOW=business
+META_CONFIG_ID=<configuration id>
+META_APP_ID=<app id>
+META_APP_SECRET=<app secret>
+GRAPH_API_BASE=https://graph.instagram.com/v23.0
+GRAPH_API_BETA_BASE=https://graph.facebook.com/v23.0
+VERIFY_TOKEN=<any string you also type into the dashboard>
+TOKEN_ENC_KEY=<openssl rand -base64 32>
+```
+
+Restart `node server.js` after every `.env` change (env is read once at boot).
+
+In the Meta dashboard:
+
+| Setting | Value |
+| --- | --- |
+| Login config -> *Allowed URLs for login from the web* | `https://<random>.ngrok-free.dev/auth/callback` |
+| Webhook -> Callback URL | `https://<random>.ngrok-free.dev/webhook` |
+| Webhook -> Verify token | the same `VERIFY_TOKEN` |
+| Webhook -> fields | `comments`, `messages` |
+
+`trust proxy` is already enabled, so the app sees the `https` protocol and the
+real client IP behind ngrok. The Origin/CSRF guard only applies to browser
+writes from `PUBLIC_BASE_URL`; `/webhook` and `/auth/*` are exempt because Meta's
+servers never send a matching Origin.
+
+Check the login URL the app builds (must start with
+`https://www.facebook.com/dialog/oauth`):
+
+```powershell
+curl.exe -s -i -b cookies.txt -H "Accept: text/html" http://localhost:3000/auth/connect | Select-String Location
+```
+
+ngrok's free URL changes on every restart — update `.env` and the dashboard
+each time.
+
 ## Troubleshooting
 
 ### "Invalid request: Request parameters are invalid: Invalid platform app"
@@ -186,27 +249,38 @@ Meta rejects the login because the app on Meta's side does not offer the login
 product the app is asking for. Check these in order, in
 [developers.facebook.com](https://developers.facebook.com) -> your app:
 
-1. **Add the right Instagram product.** *Use cases* (or *App settings -> Basic*)
-   must show one of:
-   - **Instagram API with Instagram Login** -> set `META_OAUTH_FLOW=instagram`
-   - **Instagram API with Facebook Login** -> set `META_OAUTH_FLOW=facebook`
+1. **Which login product does the app actually have?** Open
+   *App settings -> Basic* and check *How did you set up <AppName>?* / the
+   product list. Then set `META_OAUTH_FLOW` to match:
+   - **Facebook Login for Business** with a configuration id (this is what most
+     new Instagram apps get — the login screen says "Continue with Facebook")
+     -> `META_OAUTH_FLOW=business` **and** `META_CONFIG_ID=<configuration id>`
+     from *Account Authorization -> Configurations*. The dialog then uses
+     `facebook.com/dialog/oauth?client_id=…&config_id=…` and sends **no scope**
+     (permissions come from the configuration).
+   - **Instagram API with Facebook Login** -> `META_OAUTH_FLOW=facebook`
+   - **Instagram API with Instagram Login** -> `META_OAUTH_FLOW=instagram`
+     (only this one may open `instagram.com/oauth/authorize`)
 
    If the app only has "Instagram Graph API" (the old Business Manager product)
    or nothing at all, the dialog fails exactly like this. Add the product, then
    match `META_OAUTH_FLOW` to it and restart.
-2. **App mode must be Live**, not "Development". In development mode only
+2. **The redirect URI must be registered in the right place.** For
+   `META_OAUTH_FLOW=business` it goes into the *login configuration*
+   ("Allowed URLs for login from the web"), not only the app's
+   *Facebook Login -> Settings -> Valid OAuth Redirect URIs*. It must match
+   `META_REDIRECT_URI` character for character (`https`, no trailing slash).
+3. **App mode must be Live**, not "Development". In development mode only
    people listed under *App roles -> Roles* can log in.
-3. **Valid OAuth Redirect URI** must contain your callback character for
-   character: `https://<app-name>.fly.dev/auth/callback` (https, no trailing
-   slash). Same for *App settings -> Basic -> App domains*.
 4. **App ID / App Secret** in the secrets must belong to *this* app
    (*App settings -> Basic*). A secret copied from a different app produces the
    same class of error.
 
-Then re-apply the secret and restart:
+Then re-apply the secrets and restart:
 
 ```powershell
-fly secrets set META_OAUTH_FLOW="facebook"
+fly secrets set META_OAUTH_FLOW="business"
+fly secrets set META_CONFIG_ID="<login config id>"
 fly logs
 ```
 

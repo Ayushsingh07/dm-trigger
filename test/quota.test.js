@@ -135,7 +135,7 @@ test("refund returns one unit and never goes below zero", () => {
 // A permanently failed Meta send must give the unit back (integration through
 // the real pipeline with a stubbed Meta client).
 test("a failed send refunds the unit; a delivered DM does not", async () => {
-  const real = { sendDM: meta.sendDM, sendPrivateReply: meta.sendPrivateReply, isFollower: meta.isFollower };
+  const real = { sendDM: meta.sendDM, sendCommentDM: meta.sendCommentDM, sendPrivateReply: meta.sendPrivateReply, isFollower: meta.isFollower };
   try {
     const u = makeUser();
     setPass(u.id, "growth", 10);
@@ -145,7 +145,7 @@ test("a failed send refunds the unit; a delivered DM does not", async () => {
     // non-retryable failure (permission error -> shouldRetry false)
     meta.sendPrivateReply = async () => ({ ok: true, dryRun: true });
     meta.isFollower = async () => ({ dryRun: true, is_follower: true });
-    meta.sendDM = async () => ({ ok: false, status: 400, error: { error: { code: 200, message: "missing permission" } } });
+    meta.sendCommentDM = async () => ({ ok: false, status: 400, error: { error: { code: 200, message: "missing permission" } } });
 
     await actions.handleCommentEvent(acct.ig_user_id, {
       id: "cmt_fail_1", text: "guide", from: { id: "9001", username: "flo" }, media: { id: "media_fail" },
@@ -155,6 +155,7 @@ test("a failed send refunds the unit; a delivered DM does not", async () => {
 
     // now a successful send keeps the charge
     meta.sendDM = async () => ({ ok: true, dryRun: true });
+    meta.sendCommentDM = async () => ({ ok: true, dryRun: true });
     await actions.handleCommentEvent(acct.ig_user_id, {
       id: "cmt_ok_1", text: "guide", from: { id: "9002", username: "sam" }, media: { id: "media_ok" },
     });

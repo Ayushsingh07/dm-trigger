@@ -51,11 +51,14 @@ app.use(express.json({
 // present and does not match PUBLIC_BASE_URL (classic CSRF guard for a
 // cookie-authenticated app). Requests without an Origin (curl, Meta servers)
 // pass — they cannot be forged by a browser anyway.
+// /webhook and /auth/* are exempt: they are driven by Meta's servers, whose
+// Origin (if any) can never match ours.
 const allowedOrigin = (() => {
   try { return new URL(config.publicBaseUrl).origin; } catch { return ""; }
 })();
+const isMetaDriven = (path) => path === "/webhook" || path === "/auth" || path.startsWith("/auth/");
 app.use((req, res, next) => {
-  if (allowedOrigin && ["POST", "PATCH", "DELETE", "PUT"].includes(req.method)) {
+  if (allowedOrigin && !isMetaDriven(req.path) && ["POST", "PATCH", "DELETE", "PUT"].includes(req.method)) {
     const origin = req.headers.origin;
     if (origin && origin !== allowedOrigin) {
       logger.warn({ origin, path: req.path }, "[csrf] rejected cross-origin write");

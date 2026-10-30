@@ -122,6 +122,8 @@ function logBlockOnce(userId, mediaId, reason, commenterName) {
 
 async function runRule({ account, rule, accountId, commenterId, commenterName, commentId, mediaId }) {
   const accessToken = account?.accessToken || "DRY_RUN_TOKEN";
+  // Under unified login the IG business account id goes in the request path.
+  const igId = account?.ig_user_id;
 
   // 1. Followers-only gate.
   if (rule.followersOnly) {
@@ -141,9 +143,11 @@ async function runRule({ account, rule, accountId, commenterId, commenterName, c
     `Sent you a DM! 📩 Check your inbox, ${commenterName}.`);
   logger.info({ comment: commentId, ok: replyRes.ok }, "[reply]");
 
-  // 3. Private DM with text + up to 3 link buttons.
+  // 3. Private DM with text + up to 3 link buttons. Addressed by comment_id
+  //    (Meta's "private reply"), which works before the commenter has ever
+  //    opened a conversation.
   const message = meta.buildDMMessage(rule.dmText, rule.links, commenterName);
-  const dmRes = await meta.sendDM(accessToken, commenterId, message);
+  const dmRes = await meta.sendCommentDM(accessToken, igId, commentId, message);
   logger.info({ to: commenterId, ok: dmRes.ok, dryRun: !!dmRes.dryRun }, "[dm]");
   if (!dmRes.ok) {
     // Failed after retries (or never retryable). Refund unless Meta might
@@ -182,7 +186,7 @@ async function sendReminder(conv) {
   // Mark first so a crash mid-send can't double-nudge.
   store.updateConversation(conv.id, { reminded: true });
   const res = await meta.sendDM(accessToken, conv.psid,
-    { text: `Still want ${keyword}? Tap the link above 👆` });
+    { text: `Still want ${keyword}? Tap the link above 👆` }, account?.ig_user_id);
   logger.info({ conv: conv.id, ok: res.ok }, "[reminder]");
 }
 

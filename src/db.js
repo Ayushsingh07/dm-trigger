@@ -43,7 +43,8 @@ CREATE TABLE IF NOT EXISTS accounts (
   access_token    TEXT,
   user_id         TEXT REFERENCES users(id),
   connected_at    TEXT NOT NULL,
-  token_issued_at TEXT            -- when the stored long-lived token was minted/refreshed
+  token_issued_at TEXT,           -- when the stored long-lived token was minted/refreshed
+  page_id         TEXT            -- Facebook Page the IG business account hangs off (unified login)
 );
 
 CREATE TABLE IF NOT EXISTS rules (
@@ -153,6 +154,7 @@ CREATE INDEX IF NOT EXISTS idx_purchases_user  ON purchases(user_id, status);
 for (const stmt of [
   "ALTER TABLE conversations ADD COLUMN reminder_at TEXT",
   "ALTER TABLE accounts ADD COLUMN token_issued_at TEXT",
+  "ALTER TABLE accounts ADD COLUMN page_id TEXT",
   // prepaid pass + per-post quota
   "ALTER TABLE users ADD COLUMN pass_plan TEXT",
   "ALTER TABLE users ADD COLUMN pass_started_at TEXT",

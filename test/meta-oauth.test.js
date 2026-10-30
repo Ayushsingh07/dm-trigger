@@ -42,6 +42,65 @@ test("instagram flow builds the instagram.com authorize URL", () => {
   }
 });
 
+// Unified login = "Facebook Login for Business" with a configuration. The
+// dialog is /dialog/oauth (no API version in the path), carries client_id and
+// config_id, and must NOT carry a scope — permissions come from the config.
+test("unified login dialog uses client_id + config_id, no scope, no API version", () => {
+  const prev = config.metaOAuthFlow, prevCfg = config.metaConfigId;
+  config.metaOAuthFlow = "business";
+  config.metaConfigId = "1104328282219829";
+  try {
+    const url = meta.buildOAuthUrl({ state: "st3" });
+    const u = new URL(url);
+    assert.equal(u.origin, "https://www.facebook.com");
+    assert.equal(u.pathname, "/dialog/oauth");
+    assert.equal(u.searchParams.get("client_id"), "4242424242");
+    assert.equal(u.searchParams.get("config_id"), "1104328282219829");
+    assert.equal(u.searchParams.get("redirect_uri"), "http://localhost:3000/auth/callback");
+    assert.equal(u.searchParams.get("response_type"), "code");
+    assert.equal(u.searchParams.get("override_default_response_type"), "true");
+    assert.equal(u.searchParams.get("state"), "st3");
+    assert.doesNotMatch(url, /scope=/);
+  } finally {
+    config.metaOAuthFlow = prev;
+    config.metaConfigId = prevCfg;
+  }
+});
+
+// Under unified login the IG business account id belongs in the request path;
+// "/me/messages" is the legacy Instagram Login shape.
+test("unified login sends DMs to /{ig-business-account-id}/messages on graph.facebook.com", async () => {
+  const prev = config.metaOAuthFlow;
+  config.metaOAuthFlow = "business";
+  try {
+    const real = global.fetch;
+    let seen = "";
+    global.fetch = async (url) => { seen = String(url); return { ok: true, status: 200, json: async () => ({}) }; };
+    try {
+      await meta.sendDM("page-token", "1234", { text: "hi" }, "17899999");
+      assert.equal(seen, "https://graph.facebook.com/v23.0/17899999/messages");
+      await meta.sendCommentDM("page-token", "17899999", "cmt1", { text: "hi" });
+      assert.equal(seen, "https://graph.facebook.com/v23.0/17899999/messages");
+    } finally {
+      global.fetch = real;
+    }
+  } finally {
+    config.metaOAuthFlow = prev;
+  }
+});
+
+test("Login for Business without META_CONFIG_ID returns null", () => {
+  const prev = config.metaOAuthFlow, prevCfg = config.metaConfigId;
+  config.metaOAuthFlow = "business";
+  config.metaConfigId = "";
+  try {
+    assert.equal(meta.buildOAuthUrl({ state: "st4" }), null);
+  } finally {
+    config.metaOAuthFlow = prev;
+    config.metaConfigId = prevCfg;
+  }
+});
+
 test("metaErrorText surfaces Meta's message and hints at the flow mismatch", () => {
   const text = meta.metaErrorText({
     status: 400,
