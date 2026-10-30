@@ -193,6 +193,13 @@ const PAGE_BY_PATH = {
 const LOCALIZED_RE = new RegExp(
   "^/(" + SUPPORTED.filter((l) => l !== "en").join("|") + ")(/(?:pricing|privacy|terms|data-deletion))?/?$");
 
+// App pages are session-gated and have ONE canonical URL each (/app, /login,
+// ...). A locale-prefixed variant like /hi/app must not 404: redirect to the
+// canonical path and remember the language in the cookie (resolveLocale's
+// next priority after the URL), so the page renders in that language.
+const APP_PAGE_RE = new RegExp(
+  "^/(" + SUPPORTED.join("|") + ")/(app|login|signup|billing|admin)/?$");
+
 function localeRouting(req, res, next) {
   if (req.method !== "GET") return next();
   const path = (req.path.replace(/\/+$/, "") || "/");
@@ -212,6 +219,12 @@ function localeRouting(req, res, next) {
     // make the URL prefix the top priority for resolveLocale
     req.params = { ...req.params, lang: m[1] };
     return serve(PAGE_BY_PATH[m[2] || "/"])(req, res);
+  }
+  const app = APP_PAGE_RE.exec(path);
+  if (app) {
+    res.append("Set-Cookie", localeCookieHeader(app[1], 365 * 86400));
+    const qs = (req.originalUrl.match(/\?.*$/) || [""])[0];
+    return res.redirect(302, "/" + app[2] + qs);
   }
   next();
 }

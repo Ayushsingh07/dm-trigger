@@ -1,4 +1,4 @@
-# Deploying ReplyLo to Fly.io (Windows)
+  # Deploying ReplyLo to Fly.io (Windows)
 
 One always-on `shared-cpu-1x / 256mb` machine in Mumbai (`bom`) with a 1 GB
 persistent volume mounted at `/data`. The SQLite DB lives at

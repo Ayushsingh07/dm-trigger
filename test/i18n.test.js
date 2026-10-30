@@ -202,3 +202,29 @@ test("tplural: falls back to other when the exact category is missing", () => {
 test("tplural: unknown key returns the key itself", () => {
   assert.strictEqual(tplural("en", "nope.missing", 3, { count: 3 }), "nope.missing");
 });
+
+test("localeRouting: /<lang>/app-style pages redirect to the canonical URL with the lang cookie", () => {
+  const cases = [
+    ["/hi/app", "/app"], ["/ja/login", "/login"], ["/ko/signup", "/signup"],
+    ["/de/billing", "/billing"], ["/fr/admin", "/admin"], ["/bn/app/", "/app"],
+  ];
+  for (const [from, to] of cases) {
+    const res = fakeRes();
+    localeRouting({ method: "GET", path: from, originalUrl: from, headers: {} }, res, () => {});
+    assert.strictEqual(res.statusCode, 302, `${from} must redirect`);
+    assert.strictEqual(res.location, to, `${from} -> ${to}`);
+    const cookie = (res.headers["Set-Cookie"] || []).join(";");
+    assert.ok(cookie.includes("rf_lang="), `${from} must set the lang cookie`);
+  }
+});
+
+test("localeRouting: /hi/app keeps the query string; /webhook and /api still fall through", () => {
+  const res = fakeRes();
+  localeRouting({ method: "GET", path: "/hi/app", originalUrl: "/hi/app?x=1", headers: {} }, res, () => {});
+  assert.strictEqual(res.location, "/app?x=1");
+  for (const path of ["/webhook", "/api/status", "/billing/webhook"]) {
+    let nexted = false;
+    localeRouting({ method: "GET", path, originalUrl: path, headers: {} }, fakeRes(), () => { nexted = true; });
+    assert.ok(nexted, `${path} must not be touched`);
+  }
+});
