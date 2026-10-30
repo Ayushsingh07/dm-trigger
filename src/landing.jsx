@@ -419,9 +419,9 @@ function Phone({ type, keyword, dmText, stage, frame, ...inter }) {
     <div className="relative flex justify-center py-6">
       <div className="relative">
         <FloatingChips onLike={inter.onLike} />
-        <div className="tilt relative w-[300px] overflow-hidden rounded-[46px] border-[10px] border-ink bg-white shadow-lift">
-          <div className="absolute left-1/2 top-2.5 z-30 h-5 w-24 -translate-x-1/2 rounded-full bg-ink" />
-          <div className="relative h-[500px] overflow-hidden">
+        <div className="tilt relative w-[300px] overflow-hidden rounded-[46px] border-[10px] border-transparent bg-[linear-gradient(180deg,_#ffffff_0%,_#f8fafc_100%)] shadow-[0_36px_80px_rgba(15,23,42,0.18)] ring-1 ring-slate-200/80">
+          <div className="absolute left-1/2 top-2.5 z-30 h-5 w-24 -translate-x-1/2 rounded-full bg-slate-900/90" />
+          <div className="relative h-[500px] overflow-hidden rounded-[36px] bg-white">
             <div className="flex h-full w-[200%] transition-transform duration-700 [transition-timing-function:cubic-bezier(.6,.05,.3,1)]"
               style={{ transform: inDm ? "translateX(-50%)" : "translateX(0)" }}>
               <div className="relative h-full w-1/2 shrink-0 overflow-hidden">
@@ -490,10 +490,13 @@ function Hero() {
 
   return (
     <section id="demo" className="relative overflow-hidden">
-      {/* backdrop glow */}
-      <div className="pointer-events-none absolute -top-32 left-1/2 h-[480px] w-[820px] -translate-x-1/2 rounded-full bg-teal/10 blur-3xl" />
-      <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-14 md:grid-cols-[1.05fr_.95fr]">
-        <div>
+      {/* premium backdrop glow */}
+      <div className="pointer-events-none absolute -top-28 left-1/2 h-[520px] w-[860px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(13,148,136,0.18),_rgba(13,148,136,0)_60%)] blur-3xl" />
+      <div className="mx-auto max-w-6xl px-4 pb-20 pt-14">
+        <div className="relative overflow-hidden rounded-[32px] border border-line bg-[linear-gradient(135deg,_rgba(255,255,255,0.96),_rgba(244,246,250,0.92))] px-5 py-6 shadow-[0_28px_80px_rgba(12,21,36,0.08)] ring-1 ring-black/5 md:px-8 md:py-8">
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white/80 via-white/10 to-transparent" />
+          <div className="mx-auto grid items-center gap-12 md:grid-cols-[1.05fr_.95fr]">
+            <div>
           <Reveal>
             <span className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-3.5 py-1.5 text-[13px] font-semibold text-slateInk shadow-soft">
               <span className="relative flex h-2 w-2"><span className="absolute h-full w-full animate-ping rounded-full bg-teal/60" /><span className="h-2 w-2 rounded-full bg-teal" /></span>
@@ -514,7 +517,7 @@ function Hero() {
 
           {/* control card */}
           <Reveal delay={240}>
-            <div className="mt-8 max-w-md rounded-2xl border border-line bg-white p-5 shadow-soft">
+            <div className="mt-8 max-w-md rounded-[24px] border border-slate-200 bg-[linear-gradient(180deg,_#ffffff_0%,_#f8fafc_100%)] p-5 shadow-[0_18px_34px_rgba(15,23,42,0.08)] ring-1 ring-white/60">
               <div className="flex flex-wrap gap-2">
                 {TYPES.map((t) => (
                   <button key={t.id} onClick={() => pickType(t)}
@@ -570,6 +573,8 @@ function Hero() {
               liked={liked} likeCount={likeCount} reel={reel} onLike={onLike} onCommentTap={onCommentTap} onShare={onShare} />
           </div>
         </Reveal>
+          </div>
+        </div>
       </div>
     </section>
   );
