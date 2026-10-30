@@ -46,6 +46,10 @@ async function runDueReminders() {
 }
 
 // ---------------------------------------------------------------- token refresh
+// Under unified login the stored token is a *Page* access token, which Meta
+// documents as non-expiring; the exchange below is then a harmless no-op that
+// simply re-validates it. TODO(meta-docs): confirm Page-token lifetime and skip
+// the call entirely if Meta starts rejecting it.
 async function refreshStaleTokens() {
   const rows = store.listAccountRows();
   const nowMs = Date.now();

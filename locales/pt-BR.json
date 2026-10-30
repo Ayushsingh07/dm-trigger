@@ -441,7 +441,10 @@
     "planLine": "Plano {plan} · {used} de {total} publicações usadas · {replies} respostas por publicação",
     "daysLeft.one": "resta {count} dia",
     "daysLeft.other": "restam {count} dias",
-    "planUnavailable": "Detalhes do plano indisponíveis."
+    "planUnavailable": "Detalhes do plano indisponíveis.",
+    "connectErrorTitle": "Problema ao conectar o Instagram",
+    "connectOk": "Instagram conectado.",
+    "connectDryRun": "Simulação: as credenciais da Meta não estão configuradas, a conta não foi realmente conectada."
   },
   "admin": {
     "title": "Admin — {brand}",

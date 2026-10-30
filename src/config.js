@@ -15,11 +15,27 @@ const config = {
   metaAppSecret: process.env.META_APP_SECRET || "",   // App secret from Meta dashboard
   // OAuth redirect that you register in the Meta app. Empty for now.
   metaRedirectUri: process.env.META_REDIRECT_URI || "",
+  // "Login for Business" config id (Instagram -> Account Authorization ->
+  // Configurations in the Meta dashboard). When set, the login dialog is
+  // driven by this id instead of META_APP_ID + scope list.
+  metaConfigId: process.env.META_CONFIG_ID || "",
 
   // --- Meta Graph API endpoints (left empty for now; filled when you configure) ---
   // When empty, every Meta call runs in dry-run mode and is logged instead of sent.
   graphApiBase: process.env.GRAPH_API_BASE || "",     // e.g. "https://graph.instagram.com/v23.0"
   graphApiBetaBase: process.env.GRAPH_API_BETA_BASE || "", // e.g. "https://graph.facebook.com/v23.0"
+
+  // Which Instagram API integration the Meta app was created with:
+  //   "instagram" -> "Instagram API with Instagram Login"  (login on instagram.com,
+  //                 tokens work on graph.instagram.com)
+  //   "facebook"  -> "Instagram API with Facebook Login"   (login on facebook.com,
+  //                 tokens work on graph.facebook.com)
+  //   "business"  -> Unified login: "Facebook Login for Business" driven by a
+  //                 configuration id (META_CONFIG_ID). Same Graph host as
+  //                 "facebook", but the dialog carries config_id and no scope.
+  // Picking the wrong one makes Meta reject the dialog with
+  // "Invalid platform app". Must match the product added in the Meta dashboard.
+  metaOAuthFlow: (process.env.META_OAUTH_FLOW || "instagram").trim().toLowerCase(),
 
   // --- This server's public URL (ngrok etc.). Empty for now. ---
   publicBaseUrl: process.env.PUBLIC_BASE_URL || "",

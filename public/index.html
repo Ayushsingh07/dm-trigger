@@ -202,6 +202,11 @@
 
 <div class="wrap">
 
+  <div id="connectBanner" class="panel" style="display:none;margin-bottom:22px;border-color:#e0b4b4;background:#fff5f5">
+    <h2 id="connectBannerTitle" style="font-size:15px;margin:0 0 6px">Instagram connection problem</h2>
+    <p id="connectBannerMsg" class="sub" style="margin:0;word-break:break-word"></p>
+  </div>
+
   <div class="greet">
     <h1 id="greetTitle">{{t:app.greetDefault}}</h1>
     <p>{{t:app.greetSub}}</p>
@@ -383,6 +388,33 @@ async function runDemo() {
   btn.disabled = false; btn.style.opacity = 1;
   demoRunning = false;
 }
+
+/* ---------------- connect (OAuth) result banner ---------------- */
+(function showConnectResult() {
+  const q = new URLSearchParams(location.search);
+  const err = q.get("connect_error");
+  const ok = q.get("connect");
+  if (!err && !ok) return;
+  const banner = document.getElementById("connectBanner");
+  const title = document.getElementById("connectBannerTitle");
+  const msg = document.getElementById("connectBannerMsg");
+  const T = (k, d) => (window.I18N ? I18N.t(k) : d);
+  if (err) {
+    title.textContent = T("app.connectErrorTitle", "Instagram connection problem");
+    msg.textContent = err;
+  } else if (ok === "ok") {
+    banner.style.borderColor = "#bfe3cf"; banner.style.background = "#f2fbf6";
+    title.textContent = T("app.connectOk", "Instagram connected.");
+    msg.textContent = "";
+  } else if (ok === "dryrun") {
+    banner.style.borderColor = "#f0dfb8"; banner.style.background = "#fffdf3";
+    title.textContent = T("app.connectDryRun", "Dry run: Meta credentials are not configured, so the account was not really connected.");
+    msg.textContent = "";
+  }
+  banner.style.display = "";
+  // Keep the URL tidy so a reload doesn't repeat the message.
+  history.replaceState(null, "", location.pathname);
+})();
 
 /* ---------------- auth gate ---------------- */
 fetch("/auth/me").then(r => r.json()).then(j => {

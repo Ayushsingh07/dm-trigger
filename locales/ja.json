@@ -441,7 +441,10 @@
     "planLine": "プラン{plan} · {total}投稿中{used}投稿使用 · 投稿あたり{replies}返信",
     "daysLeft.one": "残り{count}日",
     "daysLeft.other": "残り{count}日",
-    "planUnavailable": "プラン詳細を取得できません。"
+    "planUnavailable": "プラン詳細を取得できません。",
+    "connectErrorTitle": "Instagram 接続の問題",
+    "connectOk": "Instagram に接続しました。",
+    "connectDryRun": "ドライラン: Meta の認証情報が未設定のため、アカウントは実際には接続されていません。"
   },
   "admin": {
     "title": "管理 — {brand}",

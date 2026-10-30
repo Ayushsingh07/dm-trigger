@@ -3,6 +3,7 @@
 const express = require("express");
 const store = require("../store");
 const meta = require("../meta");
+const logger = require("../logger");
 const config = require("../config");
 const {
   hashPassword, verifyPassword, createSession, destroySession,
@@ -78,17 +79,22 @@ router.get("/me", (req, res) => {
 // ---------------------------------------------------------------- Meta OAuth
 // GET /auth/connect — start Meta OAuth for the signed-in user.
 // Linked directly from the dashboard ("Connect Instagram"), so a browser
-// navigation must 302 straight to Instagram; JSON clients still get the URL.
+// navigation must 302 straight to Meta; JSON clients still get the URL.
+// `state` is a fresh random nonce stored server-side against the user
+// (store.createOAuthState: single-use + expiring), which is stronger than a
+// session cookie and survives a restart.
 router.get("/connect", requireUser, (req, res) => {
   const state = store.createOAuthState(req.user.id);
   const url = meta.buildOAuthUrl({ state });
   if (!url) {
+    const required = {
+      META_APP_ID: config.metaAppId, META_APP_SECRET: config.metaAppSecret,
+      META_REDIRECT_URI: config.metaRedirectUri, GRAPH_API_BASE: config.graphApiBase,
+    };
+    if (config.metaOAuthFlow === "business") required.META_CONFIG_ID = config.metaConfigId;
     return res.status(503).json({
       error: "Meta OAuth is not configured yet",
-      missing: Object.entries({
-        META_APP_ID: config.metaAppId, META_APP_SECRET: config.metaAppSecret,
-        META_REDIRECT_URI: config.metaRedirectUri, GRAPH_API_BASE: config.graphApiBase,
-      }).filter(([, v]) => !v).map(([k]) => k),
+      missing: Object.entries(required).filter(([, v]) => !v).map(([k]) => k),
       note: "Set the env vars (see .env.example), restart, then try again.",
     });
   }
@@ -99,17 +105,25 @@ router.get("/connect", requireUser, (req, res) => {
 
 // GET /auth/callback — Meta redirects back with ?code= and ?state=.
 router.get("/callback", async (req, res) => {
-  const { code, state, error } = req.query;
+  const { code, state, error, error_description: errorDescription } = req.query;
   const back = (msg, extra = {}) =>
     res.redirect(`/app?connect_error=${encodeURIComponent(msg)}${Object.entries(extra).map(([k, v]) => `&${k}=${v}`).join("")}`);
 
-  if (error) return back(String(error));
+  // The user (or Meta) cancelled the dialog. Log the reason server-side without
+  // any token material; show a friendly line in the dashboard.
+  if (error) {
+    logger.warn({ error, errorDescription: errorDescription || "" }, "[oauth] login rejected by Meta");
+    const friendly = String(error) === "access_denied"
+      ? "Login was cancelled, so no Instagram account was connected"
+      : `Meta rejected the login: ${String(errorDescription || error)}`;
+    return back(friendly);
+  }
   if (!code || !state) return back("Missing code or state");
   const stateEntry = store.consumeOAuthState(state);
   if (!stateEntry) return back("Unknown or expired state");
 
   const short = await meta.exchangeCode(code);
-  if (!short.ok) return back("Token exchange failed");
+  if (!short.ok) return back(meta.metaErrorText(short));
 
   if (short.dryRun) {
     store.trackEvent("connect_dry_run", stateEntry.user_id);
@@ -121,6 +135,16 @@ router.get("/callback", async (req, res) => {
   if (long.ok && long.access_token) accessToken = long.access_token;
 
   const profile = await meta.fetchIgProfile(accessToken);
+  if (!profile.ok) {
+    const text = meta.metaErrorText(profile);
+    // Meta answered correctly but no Page carries an IG account — say what to fix.
+    if (/No Instagram Business account/i.test(text)) {
+      return back("No Instagram Business or Creator account is linked to a Facebook Page you manage. Convert the Instagram account to Business/Creator, link it to a Page, then connect again.");
+    }
+    return back(text);
+  }
+  // Under unified login the Page token is what Graph accepts for messaging.
+  accessToken = profile.pageAccessToken || accessToken;
 
   // Plan limit: max connected accounts.
   const limits = store.limitsForPlan(store.effectivePlan(store.getUserById(stateEntry.user_id)));
@@ -135,6 +159,7 @@ router.get("/callback", async (req, res) => {
     accessToken,
     userId: stateEntry.user_id,
     tokenIssuedAt: new Date().toISOString(),
+    pageId: profile.pageId || null,
   });
   store.trackEvent("connect", stateEntry.user_id, { ig: account.username });
   res.redirect("/app?connect=ok");

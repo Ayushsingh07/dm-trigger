@@ -54,18 +54,19 @@ function setUserCurrency(userId, currency) {
 // ---------------------------------------------------------------- accounts
 // access_token is encrypted at rest (see src/crypto.js). Callers always see
 // plaintext; the ciphertext never leaves this module.
-function upsertAccount({ igUserId, username, accessToken, userId, tokenIssuedAt }) {
+function upsertAccount({ igUserId, username, accessToken, userId, tokenIssuedAt, pageId }) {
   const existing = db.prepare("SELECT * FROM accounts WHERE ig_user_id = ?").get(String(igUserId));
-  db.prepare(`INSERT INTO accounts (ig_user_id, username, access_token, user_id, connected_at, token_issued_at)
-              VALUES (?,?,?,?,?,?)
+  db.prepare(`INSERT INTO accounts (ig_user_id, username, access_token, user_id, connected_at, token_issued_at, page_id)
+              VALUES (?,?,?,?,?,?,?)
               ON CONFLICT(ig_user_id) DO UPDATE SET
                 username = excluded.username,
                 access_token = excluded.access_token,
                 user_id = COALESCE(excluded.user_id, accounts.user_id),
-                token_issued_at = excluded.token_issued_at`)
+                token_issued_at = excluded.token_issued_at,
+                page_id = COALESCE(excluded.page_id, accounts.page_id)`)
     .run(String(igUserId), username || null, sealToken(accessToken) ?? null,
       userId || existing?.user_id || null, existing?.connected_at || now(),
-      tokenIssuedAt || now());
+      tokenIssuedAt || now(), pageId || existing?.page_id || null);
   return getAccount(igUserId);
 }
 

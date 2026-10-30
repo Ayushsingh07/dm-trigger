@@ -441,7 +441,10 @@
     "planLine": "திட்டம் {plan} · {total} போஸ்ட்களில் {used} பயன்படுத்தப்பட்டது · போஸ்ட்டுக்கு {replies} பதில்கள்",
     "daysLeft.one": "{count} நாள் மீதம்",
     "daysLeft.other": "{count} நாட்கள் மீதம்",
-    "planUnavailable": "திட்ட விவரங்கள் கிடைக்கவில்லை."
+    "planUnavailable": "திட்ட விவரங்கள் கிடைக்கவில்லை.",
+    "connectErrorTitle": "Instagram இணைப்பில் சிக்கல்",
+    "connectOk": "Instagram இணைக்கப்பட்டது.",
+    "connectDryRun": "டிரை ரன்: Meta சான்றுகள் அமைக்கப்படவில்லை, எனவே கணக்கு உண்மையில் இணைக்கப்படவில்லை."
   },
   "admin": {
     "title": "அட்மின் — {brand}",

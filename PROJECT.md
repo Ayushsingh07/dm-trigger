@@ -68,7 +68,7 @@ For creators/small brands who sell via comments; original product, not a DMFast 
 - Dev/run: `node server.js` or `npm start` → http://localhost:3000. Restart needed for JS changes.
 - Test: `npm test` -> node:test suite, 125 tests, all green (crypto, store, auth, webhook over real HTTP, actions, quota, billing, i18n, locales).
 - Locale check: `npm run check:locales` (scripts/check-locales.js) compares every locales/*.json with en.json — errors (exit 1) on missing/extra keys, placeholder drift, empty values, invalid JSON; warns when a translation is >1.6x the English length. `--allow-empty` downgrades empties to warnings (use while translations are in progress — the repo currently ships mostly-empty locales, so CI should use `--allow-empty`).
-- Deploy: see DEPLOY.md (flyctl on Windows; fly launch --no-deploy, volume, secrets, deploy).
+- Deploy: see DEPLOY.md (flyctl on Windows; fly launch --no-deploy, volume, secrets, deploy). DEPLOY.md also has "Local setup with ngrok" for testing the real Meta login/webhook locally.
 - Pages: `/` landing · `/app` dashboard · `/billing` (plan, usage, upgrades, history) · `/login` `/signup` · `/admin` · `/pricing` · `/privacy` `/terms` `/data-deletion` · `/health`.
 
 ## 5. ENVIRONMENT VARIABLES (names only — never commit values; .env is gitignored)
@@ -76,7 +76,21 @@ For creators/small brands who sell via comments; original product, not a DMFast 
 - ADMIN_EMAIL / ADMIN_PASSWORD — admin account created on first boot (optional once the admin exists).
 - META_APP_ID / META_APP_SECRET / META_REDIRECT_URI — Meta OAuth app creds.
   META_APP_SECRET also verifies X-Hub-Signature-256 + Meta signed_request.
+- META_CONFIG_ID — "Login for Business" configuration id, required when
+  META_OAUTH_FLOW=business. The configuration carries the app id, the
+  permissions and the allowed redirect URIs, so the dialog sends no scope.
+- META_OAUTH_FLOW — `business` for UNIFIED LOGIN ("Facebook Login for Business"
+  with a configuration: dialog facebook.com/dialog/oauth?client_id=..&config_id=..,
+  tokens on graph.facebook.com, IG account + Page token from /me/accounts);
+  `instagram` (default) for "Instagram API with Instagram Login" (login on
+  instagram.com, tokens on graph.instagram.com); or `facebook` for "Instagram
+  API with Facebook Login" (login on facebook.com, tokens on
+  graph.facebook.com, IG account resolved via /me/accounts). Must match the
+  product added in the Meta app dashboard — the wrong value makes the login
+  dialog fail with "Invalid request: Request parameters are invalid: Invalid
+  platform app".
 - GRAPH_API_BASE / GRAPH_API_BETA_BASE — Graph API URLs; empty => DRY-RUN everything.
+  facebook flow needs GRAPH_API_BETA_BASE=https://graph.facebook.com/vXX.0.
 - PUBLIC_BASE_URL — public URL; when set, enables the cross-origin write check.
 - REMINDER_MINUTES — default reminder delay.
 - DATABASE_PATH — SQLite file (default data/replylo.db; /data/replylo.db on Fly).
@@ -168,7 +182,9 @@ DONE (billing): prepaid-pass data model (post_usage, purchases, pass columns), p
 - Meta limits: DM only within 24h window; button templates max 3; private replies need instagram_manage_engagement + instagram_manage_messages; isFollower needs beta Graph API (unverified exact path).
 - TOKEN_ENC_KEY: set before first OAuth connect; rotating it later orphans stored tokens (decrypt returns null -> dry-run token fallback).
 - UNIQUE(comment_id): demo events reuse fresh ids; NULL comment_id rows allowed (SQLite). createConversation returns null on duplicate — actions.js logs and skips.
-- OAuth callback redirects to /app with query flags (?connect=ok|dryrun|connect_error) — dashboard doesn't display them yet.
+- OAuth callback redirects to /app with query flags (?connect=ok|dryrun|connect_error) — the dashboard renders them in #connectBanner (localized titles in app.connectErrorTitle/connectOk/connectDryRun) and strips the query with history.replaceState. Meta's raw error message is passed through meta.metaErrorText so the real reason is visible.
+- "Invalid request: Request parameters are invalid: Invalid platform app" on Connect Instagram = META_OAUTH_FLOW does not match the Instagram product in the Meta app. `instagram` -> instagram.com/oauth/authorize + graph.instagram.com; `facebook` -> facebook.com/vXX/dialog/oauth + graph.facebook.com; `business` (unified login) -> facebook.com/dialog/oauth?client_id&config_id (no version in the path, no scope) + graph.facebook.com. For business/facebook the IG account comes from /me/accounts, which requires the profile to be Business/Creator linked to a Page. Also: the app must be in Live mode and META_REDIRECT_URI must be registered character for character — under `business` in the login configuration's allowed redirect URIs, not only the app's Valid OAuth Redirect URIs.
+- Unified login stores the *Page* access token (from /me/accounts) as the account token, plus accounts.page_id; messaging calls go to graph.facebook.com/{ig-business-account-id}/messages, not /me/messages. sendDM/sendCommentDM take the account id as an extra arg. Page-token lifetime and the is_follower field are marked TODO(meta-docs) — unverified against Meta docs from this network.
 - Static assets cached 1h: after `npm run build`, hard-reload (Ctrl+F5) to see changes locally.
 - node:sqlite `.get()` returns `undefined` (not null) when no row — store helpers that can miss must `|| null` (getRule/getUser*/getConversation/lastConversationForPsid do; tests assert this).
 - `node --test test/` fails on Windows (treated as a module path); use the npm script (`node --test "test/*.test.js"`).
