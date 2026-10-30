@@ -51,7 +51,13 @@ function shouldRetry(result) {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function graphCall(name, url, { method = "POST", body } = {}) {
-  if (!config.metaConfigured || !GRAPH()) {
+  // The landing-page demo has no connected account, so it runs with a
+  // placeholder token. Sending that to Meta would only burn app-level quota
+  // and earn an OAuth error, so keep those calls in dry-run even once the app
+  // secret is configured.
+  const token = body?.access_token || new URL(url).searchParams.get("access_token") || "";
+  const placeholder = token === "" || token === "DRY_RUN_TOKEN";
+  if (!config.metaConfigured || !GRAPH() || placeholder) {
     return dryRun(name, { url, method, body });
   }
   let result;
