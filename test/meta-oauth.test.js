@@ -61,6 +61,9 @@ test("unified login dialog uses client_id + config_id, no scope, no API version"
     assert.equal(u.searchParams.get("override_default_response_type"), "true");
     assert.equal(u.searchParams.get("state"), "st3");
     assert.doesNotMatch(url, /scope=/);
+    // matches the Login URL Meta generates in the dashboard
+    assert.equal(u.searchParams.get("display"), "popup");
+    assert.equal(u.searchParams.get("prompt"), "login");
   } finally {
     config.metaOAuthFlow = prev;
     config.metaConfigId = prevCfg;
