@@ -77,6 +77,8 @@ router.get("/me", (req, res) => {
 
 // ---------------------------------------------------------------- Meta OAuth
 // GET /auth/connect — start Meta OAuth for the signed-in user.
+// Linked directly from the dashboard ("Connect Instagram"), so a browser
+// navigation must 302 straight to Instagram; JSON clients still get the URL.
 router.get("/connect", requireUser, (req, res) => {
   const state = store.createOAuthState(req.user.id);
   const url = meta.buildOAuthUrl({ state });
@@ -90,6 +92,8 @@ router.get("/connect", requireUser, (req, res) => {
       note: "Set the env vars (see .env.example), restart, then try again.",
     });
   }
+  const wantsHtml = String(req.headers.accept || "").includes("text/html");
+  if (wantsHtml) return res.redirect(302, url);
   res.json({ authorize_url: url, state });
 });
 
