@@ -335,7 +335,7 @@ function effectivePlan(user) {
 
 // ------------------------------------------------- prepaid pass / per-post quota
 // All quota logic lives here; actions.js and the routes only call these.
-const { PLANS, PERIOD_DAYS, TOPUP, limitsFor: pricingLimits } = require("./pricing");
+const { PLANS, PERIOD_DAYS, TOPUP, ORDER_TTL_MIN, RENEW_WINDOW_DAYS, rankOf, limitsFor: pricingLimits } = require("./pricing");
 
 const DAY_MS = 864e5;
 const addDays = (ms, days) => new Date(ms + days * DAY_MS).toISOString();
@@ -491,14 +491,15 @@ const getPurchaseByOrderId = (orderId) =>
   db.prepare("SELECT * FROM purchases WHERE razorpay_order_id = ?").get(String(orderId)) || null;
 
 // Marks a purchase paid and applies its effect in the SAME transaction.
-// Idempotent: a second call for an already-paid order changes nothing.
-// BOTH amount and currency must match the stored order; a mismatch is refused
-// (never granted) and reported to the caller. Legacy rows without a currency
-// are treated as INR.
+// Compare-and-set on status='created', so two concurrent payment events for
+// one order can never both grant. BOTH amount and currency must match the
+// stored order; a mismatch is refused (never granted) and reported. Legacy
+// rows without a currency are treated as INR.
+// Outcomes: { ok, kind } granted | { ok, already } replay | { ok, duplicate }
+// money took but no entitlement (row marked 'duplicate') | { ok:false, reason }.
 function markPurchasePaid({ orderId, paymentId, amountMinor, currency }) {
   const order = getPurchaseByOrderId(orderId);
   if (!order) return { ok: false, reason: "not_found" };
-  if (order.status === "paid") return { ok: true, already: true };
   if (Number(amountMinor) !== Number(order.amount_paise)) {
     return { ok: false, reason: "amount_mismatch", expected: order.amount_paise, got: amountMinor };
   }
@@ -510,15 +511,73 @@ function markPurchasePaid({ orderId, paymentId, amountMinor, currency }) {
 
   db.exec("BEGIN IMMEDIATE");
   try {
-    const paid = db.prepare(`UPDATE purchases SET status = 'paid', razorpay_payment_id = ?, paid_at = ?
-      WHERE razorpay_order_id = ? AND status != 'paid'`)
+    // Compare-and-set: only a 'created' order transitions to 'paid' here.
+    const claimed = db.prepare(`UPDATE purchases SET status = 'paid', razorpay_payment_id = ?, paid_at = ?
+      WHERE razorpay_order_id = ? AND status = 'created'`)
       .run(paymentId ?? null, now(), String(orderId));
-    if (paid.changes === 0) { // raced with another webhook
-      db.exec("COMMIT");
-      return { ok: true, already: true };
+
+    if (claimed.changes === 0) {
+      const fresh = getPurchaseByOrderId(orderId);
+      if (fresh && fresh.status === "paid") {         // raced / replayed event
+        db.exec("COMMIT");
+        return { ok: true, already: true };
+      }
+      if (fresh && fresh.status === "duplicate") {
+        db.exec("COMMIT");
+        return { ok: true, duplicate: true };
+      }
+      // 'expired' or 'failed' but the money really arrived: late payment.
+      // Record the payment, then decide below whether it can still be granted.
+      db.prepare(`UPDATE purchases SET status = 'paid', razorpay_payment_id = ?, paid_at = ?
+        WHERE razorpay_order_id = ? AND status IN ('expired','failed')`)
+        .run(paymentId ?? null, now(), String(orderId));
+      if (getPurchaseByOrderId(orderId)?.status !== "paid") {
+        db.exec("COMMIT");
+        return { ok: false, reason: "not_payable" };
+      }
     }
 
     if (order.kind === "pass") {
+      // A late payment for a plan the user has since outgrown must not
+      // downgrade them; treat it as a duplicate of the pass they hold.
+      const heldRank = rankOf(getPeriod(getUserById(order.user_id) || {}).plan);
+      if (rankOf(order.plan) < heldRank) {
+        const held = db.prepare(`SELECT id FROM purchases
+          WHERE user_id = ? AND kind = 'pass' AND status = 'paid' AND id != ?
+          ORDER BY paid_at DESC LIMIT 1`).get(order.user_id, order.id);
+        db.prepare(`UPDATE purchases SET status = 'duplicate', duplicate_of = ? WHERE id = ?`)
+          .run(held ? held.id : null, order.id);
+        trackEvent("duplicate_payment", order.user_id, {
+          orderId: String(orderId), paymentId: paymentId ?? null,
+          amount: order.amount_paise, currency: orderCur, reason: "downgrade_after_upgrade",
+        });
+        db.exec("COMMIT");
+        return { ok: true, duplicate: true };
+      }
+
+      // Duplicate safety net: another PAID pass order for the same user+plan
+      // that already covers the user well beyond the renewal window means this
+      // payment buys nothing. Mark it 'duplicate', extend nothing, log it.
+      const covering = db.prepare(`SELECT id FROM purchases
+        WHERE user_id = ? AND kind = 'pass' AND plan = ? AND status = 'paid' AND id != ?
+        ORDER BY paid_at DESC LIMIT 1`).get(order.user_id, order.plan, order.id);
+      const user = getUserById(order.user_id);
+      const daysLeft = (user?.pass_plan === order.plan && user.pass_expires_at)
+        ? Math.ceil((new Date(user.pass_expires_at).getTime() - Date.now()) / 864e5)
+        : 0;
+      const alreadyCovered = user?.pass_plan === order.plan && daysLeft > RENEW_WINDOW_DAYS;
+
+      if (covering && alreadyCovered) {
+        db.prepare(`UPDATE purchases SET status = 'duplicate', duplicate_of = ? WHERE id = ?`)
+          .run(covering.id, order.id);
+        trackEvent("duplicate_payment", order.user_id, {
+          orderId: String(orderId), paymentId: paymentId ?? null,
+          amount: order.amount_paise, currency: orderCur, duplicateOf: covering.id,
+        });
+        db.exec("COMMIT");
+        return { ok: true, duplicate: true, duplicateOf: covering.id };
+      }
+
       // Renew while active extends from the current expiry; otherwise start now.
       const cur = getUserById(order.user_id);
       const expiryMs = cur?.pass_expires_at ? new Date(cur.pass_expires_at).getTime() : 0;
@@ -552,6 +611,147 @@ function markPurchaseFailed(orderId) {
 // Purchases for the dashboard / support.
 const listPurchases = (userId) =>
   db.prepare("SELECT * FROM purchases WHERE user_id = ? ORDER BY created_at DESC").all(userId);
+
+// ------------------------------------------------------- guarded order creation
+// The ONLY way a new purchase row is created. Everything below runs inside one
+// BEGIN IMMEDIATE transaction and there must be NO await inside it (node:sqlite
+// is synchronous; an await would let another request interleave and defeat the
+// uniqueness guarantees).
+//
+// Rules enforced here, in order:
+//   1. 'created' orders older than ORDER_TTL_MIN are expired.
+//   2. the same idempotency key for this user returns the existing order.
+//   3. an open ('created') order for the same (user, kind, plan, post) is reused.
+//   4. eligibility against the user's CURRENT entitlement (no downgrade, and a
+//      same-plan renewal only inside RENEW_WINDOW_DAYS of expiry).
+//   5. insert with the server-side price and order_expires_at = now + TTL.
+//
+// `orderId` is generated by the caller BEFORE the transaction (mock provider is
+// synchronous; a real provider's checkout session is created after our row so
+// that exactly one session exists per order).
+// Returns { order, reused } or { error, code, ...extra } where code maps to HTTP 409.
+function createOrderGuarded({ userId, kind, plan = null, postId = null, amountMinor, currency, provider = "mock", idempotencyKey = null, orderId }) {
+  const ttlIso = new Date(Date.now() + ORDER_TTL_MIN * 60 * 1000).toISOString();
+  const staleIso = new Date(Date.now() - ORDER_TTL_MIN * 60 * 1000).toISOString();
+  const post = kind === "topup" ? String(postId ?? "") : null;
+
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    // 1. expire abandoned checkouts
+    db.prepare(`UPDATE purchases SET status = 'expired' WHERE status = 'created' AND user_id = ? AND created_at < ?`)
+      .run(userId, staleIso);
+
+    // 2. idempotent replay of the same attempt
+    if (idempotencyKey) {
+      const byKey = db.prepare(`SELECT * FROM purchases WHERE user_id = ? AND idempotency_key = ?`)
+        .get(userId, idempotencyKey);
+      if (byKey) {
+        db.exec("COMMIT");
+        return { order: byKey, reused: true };
+      }
+    }
+
+    // 3. one open order per (user, kind, plan, post)
+    const open = db.prepare(`SELECT * FROM purchases
+      WHERE user_id = ? AND kind = ? AND status = 'created'
+        AND (plan = ? OR (plan IS NULL AND ? IS NULL))
+        AND COALESCE(post_id,'') = ?`)
+      .get(userId, kind, plan, plan, post ?? "");
+    if (open) {
+      db.exec("COMMIT");
+      return { order: open, reused: true };
+    }
+
+    // 4. eligibility, from the user row read INSIDE the transaction
+    const user = db.prepare("SELECT * FROM users WHERE id = ?").get(userId);
+    if (!user) { db.exec("ROLLBACK"); return { error: "User not found", code: "not_found" }; }
+
+    if (kind === "pass") {
+      // Entitlement = the plan governing the user right now (active pass, else
+      // trial-as-growth, else free) — same notion getPeriod()/quota use.
+      const curPlan = getPeriod(user).plan;
+      const curRank = rankOf(curPlan);
+      const wantRank = rankOf(plan);
+      const passActive = !!(user.pass_plan && user.pass_plan !== "free" && user.pass_expires_at
+        && new Date(user.pass_expires_at).getTime() > Date.now());
+      const daysLeft = passActive
+        ? Math.ceil((new Date(user.pass_expires_at).getTime() - Date.now()) / 864e5)
+        : 0;
+
+      if (wantRank < curRank) {
+        db.exec("COMMIT");
+        return { error: "downgrade_not_allowed", code: "downgrade_not_allowed", currentPlan: curPlan };
+      }
+      if (wantRank === curRank && passActive && daysLeft > RENEW_WINDOW_DAYS) {
+        db.exec("COMMIT");
+        return {
+          error: "pass_active", code: "pass_active", plan,
+          expiresAt: user.pass_expires_at,
+          renewableFrom: new Date(new Date(user.pass_expires_at).getTime() - RENEW_WINDOW_DAYS * 864e5).toISOString(),
+        };
+      }
+      // higher rank (upgrade) or same plan inside the renewal window: allowed
+    } else if (kind === "topup") {
+      const period = getPeriod(user);
+      if (!getPostUsage(userId, post, period.start)) {
+        db.exec("COMMIT");
+        return { error: "That post is not active in your current period", code: "post_not_active" };
+      }
+    } else {
+      db.exec("ROLLBACK");
+      return { error: "kind must be 'pass' or 'topup'", code: "bad_kind" };
+    }
+
+    // 5. insert
+    const id = uid("pur_");
+    db.prepare(`INSERT INTO purchases (id, user_id, razorpay_order_id, kind, plan, post_id,
+        amount_paise, status, created_at, currency, provider, idempotency_key, order_expires_at)
+      VALUES (?,?,?,?,?,?,?, 'created', ?,?,?,?,?)`)
+      .run(id, userId, String(orderId), kind, plan, post, Number(amountMinor), now(),
+        String(currency).toUpperCase(), provider, idempotencyKey || null, ttlIso);
+    const order = db.prepare("SELECT * FROM purchases WHERE id = ?").get(id);
+    db.exec("COMMIT");
+    return { order, reused: false };
+  } catch (err) {
+    try { db.exec("ROLLBACK"); } catch { /* already rolled back */ }
+    // A concurrent request won the race on one of the unique indexes; hand back
+    // its order instead of failing.
+    if (isUniqueViolation(err)) {
+      const race = db.prepare(`SELECT * FROM purchases
+        WHERE user_id = ? AND kind = ? AND status = 'created'
+          AND (plan = ? OR (plan IS NULL AND ? IS NULL)) AND COALESCE(post_id,'') = ?`)
+        .get(userId, kind, plan, plan, post ?? "");
+      if (race) return { order: race, reused: true };
+    }
+    throw err;
+  }
+}
+
+// Read-only peek used by POST /api/billing/order before it asks a provider for
+// a checkout session, so a repeated click cannot open two sessions. The
+// authoritative check is still createOrderGuarded's transaction.
+function peekOpenOrder(userId, kind, plan = null, postId = null) {
+  const post = kind === "topup" ? String(postId ?? "") : null;
+  const staleIso = new Date(Date.now() - ORDER_TTL_MIN * 60 * 1000).toISOString();
+  return db.prepare(`SELECT * FROM purchases
+    WHERE user_id = ? AND kind = ? AND status = 'created' AND created_at >= ?
+      AND (plan = ? OR (plan IS NULL AND ? IS NULL))
+      AND COALESCE(post_id,'') = ?`)
+    .get(userId, kind, staleIso, plan, plan, post ?? "") || null;
+}
+
+// True when this (provider, event_id) webhook was never seen. Inserting is the
+// claim: a PK conflict means a replay, so the caller must grant nothing.
+function claimWebhookEvent(provider, eventId) {
+  try {
+    db.prepare("INSERT INTO webhook_events (provider, event_id, received_at) VALUES (?,?,?)")
+      .run(String(provider), String(eventId), now());
+    return true;
+  } catch (err) {
+    if (isUniqueViolation(err)) return false;
+    throw err;
+  }
+}
 
 // ---------------------------------------------------------------- pass expiry
 // Users whose paid pass expired: clear pass_plan so they fall back to free.
@@ -1050,9 +1250,207 @@ function setFanTier(userId, accountId, psid, tierIndex) {
     .run(tierIndex, userId, String(accountId), String(psid));
 }
 
+// ---------------------------------------------------------------- analytics page
+// All aggregate SQL for the dashboard summary card and /analytics lives here.
+// `days` is 7|30|90; windows are UTC-day aligned: current = [today-days+1 00:00, now],
+// previous = the equally long window right before it. tzOffsetMin shifts the
+// hourly heatmap into the user's local time (does NOT change daily buckets).
+const ANALYTICS_DAYS = [7, 30, 90];
+
+function analyticsWindows(days) {
+  const DAY = 864e5;
+  const todayUtc = Math.floor(Date.now() / DAY) * DAY;
+  const curStart = todayUtc - (days - 1) * DAY;
+  const prevStart = curStart - days * DAY;
+  const iso = (ms) => new Date(ms).toISOString();
+  return {
+    curStart: iso(curStart),
+    prevStart: iso(prevStart),
+    prevEnd: iso(curStart), // exclusive lower bound for current
+    days,
+  };
+}
+
+// Sum a per-day map over [startIso, endIso) windows.
+function sumRange(rows, startIso, endIso) {
+  let n = 0;
+  for (const r of rows) {
+    const t = r.day.length === 10 ? r.day + "T00:00:00.000Z" : r.day;
+    if (t >= startIso && (!endIso || t < endIso)) n += r.n;
+  }
+  return n;
+}
+
+// Zero-filled per-day series for one window.
+function fillDays(rows, startIso, days) {
+  const out = new Array(days).fill(0);
+  const startIdx = Math.floor(new Date(startIso).getTime() / 864e5);
+  const byDay = new Map(rows.map((r) => [r.day, r.n]));
+  for (let i = 0; i < days; i++) {
+    const d = new Date((startIdx + i) * 864e5).toISOString().slice(0, 10);
+    out[i] = byDay.get(d) || 0;
+  }
+  return out;
+}
+
+const pctRound = (n, d) => (d ? Math.round((n / d) * 1000) / 10 : 0);
+
+// Core payload for /api/analytics and /api/analytics/summary.
+function getAnalytics(userId, { days = 7, tzOffsetMin = 0 } = {}) {
+  const w = analyticsWindows(days);
+
+  // --- per-day rows from each source (whole user scope, both windows) ------
+  const commentRows = db.prepare(`SELECT substr(created_at,1,10) AS day, COUNT(*) AS n, SUM(matched) AS m
+    FROM comment_events WHERE user_id = ? AND created_at >= ? GROUP BY day`).all(userId, w.prevStart);
+  const matchRows = commentRows.map((r) => ({ day: r.day, n: r.m || 0 }));
+  // "reached"/sent: conversations excluding failed (same rule as the old card).
+  const sentRows = db.prepare(`SELECT substr(sent_at,1,10) AS day, COUNT(*) AS n
+    FROM conversations WHERE user_id = ? AND status != 'failed' AND sent_at >= ? GROUP BY day`).all(userId, w.prevStart);
+  const deliveredRows = db.prepare(`SELECT substr(sent_at,1,10) AS day, COUNT(*) AS n
+    FROM conversations WHERE user_id = ? AND delivered = 1 AND sent_at >= ? GROUP BY day`).all(userId, w.prevStart);
+  const clickRows = db.prepare(`SELECT c.day AS day, COUNT(*) AS n
+    FROM link_clicks c JOIN go_links l ON l.token = c.token
+    WHERE l.user_id = ? AND c.created_at >= ? GROUP BY c.day`).all(userId, w.prevStart);
+  // Unique visitors per day: distinct ua_hash within that day (cross-day
+  // dedup is impossible in a daily series; totals use a global DISTINCT).
+  const visitorRows = db.prepare(`SELECT c.day AS day, COUNT(DISTINCT c.ua_hash) AS n
+    FROM link_clicks c JOIN go_links l ON l.token = c.token
+    WHERE l.user_id = ? AND c.created_at >= ? GROUP BY c.day`).all(userId, w.prevStart);
+  // Conversions: conversations that reached clicked/email_collected, by sent day.
+  const convRows = db.prepare(`SELECT substr(sent_at,1,10) AS day, COUNT(*) AS n
+    FROM conversations WHERE user_id = ? AND status IN ('clicked','email_collected') AND sent_at >= ? GROUP BY day`).all(userId, w.prevStart);
+
+  const series = {
+    comments: { cur: fillDays(commentRows, w.curStart, days), prev: fillDays(commentRows, w.prevStart, days) },
+    matches: { cur: fillDays(matchRows, w.curStart, days), prev: fillDays(matchRows, w.prevStart, days) },
+    dms: { cur: fillDays(sentRows, w.curStart, days), prev: fillDays(sentRows, w.prevStart, days) },
+    delivered: { cur: fillDays(deliveredRows, w.curStart, days), prev: fillDays(deliveredRows, w.prevStart, days) },
+    clicks: { cur: fillDays(clickRows, w.curStart, days), prev: fillDays(clickRows, w.prevStart, days) },
+    visitors: { cur: fillDays(visitorRows, w.curStart, days), prev: fillDays(visitorRows, w.prevStart, days) },
+    conversions: { cur: fillDays(convRows, w.curStart, days), prev: fillDays(convRows, w.prevStart, days) },
+  };
+
+  const total = (k, which = "cur") => series[k][which].reduce((a, b) => a + b, 0);
+
+  // Totals that must be DISTINCT across the window, not summed per day.
+  const uniquesFor = (start, end) => (db.prepare(`SELECT COUNT(DISTINCT c.ua_hash) n
+    FROM link_clicks c JOIN go_links l ON l.token = c.token
+    WHERE l.user_id = ? AND c.created_at >= ?${end ? " AND c.created_at < ?" : ""}`)
+    .get(userId, start, ...(end ? [end] : [])) || { n: 0 }).n;
+
+  const curUniques = uniquesFor(w.curStart, null);
+  const prevUniques = uniquesFor(w.prevStart, w.prevEnd);
+
+  const kpiDefs = [
+    ["comments", total("comments"), total("comments", "prev")],
+    ["matches", total("matches"), total("matches", "prev")],
+    ["reached", total("dms"), total("dms", "prev")],
+    ["delivered", total("delivered"), total("delivered", "prev")],
+    ["clicks", total("clicks"), total("clicks", "prev")],
+    ["uniqueVisitors", curUniques, prevUniques],
+  ];
+  const kpis = {};
+  for (const [key, cur, prev] of kpiDefs) {
+    kpis[key] = { total: cur, previousTotal: prev, deltaPct: prev ? Math.round(((cur - prev) / prev) * 1000) / 10 : null };
+  }
+  // Ratio KPIs: percent points, 0 when the denominator is 0.
+  const curCtr = pctRound(kpis.clicks.total, kpis.reached.total);
+  const prevCtr = pctRound(kpis.clicks.previousTotal, kpis.reached.previousTotal);
+  const curConv = pctRound(curUniques, kpis.reached.total);
+  const prevConv = pctRound(prevUniques, kpis.reached.previousTotal);
+  kpis.ctrPct = { total: curCtr, previousTotal: prevCtr, deltaPct: prevCtr ? Math.round(((curCtr - prevCtr) / prevCtr) * 1000) / 10 : null };
+  kpis.conversionPct = { total: curConv, previousTotal: prevConv, deltaPct: prevConv ? Math.round(((curConv - prevConv) / prevConv) * 1000) / 10 : null };
+
+  // daily rows aligned by index for the client.
+  const daily = [];
+  for (let i = 0; i < days; i++) {
+    daily.push({
+      day: new Date(new Date(w.curStart).getTime() + i * 864e5).toISOString().slice(0, 10),
+      comments: series.comments.cur[i], matches: series.matches.cur[i],
+      dms: series.dms.cur[i], delivered: series.delivered.cur[i],
+      clicks: series.clicks.cur[i], conversions: series.conversions.cur[i],
+      visitors: series.visitors.cur[i],
+      prevComments: series.comments.prev[i], prevMatches: series.matches.prev[i],
+      prevDms: series.dms.prev[i], prevClicks: series.clicks.prev[i],
+      prevConversions: series.conversions.prev[i],
+    });
+  }
+
+  // --- funnel ---------------------------------------------------------------
+  const funnelStages = [
+    ["comments", kpis.comments.total],
+    ["matches", kpis.matches.total],
+    ["dms", kpis.reached.total],
+    ["clicks", kpis.clicks.total],
+    ["conversions", total("conversions")],
+  ];
+  const funnel = funnelStages.map(([stage, count], i) => ({
+    stage,
+    count,
+    dropPct: i === 0 ? null : (funnelStages[i - 1][1] ? Math.round((1 - count / funnelStages[i - 1][1]) * 1000) / 10 : null),
+  }));
+
+  // --- hourly heatmap (weekday x hour, user-local) --------------------------
+  const tz = Math.max(-840, Math.min(840, Math.trunc(Number(tzOffsetMin) || 0)));
+  const hourly = Array.from({ length: 7 }, () => new Array(24).fill(0));
+  // Aggregate in SQL to UTC hour buckets, then shift each bucket by tz in JS.
+  const hourRows = db.prepare(`SELECT substr(created_at,1,13) AS hr, COUNT(*) AS n FROM comment_events
+    WHERE user_id = ? AND matched = 1 AND created_at >= ? GROUP BY hr`).all(userId, w.curStart);
+  for (const r of hourRows) {
+    const local = new Date(new Date(r.hr + ":00:00Z").getTime() + tz * 60000);
+    hourly[local.getUTCDay()][local.getUTCHours()] += r.n;
+  }
+
+  // --- top keywords (rules) --------------------------------------------------
+  const topKeywords = db.prepare(`
+    SELECT r.id, r.keyword,
+      (SELECT COUNT(*) FROM conversations c WHERE c.user_id = ? AND c.rule_id = r.id AND c.status != 'failed' AND c.sent_at >= ?) AS dms,
+      (SELECT COUNT(*) FROM link_clicks lc JOIN go_links gl ON gl.token = lc.token
+        WHERE gl.user_id = ? AND gl.rule_id = r.id AND lc.created_at >= ?) AS clicks
+    FROM rules r WHERE r.user_id = ?
+    ORDER BY dms DESC, clicks DESC LIMIT 10`).all(userId, w.curStart, userId, w.curStart, userId)
+    .map((r) => ({ id: r.id, keyword: r.keyword, matches: r.dms, dms: r.dms, clicks: r.clicks, ctrPct: pctRound(r.clicks, r.dms) }));
+
+  // --- top posts by matches, with usage vs cap -------------------------------
+  const postRows = db.prepare(`SELECT post_id, COUNT(*) AS matches FROM comment_events
+    WHERE user_id = ? AND matched = 1 AND created_at >= ? AND post_id IS NOT NULL
+    GROUP BY post_id ORDER BY matches DESC LIMIT 10`).all(userId, w.curStart);
+  const period = getPeriod(getUserById(userId));
+  const capBase = limitsForPeriod(period.plan).repliesPerPost;
+  const topPosts = postRows.map((r) => {
+    const usage = getPostUsage(userId, r.post_id, period.start);
+    const cap = capBase + ((usage && usage.extra_replies) || 0);
+    return { postId: String(r.post_id).slice(0, 20), matches: r.matches, used: (usage && usage.used) || 0, cap };
+  });
+
+  // --- status breakdown -------------------------------------------------------
+  const statusBreakdown = db.prepare(`SELECT status, COUNT(*) AS n FROM conversations
+    WHERE user_id = ? AND status != 'failed' AND sent_at >= ? GROUP BY status`).all(userId, w.curStart)
+    .reduce((acc, r) => (acc[r.status] = r.n, acc), { sent: 0, replied: 0, clicked: 0, email_collected: 0 });
+
+  return { days, kpis, daily, funnel, hourly, topKeywords, topPosts, statusBreakdown };
+}
+
+// Compact per-tile payload for the dashboard card: total/previous/delta + sparkline.
+function getAnalyticsSummary(userId, { days = 7 } = {}) {
+  const a = getAnalytics(userId, { days });
+  const seriesFor = {
+    comments: a.daily.map((d) => d.comments),
+    matches: a.daily.map((d) => d.matches),
+    reached: a.daily.map((d) => d.dms),
+    delivered: a.daily.map((d) => d.delivered),
+    clicks: a.daily.map((d) => d.clicks),
+    uniqueVisitors: a.daily.map((d) => d.visitors),
+    ctrPct: a.daily.map((d) => pctRound(d.clicks, d.dms)),
+    conversionPct: a.daily.map((d) => pctRound(d.conversions, d.dms)),
+  };
+  const metrics = {};
+  for (const [key, v] of Object.entries(a.kpis)) metrics[key] = { ...v, series: seriesFor[key] };
+  return { days, metrics };
+}
+
 // expose a light db handle for actions that used store.db.*
-module.exports = {
-  db,
+module.exports = {  db,
   listAllRules, listAllConversations, listAllEmails,
   createUser, getUserByEmail, getUserById, setUserLang, setUserCurrency,
   upsertAccount, getAccount, listAccounts, listAccountRows, updateAccountToken,
@@ -1071,6 +1469,7 @@ module.exports = {
   downgradeExpiredPasses, passesExpiringWithin,
   // purchases
   createPurchase, getPurchaseByOrderId, markPurchasePaid, markPurchaseFailed, listPurchases,
+  createOrderGuarded, claimWebhookEvent, peekOpenOrder,
   deleteUserCompletely, deleteAccountByIgUserId, purgeExpiredSessions,
   // advanced analytics
   recordCommentEvent, markCommentMatched, commentStatsForUser, commentStatsForPost,
@@ -1078,6 +1477,7 @@ module.exports = {
   clickStatsForUser, clickStatsForPost, clickSeriesForPost, clickSeriesForUser,
   clickedConversationsForUser, uniqueVisitorsForUser,
   markDelivered, deliveredCountForUser, deliveredCountForPost,
+  getAnalytics, getAnalyticsSummary,
   // flows / dm automation
   createFlow, getFlow, listFlows, updateFlow, deleteFlow,
   saveFlowSteps, listFlowSteps, getFlowStep, listLiveDmFlows, countFlowsForUser,

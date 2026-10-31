@@ -1,5 +1,5 @@
-// ReplyLo — Advanced Analytics (Pro plan only).
-// Overall + per-post performance of the comment→DM automation:
+// ReplyLo â€” Advanced Analytics (Pro plan only).
+// Overall + per-post performance of the commentâ†’DM automation:
 // comments seen (from our webhook), DMs sent/delivered, link clicks and
 // unique visitors (from /go/ redirects), CTR and conversion rate.
 const express = require("express");
@@ -14,11 +14,22 @@ router.use(attachUser, requireUser);
 function requirePro(req, res, next) {
   const plan = store.getPeriod(req.user).plan;
   if (plan === "pro") return next();
-  return res.status(403).json({ error: "Advanced Analytics is available on the Pro plan", upgrade: "/billing", plan });
+  return res.status(402).json({ error: "analytics_pro_only", upgrade: "/billing", plan });
 }
 router.use(requirePro);
 
 const RANGES = { today: 1, "7d": 7, "30d": 30, all: null };
+const ALLOWED_DAYS = [7, 30, 90];
+function parseDays(raw) {
+  const n = Number(raw ?? 7);
+  return ALLOWED_DAYS.includes(n) ? n : null;
+}
+function parseTz(raw) {
+  if (raw === undefined || raw === null || raw === "") return 0;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < -840 || n > 840) return null;
+  return n;
+}
 
 // ISO cutoff for a range name, or null for all-time.
 function sinceFor(range) {
@@ -131,7 +142,7 @@ router.get("/overview", (req, res) => {
   res.json({ range, totals, posts, series });
 });
 
-// GET /api/analytics/post/:postId?range= — drill-down for one post.
+// GET /api/analytics/post/:postId?range= â€” drill-down for one post.
 router.get("/post/:postId", (req, res) => {
   const postId = String(req.params.postId).slice(0, 64);
   const range = RANGES[req.query.range] !== undefined ? req.query.range : "30d";
@@ -173,4 +184,23 @@ router.get("/post/:postId", (req, res) => {
   });
 });
 
+// ---------------------------------------------------------------- new analytics API
+// GET /api/analytics/summary?days=7 -> dashboard card: per metric
+// { total, previousTotal, deltaPct, series[] }.
+router.get("/summary", (req, res) => {
+  const days = parseDays(req.query.days);
+  if (days === null) return res.status(400).json({ error: "invalid_days" });
+  res.set("Cache-Control", "no-store");
+  res.json(store.getAnalyticsSummary(req.user.id, { days }));
+});
+
+// GET /api/analytics?days=7|30|90&tz=<minutes> -> full page payload.
+router.get("/", (req, res) => {
+  const days = parseDays(req.query.days);
+  if (days === null) return res.status(400).json({ error: "invalid_days" });
+  const tz = parseTz(req.query.tz);
+  if (tz === null) return res.status(400).json({ error: "invalid_tz" });
+  res.set("Cache-Control", "no-store");
+  res.json(store.getAnalytics(req.user.id, { days, tzOffsetMin: tz }));
+});
 module.exports = router;

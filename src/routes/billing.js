@@ -10,6 +10,7 @@ const provider = require("../billing/provider");
 const { grantPurchase } = require("../billing/grant");
 const {
   PLANS, TOPUP, PERIOD_DAYS, PURCHASABLE, rankOf,
+  ORDER_TTL_MIN, RENEW_WINDOW_DAYS,
   CURRENCIES, CURRENCY_EXPONENT, currencyFromLocale, isSupportedCurrency,
   priceMinor, topupPriceMinor,
 } = require("../pricing");
@@ -20,6 +21,16 @@ const router = express.Router();
 router.use(attachUser);
 
 const isProduction = () => process.env.NODE_ENV === "production";
+
+// Idempotency keys are opaque client-generated tokens (crypto.randomUUID()).
+// Accepted from the Idempotency-Key header or an idempotencyKey body field.
+const IDEM_RE = /^[A-Za-z0-9_-]{8,64}$/;
+function readIdempotencyKey(req) {
+  const raw = req.headers["idempotency-key"] || (req.body || {}).idempotencyKey || "";
+  const key = String(raw).trim();
+  if (!key) return null;
+  return IDEM_RE.test(key) ? key : undefined; // undefined = invalid
+}
 
 // The user's billing currency: explicit choice wins, else derived from their
 // language (ja -> JPY, hi -> INR, de/fr -> EUR, ...).
@@ -52,6 +63,8 @@ router.get("/config", (req, res) => {
       canBuy: paymentsEnabled(c),
     })),
     periodDays: PERIOD_DAYS,
+    orderTtlMin: ORDER_TTL_MIN,
+    renewWindowDays: RENEW_WINDOW_DAYS,
     plans: Object.entries(PLANS).map(([id, p]) => ({
       id,
       ...p,
@@ -98,9 +111,15 @@ router.get("/history", requireUser, (req, res) => {
 // ---------------------------------------------------------------- order
 // POST /api/billing/order { kind:'pass', plan } | { kind:'topup', postId }
 // Currency is the user's stored/derived choice — never taken from the body.
+// Duplicate-proof: an Idempotency-Key (header or body) plus "one open order per
+// (user, kind, plan, post)" means repeated clicks return the SAME order, and
+// re-buying an active plan is refused with 409 + a locale message code.
 router.post("/order", requireUser, async (req, res) => {
   const currency = currencyForUser(req.user);
   if (!paymentsEnabled(currency)) return res.status(503).json({ error: "Payments are not open yet" });
+
+  const idemKey = readIdempotencyKey(req);
+  if (idemKey === undefined) return res.status(400).json({ error: "Idempotency-Key must be 8-64 chars of letters, digits, - or _" });
 
   const { kind } = req.body || {};
   let amountMinor, plan = null, postId = null, receipt;
@@ -125,20 +144,38 @@ router.post("/order", requireUser, async (req, res) => {
     return res.status(400).json({ error: "kind must be 'pass' or 'topup'" });
   }
 
+  // Cheap pre-check so a repeated click never opens a second provider session.
+  // The authoritative guard is createOrderGuarded's transaction below.
+  const peek = store.peekOpenOrder(req.user.id, kind, plan, postId);
+  if (peek) {
+    const row = { orderId: peek.razorpay_order_id, amountMinor: peek.amount_paise, currency: peek.currency || currency, receipt };
+    return res.json({ ...provider.checkoutConfig(currency, row), reused: true, orderExpiresAt: peek.order_expires_at });
+  }
+
   try {
     const order = await provider.createOrder(currency, {
       amountMinor,
       receipt,
       notes: { userId: req.user.id, kind, plan: plan || undefined, postId: postId || undefined },
     });
-    store.createPurchase({
-      id: "pur_" + crypto.randomBytes(8).toString("hex"),
-      userId: req.user.id,
-      orderId: order.orderId,
-      kind, plan, postId, amountMinor, currency,
-      provider: provider.nameFor(currency),
+    // One transaction, no awaits inside: expiry, idempotency, eligibility, insert.
+    const result = store.createOrderGuarded({
+      userId: req.user.id, kind, plan, postId,
+      amountMinor, currency, provider: provider.nameFor(currency),
+      idempotencyKey: idemKey || null, orderId: order.orderId,
     });
-    res.json(provider.checkoutConfig(currency, order));
+    if (result.error) {
+      const msg = result.code; // client translates billing.errors.<code>
+      logger.warn({ user: req.user.id, kind, plan, code: result.code }, "[billing] order rejected");
+      return res.status(409).json({ error: msg, code: result.code, expiresAt: result.expiresAt, renewableFrom: result.renewableFrom, currentPlan: result.currentPlan });
+    }
+    const row = result.order;
+    const checkout = { orderId: row.razorpay_order_id, amountMinor: row.amount_paise, currency: row.currency || currency, receipt };
+    res.json({
+      ...provider.checkoutConfig(currency, checkout),
+      reused: !!result.reused,
+      orderExpiresAt: row.order_expires_at,
+    });
   } catch (err) {
     logger.error({ err: err.message, kind, currency }, "[billing] order creation failed");
     res.status(502).json({ error: "Could not create the order. Try again." });
@@ -149,6 +186,8 @@ router.post("/order", requireUser, async (req, res) => {
 // POST /api/billing/mock-pay { orderId } — the "simulate UPI payment" button.
 // Exists only when the mock provider is active AND we are not in production.
 // Works for every currency (the order carries its own currency).
+// Replaying it on a paid order is a no-op success, exactly like a duplicate
+// provider webhook; an expired order is refused.
 router.post("/mock-pay", requireUser, (req, res) => {
   const mockActive = provider.resolveFor(currencyForUser(req.user)).name === "mock";
   if (!mockActive || isProduction()) return res.status(404).end();
@@ -156,8 +195,9 @@ router.post("/mock-pay", requireUser, (req, res) => {
   const orderId = String((req.body || {}).orderId || "");
   const order = store.getPurchaseByOrderId(orderId);
   if (!order || order.user_id !== req.user.id) return res.status(404).json({ error: "Order not found" });
-  if (order.status === "paid") return res.status(409).json({ error: "Order already paid" });
-  if (order.status === "failed") return res.status(409).json({ error: "Order failed" });
+  if (order.status === "expired") return res.status(409).json({ error: "billing.errors.order_expired", code: "order_expired" });
+  if (order.status === "failed") return res.status(409).json({ error: "billing.errors.order_failed", code: "order_failed" });
+  if (order.status === "duplicate") return res.status(409).json({ error: "billing.errors.duplicate", code: "duplicate" });
 
   const result = grantPurchase({
     orderId,
@@ -166,7 +206,8 @@ router.post("/mock-pay", requireUser, (req, res) => {
     currency: order.currency || "INR",
   });
   if (!result.ok) return res.status(400).json({ error: result.reason || "Grant failed" });
-  res.json({ ok: true, already: !!result.already });
+  if (result.duplicate) return res.status(409).json({ error: "billing.errors.duplicate", code: "duplicate" });
+  res.json({ ok: true, alreadyPaid: !!result.already });
 });
 
 module.exports = router;
@@ -195,13 +236,19 @@ function webhookHandler(providerName) {
 
     const ev = verified.event || {};
     if (ev.type === "paid") {
-      // grantPurchase checks BOTH amount and currency against the stored order.
+      // grantPurchase checks BOTH amount and currency against the stored order,
+      // and claims ev.eventId in webhook_events so a redelivery grants once.
       const result = grantPurchase({
         orderId: ev.orderId, paymentId: ev.paymentId,
         amountMinor: ev.amountMinor, currency: ev.currency,
+        provider: providerName, eventId: ev.eventId || null,
       });
       if (!result.ok) return res.status(400).json({ error: result.reason || "Grant failed" });
+      return res.json({ ok: true, replay: !!result.replay, duplicate: !!result.duplicate });
     } else if (ev.type === "failed") {
+      if (ev.eventId && !store.claimWebhookEvent(providerName, ev.eventId)) {
+        return res.json({ ok: true, replay: true });
+      }
       store.markPurchaseFailed(ev.orderId);
       logger.warn({ orderId: ev.orderId, provider: providerName }, "[billing] payment failed");
     } else {

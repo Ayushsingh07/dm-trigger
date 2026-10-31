@@ -48,19 +48,25 @@ app.use(express.json({
 }));
 
 // Same-origin check: reject state-changing requests whose Origin header is
-// present and does not match PUBLIC_BASE_URL (classic CSRF guard for a
-// cookie-authenticated app). Requests without an Origin (curl, Meta servers)
-// pass — they cannot be forged by a browser anyway.
+// present and matches neither PUBLIC_BASE_URL nor the Host being served
+// (classic CSRF guard for a cookie-authenticated app). The Host comparison
+// keeps local dev working while PUBLIC_BASE_URL points at a tunnel/production
+// URL — a real cross-site page can never make the browser send our own Host
+// as its Origin. Requests without an Origin (curl, Meta servers) pass — they
+// cannot be forged by a browser anyway.
 // /webhook and /auth/* are exempt: they are driven by Meta's servers, whose
 // Origin (if any) can never match ours.
 const allowedOrigin = (() => {
   try { return new URL(config.publicBaseUrl).origin; } catch { return ""; }
 })();
 const isMetaDriven = (path) => path === "/webhook" || path === "/auth" || path.startsWith("/auth/");
+const isSameHost = (origin, req) => {
+  try { return new URL(origin).host === req.headers.host; } catch { return false; }
+};
 app.use((req, res, next) => {
   if (allowedOrigin && !isMetaDriven(req.path) && ["POST", "PATCH", "DELETE", "PUT"].includes(req.method)) {
     const origin = req.headers.origin;
-    if (origin && origin !== allowedOrigin) {
+    if (origin && origin !== allowedOrigin && !isSameHost(origin, req)) {
       logger.warn({ origin, path: req.path }, "[csrf] rejected cross-origin write");
       return res.status(403).json({ error: "Cross-origin request rejected" });
     }
@@ -103,6 +109,7 @@ app.get("/login", i18nPages.serveApp("auth.html"));
 app.get("/signup", i18nPages.serveApp("auth.html"));
 app.get("/admin", i18nPages.serveApp("admin.html"));
 app.get("/billing", i18nPages.serveApp("billing.html"));
+app.get("/analytics", i18nPages.serveApp("analytics.html"));
 // English canonical pages, rendered through the same i18n pipeline
 app.get("/pricing", i18nPages.serve("pricing"));
 app.get("/privacy", i18nPages.serve("privacy"));
@@ -122,6 +129,7 @@ const CANONICAL_REDIRECTS = {
   "/terms.html": "/terms",
   "/pricing.html": "/pricing",
   "/billing.html": "/billing",
+  "/analytics.html": "/analytics",
   "/data-deletion.html": "/data-deletion",
   "/404.html": "/", // never served by URL — only rendered by the 404 handler
 };

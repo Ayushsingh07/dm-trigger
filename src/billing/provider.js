@@ -5,7 +5,9 @@
 //   createOrder({ currency, amountMinor, receipt, notes }) => { orderId, amountMinor, currency }
 //   checkoutConfig(order)       => what the frontend needs to open checkout
 //   verifyWebhook(rawBody, headers) => { ok, event }
-//     event = { type: 'paid' | 'failed', orderId, paymentId, amountMinor, currency }
+//     event = { type: 'paid' | 'failed', orderId, paymentId, amountMinor, currency, eventId }
+//       eventId is the provider's own event id; it is recorded in webhook_events
+//       so a redelivery can never grant twice.
 //
 // Provider choice by currency (production default):
 //   INR -> razorpay (UPI)          every other currency -> dodo

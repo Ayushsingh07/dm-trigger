@@ -198,7 +198,7 @@ const LOCALIZED_RE = new RegExp(
 // canonical path and remember the language in the cookie (resolveLocale's
 // next priority after the URL), so the page renders in that language.
 const APP_PAGE_RE = new RegExp(
-  "^/(" + SUPPORTED.join("|") + ")/(app|login|signup|billing|admin)/?$");
+  "^/(" + SUPPORTED.join("|") + ")/(app|login|signup|billing|admin|analytics)/?$");
 
 function localeRouting(req, res, next) {
   if (req.method !== "GET") return next();

@@ -74,7 +74,7 @@ function render(usage) {
       const pct = Math.min(100, Math.round((p.used / Math.max(1, p.cap)) * 100));
       const near = p.used >= p.cap * 0.8;
       const topup = (cfg.enabled && near)
-        ? '<button class="pill light" style="padding:6px 12px;font-size:12px" onclick="buyTopup(\'' + esc(p.postId) + '\')">+' + cfg.topup.replies + " replies \u00B7 " + priceIn(cfg.topup.prices, cur) + "</button>" : "";
+        ? '<button class="pill light" style="padding:6px 12px;font-size:12px" data-buy="topup" data-post="' + esc(p.postId) + '">+' + cfg.topup.replies + " replies \u00B7 " + priceIn(cfg.topup.prices, cur) + "</button>" : "";
       return "<tr>"
         + "<td><code class=\"inline\">" + esc(shortPost(p.postId)) + "</code></td>"
         + "<td>" + p.used + " / " + p.cap + (p.extraReplies ? ' <span class="dim">(' + T("billing.extra", { count: p.extraReplies }) + ")</span>" : "") + "</td>"
@@ -82,6 +82,9 @@ function render(usage) {
         + "<td>" + topup + "</td>"
         + "</tr>";
     }).join("");
+    body.querySelectorAll("[data-buy]").forEach((b) => {
+      b.addEventListener("click", () => buyTopup(b.dataset.post, b));
+    });
   }
 
   // ---- plan chooser: current plan (renew) + upgrades ONLY, never lower plans
@@ -98,16 +101,33 @@ function render(usage) {
     } else {
       panel.style.display = "";
       $("upgradeTitle").textContent = curRank > 0 ? T("billing.renewUpgrade") : T("billing.choosePlan");
+      const renewWindow = cfg.renewWindowDays ?? 7;
       pick.innerHTML = options.map((p) => {
         const isCurrent = usage.passPlan === p.id; // NOTE: do not name this `cur` — it shadowed the currency
-        const label = p.rank > curRank ? T("billing.upgrade") : (isCurrent ? T("billing.renew") : T("billing.choose"));
+        // Same plan: only renewable inside the renewal window; otherwise the
+        // button is disabled and shows the date it becomes available.
+        const inWindow = usage.daysLeft == null || usage.daysLeft <= renewWindow;
+        const renewableFrom = usage.passExpiresAt
+          ? new Date(new Date(usage.passExpiresAt).getTime() - renewWindow * 864e5).toISOString()
+          : null;
+        const isUpgrade = p.rank > curRank;
+        const label = !isUpgrade && isCurrent && !inWindow
+          ? T("billing.renewAvailableFrom", { date: fmtDate(renewableFrom) })
+          : (isUpgrade ? T("billing.upgrade") : (isCurrent ? T("billing.renew") : T("billing.choose")));
+        const disabled = !isUpgrade && isCurrent && !inWindow;
+        const btn = '<button class="pill ' + (cur ? "light" : "dark") + '" data-buy="pass" data-plan="' + p.id + '"'
+          + (disabled ? " disabled" : "") + ">" + label + "</button>";
         return '<div class="planopt' + (isCurrent ? " cur" : "") + '">'
           + '<div class="pname">' + p.id[0].toUpperCase() + p.id.slice(1) + (isCurrent ? " " + T("billing.current") : "") + "</div>"
           + '<div class="pprice">' + priceIn(p.prices, cur) + " <small>" + T("billing.per30") + "</small></div>"
           + '<div class="pdesc">' + T("billing.planDesc", { replies: p.repliesPerPost, posts: p.postsPerPeriod }) + "</div>"
-          + '<button class="pill ' + (cur ? "light" : "dark") + '" onclick="buyPass(\'' + p.id + '\')">' + label + "</button>"
+          + btn
           + "</div>";
       }).join("");
+      // Delegated (not inline onclick) so the busy state can disable cleanly.
+      pick.querySelectorAll("[data-buy]").forEach((b) => {
+        b.addEventListener("click", () => buyPass(b.dataset.plan, b));
+      });
       hint.innerHTML = T("billing.hintPre", { currency: cur }) + ' <a href="/terms" style="color:var(--acc-ink)">' + T("billing.refundLink") + "</a>" + T("billing.refundPost");
     }
   }
@@ -160,25 +180,65 @@ async function loadHistory() {
   } catch { /* history is optional */ }
 }
 
-async function buyPass(plan) {
-  const res = await fetch("/api/billing/order", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ kind: "pass", plan }),
+// ------------------------------------------------------------- purchasing
+// One attempt = one idempotency key. A network-error retry reuses the key so
+// the server hands back the same order instead of creating a second one.
+async function placeOrder(body, btn) {
+  const key = window.newIdempotencyKey();
+  const send = async (idem) => fetch("/api/billing/order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Idempotency-Key": idem },
+    body: JSON.stringify(body),
   });
-  const j = await res.json();
-  if (!res.ok) return alert(j.error || T("billing.orderError"));
+  let res;
+  try {
+    res = await send(key);
+  } catch {
+    try { res = await send(window.retryIdempotencyKey()); }
+    catch { return { error: T("billing.orderError") }; }
+  }
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) return { error: window.billingErrorMessage(j) };
+  return j;
+}
+
+// Marks the clicked button busy (and all others disabled) for the whole
+// checkout, via the shared lock in /assets/billing.js.
+function paintBusy(btn) {
+  document.querySelectorAll("[data-buy]").forEach((b) => {
+    if (b === btn) { b.dataset.label = b.textContent; b.textContent = T("billing.busy"); }
+    b.disabled = true;
+  });
+}
+function paintIdle() {
+  document.querySelectorAll("[data-buy]").forEach((b) => {
+    if (b.dataset.label) { b.textContent = b.dataset.label; delete b.dataset.label; }
+    b.disabled = false;
+  });
+}
+document.addEventListener("billing-busy", (e) => { if (!e.detail.busy) paintIdle(); });
+
+async function buyPass(plan, btn) {
+  if (window.billingIsBusy()) return;
+  paintBusy(btn);                       // all buttons disabled for this attempt
+  const j = await placeOrder({ kind: "pass", plan }, btn);
+  if (j.error) { paintIdle(); alert(j.error); return; }
+  // reused: true -> the server handed back the order already open for this
+  // plan; opening checkout on it resumes that attempt, never a second one.
+  // openCheckout takes the in-flight lock synchronously and releases it at
+  // the end of the attempt (paintIdle in its finally).
   window.openCheckout(j);
 }
-async function buyTopup(postId) {
-  const res = await fetch("/api/billing/order", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ kind: "topup", postId }),
-  });
-  const j = await res.json();
-  if (!res.ok) return alert(j.error || T("billing.orderError"));
+async function buyTopup(postId, btn) {
+  if (window.billingIsBusy()) return;
+  paintBusy(btn);
+  const j = await placeOrder({ kind: "topup", postId }, btn);
+  if (j.error) { paintIdle(); alert(j.error); return; }
   window.openCheckout(j);
 }
 
 window.refreshBilling = load;   // called by billing.js after a mock payment
 load();
 setInterval(load, 30000);
+// Back/forward cache: re-read state instead of resubmitting anything.
+window.addEventListener("pageshow", () => { cfg = null; load(); });

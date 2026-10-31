@@ -36,6 +36,14 @@ const PLANS = {
 // Passes and free "periods" both span this many days.
 const PERIOD_DAYS = 30;
 
+// An unpaid order ('created') is valid for this many minutes; after that the
+// server expires it so the user can start a fresh checkout.
+const ORDER_TTL_MIN = 30;
+
+// You may only re-buy the SAME plan once the pass is within this many days of
+// expiring. Buying a HIGHER plan is always allowed.
+const RENEW_WINDOW_DAYS = 7;
+
 // One-off extra replies for a SINGLE post (raises that post's cap only).
 const TOPUP = { replies: 300 };
 
@@ -85,6 +93,7 @@ const rankOf = (plan) => (plan === "trial" ? PLANS.growth.rank : (PLANS[plan] ||
 
 module.exports = {
   PLANS, PERIOD_DAYS, TOPUP, PURCHASABLE, limitsFor, rankOf,
+  ORDER_TTL_MIN, RENEW_WINDOW_DAYS,
   CURRENCY_EXPONENT, CURRENCIES, LOCALE_CURRENCY, currencyFromLocale,
   PLAN_PRICES_MINOR, TOPUP_PRICE_MINOR,
   exponentOf, isSupportedCurrency, toMajor, priceMinor, topupPriceMinor,

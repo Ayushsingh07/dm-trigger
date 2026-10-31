@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<!-- Uses window.I18N (rendered by src/i18nPages.js serveApp). -->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{t:analytics.pageTitle|brand=ReplyLo}}</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/assets/billing-page.css" />
+<link rel="stylesheet" href="/assets/analytics-page.css" />
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="/app"><span class="mark">⚡</span> ReplyLo</a>
+  <div class="nav-right">
+    <a class="pill light" href="/app">{{t:analytics.backDash}}</a>
+    <span data-lang-switcher="pill light"></span>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="greet">
+    <h1>{{t:analytics.pageHeading}}</h1>
+    <p>{{t:analytics.pageSub}}</p>
+  </div>
+
+  <div class="ana-toolbar">
+    <div class="ana-ranges" role="group" aria-label="{{t:analytics.rangeLabel}}">
+      <button class="chip-btn on" data-days="7">{{t:analytics.range.7d}}</button>
+      <button class="chip-btn" data-days="30">{{t:analytics.range.30d}}</button>
+      <button class="chip-btn" data-days="90">{{t:analytics.range.90d}}</button>
+    </div>
+    <span class="st" id="anaUpdated">&mdash;</span>
+  </div>
+
+  <!-- Locked teaser for non-Pro -->
+  <section class="panel" id="anaLocked" style="display:none">
+    <div class="locked-box">
+      <div class="lock-ic">🔒</div>
+      <h2>{{t:analytics.locked}}</h2>
+      <p class="sub">{{t:analytics.lockedSub}}</p>
+      <a class="pill dark" href="/billing">{{t:analytics.upgrade}}</a>
+      <div class="hint">{{t:analytics.example}}</div>
+    </div>
+    <div class="locked-grid" aria-hidden="true">
+      <div class="lk-tile"><div class="v">128</div><div class="k">{{t:analytics.kComments}}</div></div>
+      <div class="lk-tile"><div class="v">46</div><div class="k">{{t:analytics.kReached}}</div></div>
+      <div class="lk-tile"><div class="v">19</div><div class="k">{{t:analytics.kClicks}}</div></div>
+      <div class="lk-tile"><div class="v">41%</div><div class="k">{{t:analytics.kCtr}}</div></div>
+    </div>
+  </section>
+
+  <div id="anaMain" style="display:none">
+    <!-- KPI strip; each tile is a deep-link target (#metric-<key>) -->
+    <section class="panel ana-kpis-panel">
+      <div class="ana-kpis" id="anaKpis"></div>
+    </section>
+
+    <!-- Trend -->
+    <section class="panel">
+      <div class="panel-head">
+        <h2>{{t:analytics.trendTitle}}</h2>
+        <select id="anaMetric" class="ana-select" aria-label="{{t:analytics.trendMetric}}"></select>
+      </div>
+      <div class="ana-legend"><span class="lg-cur"></span><span class="lg-prev"></span></div>
+      <div id="anaTrend"></div>
+    </section>
+
+    <!-- Funnel -->
+    <section class="panel" id="metric-funnel">
+      <h2>{{t:analytics.funnelTitle}}</h2>
+      <div class="sub">{{t:analytics.funnelSub}}</div>
+      <div id="anaFunnel"></div>
+    </section>
+
+    <div class="ana-two-col">
+      <!-- Heatmap -->
+      <section class="panel" id="metric-heatmap">
+        <h2>{{t:analytics.heatTitle}}</h2>
+        <div class="sub">{{t:analytics.heatSub}}</div>
+        <div id="anaHeat"></div>
+      </section>
+      <!-- Donut -->
+      <section class="panel" id="metric-status">
+        <h2>{{t:analytics.statusTitle}}</h2>
+        <div class="sub">{{t:analytics.statusSub}}</div>
+        <div id="anaDonut"></div>
+      </section>
+    </div>
+
+    <!-- Top keywords -->
+    <section class="panel" id="metric-keywords">
+      <div class="panel-head"><h2>{{t:analytics.kwTitle}}</h2><span class="sub" style="margin:0">{{t:analytics.kwSub}}</span></div>
+      <div id="anaKeywords"></div>
+    </section>
+
+    <!-- Top posts -->
+    <section class="panel" id="metric-posts">
+      <div class="panel-head"><h2>{{t:analytics.postsTitle}}</h2><span class="sub" style="margin:0">{{t:analytics.postsSub}}</span></div>
+      <div id="anaPosts"></div>
+    </section>
+  </div>
+</div>
+
+<!-- analytics-page.js calls window.I18N (t, num, date); the server injects
+     <script src="/assets/i18n.js"> in <head> because this file mentions I18N. -->
+<script src="/assets/charts.js"></script>
+<script src="/assets/analytics-page.js"></script>
+</body>
+</html>

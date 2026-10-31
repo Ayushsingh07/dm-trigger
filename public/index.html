@@ -302,6 +302,38 @@
           text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
     #deleteAccountBtn { color:#c98f8f; }
   }
+
+  /* ---------- analytics summary tiles (dashboard card) ---------- */
+  /* soft blurred photo behind the analytics card (same warm brand photo as the landing CTA) */
+  #analyticsPanel { position:relative; isolation:isolate; }
+  #analyticsPanel::before { content:""; position:absolute; inset:-30px; z-index:-1;
+    background:url("/assets/img/cta-workspace.jpg") center 30%/cover no-repeat;
+    filter:blur(22px) saturate(1.15); opacity:.12; transform:scale(1.06); pointer-events:none; }
+  .ana-tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  @media (max-width:860px) { .ana-tiles { grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:430px) { .ana-tiles { grid-template-columns:1fr; } }
+  .ana-tile { position:relative; display:grid; grid-template-columns:1fr auto; grid-template-rows:auto auto;
+    column-gap:8px; align-items:baseline; background:var(--bg2);
+    border:1px solid var(--line); border-radius:14px; padding:11px 14px; text-decoration:none;
+    transition:border-color .15s, box-shadow .15s, transform .15s; }
+  .ana-tile:hover, .ana-tile:focus-visible { border-color:var(--acc2); box-shadow:var(--shadow); transform:translateY(-1px); }
+  .ana-tile-label { grid-column:1/-1; font-size:11.5px; font-weight:600; color:var(--soft); }
+  .ana-tile-value { font-size:21px; font-weight:800; letter-spacing:-.02em; }
+  .ana-tile-delta { justify-self:end; font-size:11px; font-weight:700; padding:1px 8px; border-radius:999px; white-space:nowrap; }
+  .ana-tile-delta.up { color:var(--ok); background:var(--mint); }
+  .ana-tile-delta.down { color:var(--bad); background:var(--rose); }
+  .ana-tile-delta.flat { color:var(--soft); background:var(--line); }
+  .ana-tile-spark { grid-column:1/-1; margin-top:4px; height:26px; }
+  .ana-tile-pop { display:none; position:absolute; z-index:20; inset-inline-start:50%; bottom:calc(100% + 6px);
+    transform:translateX(-50%); width:max-content; max-width:260px; background:var(--ink); color:#fff;
+    border-radius:12px; padding:10px 12px; font-size:12px; line-height:1.5; box-shadow:var(--shadow-lg); pointer-events:none; }
+  .ana-tile:hover .ana-tile-pop, .ana-tile:focus-visible .ana-tile-pop { display:block; }
+  .ana-tile:last-child .ana-tile-pop, .ana-tile:nth-child(4n) .ana-tile-pop { inset-inline-start:auto; inset-inline-end:0; transform:none; }
+  .ana-tile .pop-def { color:#ffd9c9; margin-bottom:4px; }
+  .ana-tile .pop-row { display:flex; justify-content:space-between; gap:14px; }
+  .ana-tile .pop-cta { margin-top:5px; color:#ffc9b3; font-weight:600; }
+  .ana-empty { text-align:center; padding:22px 10px; border:1px dashed var(--line2); border-radius:14px; }
+  .ana-empty-title { font-weight:700; margin-bottom:2px; }
   /* ---- flows / audience / fan / health ---- */
 .flows-list { display:grid; gap:10px; margin-top:14px; }
 .flow-row { display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--line);
@@ -370,6 +402,7 @@
     <span id="modeBadge" class="badge warn"><span class="dot"></span>…</span>
     <a class="pill dark" href="/auth/connect">{{t:app.connectIg}}</a>
     <span id="whoBadge" class="badge user" style="display:none"></span>
+    <a class="pill light" id="navAnalytics" href="/analytics"><span id="navAnaLock" style="display:none">🔒</span> {{t:analytics.nav}}</a>
     <span data-lang-switcher="pill light"></span>
     <button id="signoutBtn" class="pill ghost" style="display:none" onclick="fetch('/auth/logout',{method:'POST'}).then(()=>location.href='/')">{{t:app.signout}}</button>
     <button id="deleteAccountBtn" class="pill ghost" style="display:none" onclick="deleteMyAccount()">{{t:app.delete}}</button>
@@ -442,11 +475,11 @@
     </section>
   </div>
 
-  <!-- Advanced Analytics (Pro plan only) -->
+  <!-- Analytics summary (Pro plan only; full charts live on /analytics) -->
   <section class="panel" id="analyticsPanel" style="margin-bottom:34px">
     <div class="panel-head">
       <h2>{{t:analytics.title}} <span class="pro-badge">PRO</span></h2>
-      <span class="sub" id="analyticsRangeLabel" style="margin:0"></span>
+      <a class="chip-btn" id="analyticsFullLink" href="/analytics">{{t:analytics.viewFull}} →</a>
     </div>
     <div id="analyticsLocked" style="display:none">
       <div class="analytics-locked">
@@ -476,21 +509,14 @@
           </div>
         </div>
       </div>
+      <div class="hint" style="text-align:center;margin-top:8px">{{t:analytics.example}}</div>
     </div>
     <div id="analyticsBody">
-      <div class="kpi-grid" id="analyticsKpis"></div>
-      <div id="analyticsPostsWrap">
-        <h3 class="analytics-h3">{{t:analytics.postsTitle}}</h3>
-        <div class="posts-table-wrap"><table class="posts-table" id="analyticsPosts"></table></div>
+      <div class="ana-tiles" id="analyticsTiles"></div>
+      <div class="ana-empty" id="analyticsEmpty" style="display:none">
+        <div class="ana-empty-title">{{t:analytics.emptyTitle}}</div>
+        <div class="sub">{{t:analytics.emptyHint}}</div>
       </div>
-      <div id="analyticsDrill" style="display:none">
-        <button class="chip-btn" id="analyticsBack">← {{t:analytics.back}}</button>
-        <h3 class="analytics-h3" id="drillTitle"></h3>
-        <div class="kpi-grid" id="drillKpis"></div>
-        <div class="panel-head" style="margin-top:10px"><span class="sub" style="margin:0">{{t:analytics.dailyTitle}}</span><span class="sub" id="drillLegend" style="margin:0"></span></div>
-        <div class="chart" id="drillChart"></div>
-      </div>
-      <div class="hint" id="analyticsEmpty" style="display:none">{{t:analytics.noData}}</div>
     </div>
   </section>
 
@@ -692,6 +718,7 @@
   </section>
 </div>
 
+<script src="/assets/charts.js"></script>
 <script>
 const T = (k, v) => (window.I18N ? window.I18N.t(k, v) : k);
 const TP = (k, c, v) => (window.I18N ? window.I18N.tplural(k, c, Object.assign({ count: c }, v)) : k);
@@ -1027,104 +1054,99 @@ async function refreshBillingSummary() {
   }
 }
 
-// ---------------------------------------------------------------- Advanced Analytics (Pro)
+// ---------------------------------------------------------------- Analytics summary (Pro)
+// Compact 4x2 tiles; the full charts live on /analytics. Data: /api/analytics/summary.
 let analyticsLoaded = false;
 let analyticsPlan = null;   // null = unknown yet
-let drillPostId = null;     // currently drilled-down post (or null)
 
-const ANALYTICS_KPIS = [
-  ["comments", "analytics.kComments"], ["matched", "analytics.kMatched"],
+const ANALYTICS_TILES = [
+  ["comments", "analytics.kComments"], ["matches", "analytics.kMatched"],
   ["reached", "analytics.kReached"], ["delivered", "analytics.kDelivered"],
   ["clicks", "analytics.kClicks"], ["uniqueVisitors", "analytics.kVisitors"],
   ["ctrPct", "analytics.kCtr", "pct"], ["conversionPct", "analytics.kConv", "pct"],
 ];
 
-function renderKpis(el, totals) {
-  el.innerHTML = ANALYTICS_KPIS.map(([k, key, kind]) =>
-    `<div class="kpi"><div class="v">${kind === "pct" ? (totals[k] || 0) + "%" : (totals[k] ?? 0)}</div>
-     <div class="k">${esc(T(key))}</div></div>`).join("");
+function anaFmt(v, kind) {
+  const n = window.I18N ? I18N.num(v || 0) : String(v || 0);
+  return kind === "pct" ? n + "%" : n;
 }
 
-function analyticsDayLabel(d) {
-  const dt = new Date(d + "T00:00:00Z");
-  return dt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-}
+function renderAnalyticsTiles(container, metrics) {
+  container.innerHTML = "";
+  ANALYTICS_TILES.forEach(([key, labelKey, kind]) => {
+    const m = metrics[key] || {};
+    const series = m.series || [];
+    const delta = m.deltaPct;
+    const a = document.createElement("a");
+    a.className = "ana-tile";
+    a.href = "/analytics#metric-" + key;
+    a.setAttribute("data-metric", key);
 
-function renderAnalyticsChart(el, legendEl, series, keys) {
-  if (!series || !series.length) { el.innerHTML = `<div class="hint">${T("analytics.noData")}</div>`; if (legendEl) legendEl.textContent = ""; return; }
-  const max = Math.max(1, ...series.map((p) => Math.max(p[keys[0]] || 0, p[keys[1]] || 0)));
-  el.innerHTML = series.map((p) => {
-    const h1 = Math.round(((p[keys[0]] || 0) / max) * 118);
-    const h2 = Math.round(((p[keys[1]] || 0) / max) * 118);
-    return `<div class="col" title="${esc(p.day)}: ${p[keys[0]] || 0} / ${p[keys[1]] || 0}">
-      <div style="display:flex;align-items:flex-end;gap:3px;height:124px;width:100%;justify-content:center">
-        <div class="bar" style="height:${Math.max(h1, p[keys[0]] ? 4 : 2)}px"></div>
-        <div class="bar ${keys[1] === "clicks" ? "clk" : "eng"}" style="height:${Math.max(h2, 0)}px"></div>
-      </div><div class="day">${esc(analyticsDayLabel(p.day))}</div></div>`;
-  }).join("");
-  if (legendEl) legendEl.textContent = `■ ${T("analytics.sent")}  ■ ${T(keys[1] === "clicks" ? "analytics.kClicks" : "analytics.kMatched")}`;
-}
+    const label = document.createElement("div");
+    label.className = "ana-tile-label";
+    label.textContent = T(labelKey);
 
-function renderAnalyticsPosts(posts) {
-  const table = $("analyticsPosts");
-  if (!posts.length) { $("analyticsPostsWrap").style.display = "none"; return; }
-  $("analyticsPostsWrap").style.display = "";
-  const head = `<tr><th>{{POSTS}}</th><th>${esc(T("analytics.cComments"))}</th><th>${esc(T("analytics.cMatched"))}</th>
-    <th>${esc(T("analytics.cSent"))}</th><th>${esc(T("analytics.cDelivered"))}</th><th>${esc(T("analytics.cClicks"))}</th>
-    <th>${esc(T("analytics.cVisitors"))}</th><th>${esc(T("analytics.cCtr"))}</th></tr>`
-    .replace("{{POSTS}}", esc(T("analytics.cPost")));
-  table.innerHTML = head + posts.map((p) =>
-    `<tr class="post-row" data-post="${esc(p.postId || "")}">
-      <td class="pid">${p.postId ? esc(String(p.postId).slice(0, 16)) : esc(T("analytics.otherPost"))}</td>
-      <td>${p.comments}</td><td>${p.matched}</td><td>${p.sent}</td><td>${p.delivered}</td>
-      <td>${p.clicks}</td><td>${p.uniqueVisitors}</td><td>${p.ctrPct}%</td></tr>`).join("");
-  table.querySelectorAll("tr.post-row").forEach((tr) => {
-    tr.addEventListener("click", () => {
-      const pid = tr.getAttribute("data-post");
-      if (pid) openDrill(pid);
-    });
+    const val = document.createElement("div");
+    val.className = "ana-tile-value";
+    val.textContent = anaFmt(m.total, kind);
+
+    const chip = document.createElement("div");
+    if (delta === null || delta === undefined) {
+      chip.className = "ana-tile-delta flat";
+      chip.textContent = "—"; // no previous period; the tooltip carries the detail
+      chip.title = T("analytics.noPrev");
+    } else {
+      const up = delta > 0, flat = delta === 0;
+      chip.className = "ana-tile-delta " + (flat ? "flat" : up ? "up" : "down");
+      chip.textContent = (flat ? "→" : up ? "↑" : "↓") + " " + (window.I18N ? I18N.num(Math.abs(delta)) : Math.abs(delta)) + "%";
+    }
+
+    const sparkWrap = document.createElement("div");
+    sparkWrap.className = "ana-tile-spark";
+    const hasSeries = series.some((v) => v > 0);
+    if (window.Charts && hasSeries) sparkWrap.appendChild(Charts.sparkline(series, { ariaLabel: T(labelKey) }));
+    else sparkWrap.style.display = "none"; // a flat zero line just reads as a stray underline
+
+    const pop = document.createElement("div");
+    pop.className = "ana-tile-pop";
+    pop.setAttribute("role", "tooltip");
+    pop.innerHTML = `<div class="pop-def">${esc(T(labelKey + "Def"))}</div>
+      <div class="pop-row"><span>${esc(T("analytics.thisPeriod"))}</span><b>${esc(anaFmt(m.total, kind))}</b></div>
+      <div class="pop-row"><span>${esc(T("analytics.prevPeriod"))}</span><b>${esc(anaFmt(m.previousTotal, kind))}</b></div>
+      <div class="pop-cta">${esc(T("analytics.clickDetails"))}</div>`;
+
+    a.append(label, val, chip, sparkWrap, pop);
+    container.appendChild(a);
   });
 }
 
-async function openDrill(postId) {
-  drillPostId = postId;
-  try {
-    const d = await fetch(`/api/analytics/post/${encodeURIComponent(postId)}?range=${statsRange}`).then((r) => r.json());
-    if (d.error) return;
-    $("analyticsPostsWrap").style.display = "none";
-    $("analyticsDrill").style.display = "";
-    $("drillTitle").textContent = `${T("analytics.postTitle")} · ${postId.slice(0, 20)}`;
-    renderKpis($("drillKpis"), d.totals || {});
-    renderAnalyticsChart($("drillChart"), $("drillLegend"), d.series, ["comments", "clicks"]);
-  } catch { /* keep list view */ }
-}
-
-$("analyticsBack").addEventListener("click", () => {
-  drillPostId = null;
-  $("analyticsDrill").style.display = "none";
-  $("analyticsPostsWrap").style.display = "";
-});
-
 async function refreshAnalytics() {
   try {
-    const ov = await fetch("/api/analytics/overview?range=" + statsRange).then((r) => r.json());
+    const days = statsRange === "30d" ? 30 : statsRange === "all" ? 90 : 7;
+    const ov = await fetch("/api/analytics/summary?days=" + days).then((r) => r.json());
     if (ov.error) {
-      // 403 for non-Pro (or session gone) -> show the upsell, hide the body.
+      // 402 for non-Pro (or session gone) -> show the upsell, hide the body.
       analyticsPlan = ov.plan || analyticsPlan;
       $("analyticsLocked").style.display = "";
       $("analyticsBody").style.display = "none";
+      $("analyticsFullLink").style.display = "none";
+      $("navAnaLock").style.display = "";
       analyticsLoaded = true;
       return;
     }
     analyticsPlan = "pro";
+    $("navAnaLock").style.display = "none";
     $("analyticsLocked").style.display = "none";
     $("analyticsBody").style.display = "";
-    $("analyticsRangeLabel").textContent = T("analytics.range." + statsRange);
-    renderKpis($("analyticsKpis"), ov.totals);
-    renderAnalyticsPosts(ov.posts || []);
-    const hasData = (ov.totals && ov.totals.reached > 0) || (ov.posts || []).length > 0;
-    $("analyticsEmpty").style.display = hasData ? "none" : "";
-    if (drillPostId) openDrill(drillPostId); // keep drill-down fresh on range change
+    $("analyticsFullLink").style.display = "";
+    const metrics = ov.metrics || {};
+    renderAnalyticsTiles($("analyticsTiles"), metrics);
+    const totalReached = (metrics.reached && metrics.reached.total) || 0;
+    const hasAny = ANALYTICS_TILES.some(([k]) => metrics[k] && metrics[k].total > 0);
+    $("analyticsEmpty").style.display = hasAny ? "none" : "";
+    $("analyticsTiles").style.display = hasAny ? "" : "none"; // don't show 8 zero tiles next to the empty state
+    $("analyticsEmpty").querySelector(".ana-empty-title").textContent =
+      totalReached === 0 ? T("analytics.emptyTitle") : T("analytics.emptyTitle2");
     analyticsLoaded = true;
   } catch { /* analytics is optional; dashboard works without it */ }
 }

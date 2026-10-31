@@ -78,12 +78,20 @@ test("a pass renewal extends from the current expiry", () => {
   grantPurchase({ orderId, paymentId: "pay_a", amountMinor: priceMinor("growth", "INR"), currency: "INR" });
   const firstExpiry = new Date(store.getUserById(userId).pass_expires_at).getTime();
 
+  assert.ok(new Date(firstExpiry).getTime() > Date.now(), "first grant set an expiry");
+
+  // Renewal is only meaningful inside the renewal window (7 days), so pull the
+  // expiry to 3 days out before renewing. The grant extends from the stored
+  // expiry, not from now.
+  const inWindow = new Date(Date.now() + 3 * DAY).toISOString();
+  store.db.prepare("UPDATE users SET pass_expires_at=? WHERE id=?").run(inWindow, userId);
   const orderId2 = makeOrder({ userId });
-  grantPurchase({ orderId: orderId2, paymentId: "pay_b", amountMinor: priceMinor("growth", "INR"), currency: "INR" });
+  const res = grantPurchase({ orderId: orderId2, paymentId: "pay_b", amountMinor: priceMinor("growth", "INR"), currency: "INR" });
+  assert.equal(res.ok, true);
   const secondExpiry = new Date(store.getUserById(userId).pass_expires_at).getTime();
 
-  const days = (secondExpiry - firstExpiry) / DAY;
-  assert.ok(days >= 29 && days <= 30.1, `renewal added ~30 days (got ${days.toFixed(1)})`);
+  const days = (secondExpiry - new Date(inWindow).getTime()) / DAY;
+  assert.ok(days >= 29 && days <= 30.1, `renewal added ~30 days from the stored expiry (got ${days.toFixed(1)})`);
 });
 
 test("a topup raises only that post's cap", () => {
@@ -236,8 +244,13 @@ test("mock-pay grants, is single-use, and 404s in production", async () => {
   assert.equal(pay.status, 200);
   assert.equal(store.getUserById(userId).pass_plan, "pro");
 
+  // Replay on a PAID order: 200 {alreadyPaid:true}, nothing granted twice.
+  const expiryAfterFirst = store.getUserById(userId).pass_expires_at;
   const again = await fetch(`${base}/api/billing/mock-pay`, { method: "POST", headers, body: JSON.stringify({ orderId: cfg.orderId }) });
-  assert.equal(again.status, 409, "already paid");
+  assert.equal(again.status, 200);
+  const againBody = await again.json();
+  assert.equal(againBody.alreadyPaid, true, "already paid");
+  assert.equal(store.getUserById(userId).pass_expires_at, expiryAfterFirst, "replay did not extend the pass");
 
   // someone else's order is invisible
   const other = newUserId();
@@ -354,3 +367,203 @@ test("LOCALE_CURRENCY never defaults a user to an unpriced currency", () => {
   const { SUPPORTED } = require("../src/i18n");
   for (const locale of SUPPORTED) assert.ok(priced.has(currencyFromLocale(locale)), locale);
 });
+
+// ------------------------------------------------- duplicate-proof orders/grants
+const { ORDER_TTL_MIN, RENEW_WINDOW_DAYS, PLANS: P2 } = require("../src/pricing");
+
+function guardedOrder({ userId, kind = "pass", plan = "growth", postId = null, key = null }) {
+  return store.createOrderGuarded({
+    userId, kind, plan, postId,
+    amountMinor: kind === "pass" ? priceMinor(plan, "INR") : topupPriceMinor("INR"),
+    currency: "INR", provider: "mock", idempotencyKey: key,
+    orderId: `mock_order_g_${Math.random().toString(36).slice(2)}`,
+  });
+}
+const openCount = (userId) => store.db.prepare(
+  "SELECT COUNT(*) AS n FROM purchases WHERE user_id = ? AND status = 'created'").get(userId).n;
+
+test("the same idempotency key twice returns the same order", () => {
+  const userId = newUserId();
+  const key = "idemkey_aaaaaaaaaaaaaaaa";
+  const a = guardedOrder({ userId, key });
+  const b = guardedOrder({ userId, key });
+  assert.equal(a.reused, false);
+  assert.equal(b.reused, true);
+  assert.equal(b.order.id, a.order.id);
+  assert.equal(openCount(userId), 1);
+});
+
+test("two rapid orders with different keys reuse the one open order", () => {
+  const userId = newUserId();
+  const a = guardedOrder({ userId, key: "idemkey_bbbbbbbbbbbbbbb1" });
+  const b = guardedOrder({ userId, key: "idemkey_bbbbbbbbbbbbbbb2" });
+  assert.equal(a.reused, false);
+  assert.equal(b.reused, true, "second click resumes the open order");
+  assert.equal(b.order.id, a.order.id);
+  assert.equal(openCount(userId), 1, "only one 'created' row exists");
+});
+
+test("a stale 'created' order is expired and a new order can be created", () => {
+  const userId = newUserId();
+  const a = guardedOrder({ userId });
+  // age it past the TTL
+  store.db.prepare("UPDATE purchases SET created_at = ? WHERE id = ?")
+    .run(new Date(Date.now() - (ORDER_TTL_MIN + 5) * 60 * 1000).toISOString(), a.order.id);
+  const b = guardedOrder({ userId });
+  assert.equal(b.reused, false, "fresh order after the old one aged out");
+  assert.equal(store.getPurchaseByOrderId(a.order.razorpay_order_id).status, "expired");
+  assert.equal(openCount(userId), 1, "the expired row no longer counts as open");
+});
+
+test("renewal: rejected with 20 days left, allowed with 3 days left or after expiry", () => {
+  const userId = newUserId();
+  const first = guardedOrder({ userId });
+  grantPurchase({ orderId: first.order.razorpay_order_id, paymentId: "pay_r1", amountMinor: priceMinor("growth", "INR"), currency: "INR" });
+
+  const tooEarly = guardedOrder({ userId });
+  assert.equal(tooEarly.code, "pass_active");
+  assert.ok(tooEarly.expiresAt && tooEarly.renewableFrom, "response carries the renewal dates");
+
+  // inside the renewal window (3 days left): allowed
+  store.db.prepare("UPDATE users SET pass_expires_at = ? WHERE id = ?")
+    .run(new Date(Date.now() + 3 * DAY).toISOString(), userId);
+  const inWindow = guardedOrder({ userId });
+  assert.equal(inWindow.error, undefined, "renewal allowed inside the window");
+  assert.equal(inWindow.reused, false);
+
+  // expired pass: allowed
+  store.db.prepare("UPDATE users SET pass_expires_at = ? WHERE id = ?")
+    .run(new Date(Date.now() - DAY).toISOString(), userId);
+  const afterExpiry = guardedOrder({ userId });
+  assert.equal(afterExpiry.error, undefined, "renewal allowed after expiry");
+});
+
+test("downgrade rejected, upgrade allowed", () => {
+  const userId = newUserId();
+  const pro = guardedOrder({ userId, plan: "pro" });
+  grantPurchase({ orderId: pro.order.razorpay_order_id, paymentId: "pay_d1", amountMinor: priceMinor("pro", "INR"), currency: "INR" });
+
+  const down = guardedOrder({ userId, plan: "starter" });
+  assert.equal(down.code, "downgrade_not_allowed");
+  assert.equal(down.currentPlan, "pro");
+
+  // a trial user (counts as growth) cannot buy starter either
+  const trial = newUserId();
+  store.db.prepare("UPDATE users SET plan = 'trial', trial_ends_at = ? WHERE id = ?")
+    .run(new Date(Date.now() + 7 * DAY).toISOString(), trial);
+  const downTrial = guardedOrder({ userId: trial, plan: "starter" });
+  assert.equal(downTrial.code, "downgrade_not_allowed", "trial counts as growth");
+
+  // re-buying the same plan (pro) while active is pass_active, not a downgrade
+  const same = guardedOrder({ userId, plan: "pro" });
+  assert.equal(same.code, "pass_active");
+});
+
+test("mock-pay twice on one order grants once; expired order returns 409", async () => {
+  const userId = newUserId();
+  const headers = { "Content-Type": "application/json", cookie: cookieFor(userId) };
+  const order = await (await fetch(`${base}/api/billing/order`, {
+    method: "POST", headers, body: JSON.stringify({ kind: "pass", plan: "starter" }),
+  })).json();
+
+  const pay1 = await fetch(`${base}/api/billing/mock-pay`, { method: "POST", headers, body: JSON.stringify({ orderId: order.orderId }) });
+  assert.equal(pay1.status, 200);
+  const expiry = store.getUserById(userId).pass_expires_at;
+
+  const pay2 = await fetch(`${base}/api/billing/mock-pay`, { method: "POST", headers, body: JSON.stringify({ orderId: order.orderId }) });
+  assert.equal(pay2.status, 200);
+  assert.equal((await pay2.json()).alreadyPaid, true);
+  assert.equal(store.getUserById(userId).pass_expires_at, expiry, "no second grant");
+
+  // an expired order cannot be paid
+  const otherUser = newUserId();
+  const other = guardedOrder({ userId: otherUser });
+  store.db.prepare("UPDATE purchases SET status='expired' WHERE id = ?").run(other.order.id);
+  const headers2 = { "Content-Type": "application/json", cookie: cookieFor(otherUser) };
+  const late = await fetch(`${base}/api/billing/mock-pay`, { method: "POST", headers: headers2, body: JSON.stringify({ orderId: other.order.razorpay_order_id }) });
+  assert.equal(late.status, 409);
+  assert.equal((await late.json()).code, "order_expired");
+});
+
+test("a replayed webhook event id grants once", () => {
+  const userId = newUserId();
+  const o1 = guardedOrder({ userId });
+  const r1 = grantPurchase({ orderId: o1.order.razorpay_order_id, paymentId: "pay_w1", amountMinor: priceMinor("growth", "INR"), currency: "INR", provider: "mock", eventId: "evt_replay_1" });
+  assert.equal(r1.ok, true);
+  const expiry = store.getUserById(userId).pass_expires_at;
+  const r2 = grantPurchase({ orderId: o1.order.razorpay_order_id, paymentId: "pay_w1", amountMinor: priceMinor("growth", "INR"), currency: "INR", provider: "mock", eventId: "evt_replay_1" });
+  assert.equal(r2.ok, true);
+  assert.equal(r2.replay, true, "event id already claimed -> nothing changed");
+  assert.equal(store.getUserById(userId).pass_expires_at, expiry);
+});
+
+test("two PAID orders for the same pass -> one grant + one 'duplicate' row + event", () => {
+  const userId = newUserId();
+  const a = makeOrder({ userId });
+  const ra = grantPurchase({ orderId: a, paymentId: "pay_dup1", amountMinor: priceMinor("growth", "INR"), currency: "INR" });
+  assert.equal(ra.ok, true);
+  const expiry = store.getUserById(userId).pass_expires_at;
+
+  // second order created directly (bypasses order eligibility, as an old row would)
+  const b = makeOrder({ userId });
+  const rb = grantPurchase({ orderId: b, paymentId: "pay_dup2", amountMinor: priceMinor("growth", "INR"), currency: "INR" });
+  assert.equal(rb.ok, true);
+  assert.equal(rb.duplicate, true);
+  assert.equal(store.getUserById(userId).pass_expires_at, expiry, "duplicate did NOT extend the pass");
+  const rowB = store.getPurchaseByOrderId(b);
+  assert.equal(rowB.status, "duplicate");
+  assert.equal(rowB.duplicate_of, store.getPurchaseByOrderId(a).id);
+  const ev = store.db.prepare("SELECT meta FROM events WHERE user_id = ? AND name = 'duplicate_payment'").get(userId);
+  assert.ok(ev && JSON.parse(ev.meta).orderId === b, "duplicate_payment event written");
+});
+
+test("amount/currency mismatch still rejected; unpriced currency still 400", async () => {
+  const userId = newUserId();
+  const orderId = makeOrder({ userId });
+  assert.equal(grantPurchase({ orderId, paymentId: "pay_m1", amountMinor: 1, currency: "INR" }).reason, "amount_mismatch");
+  assert.equal(grantPurchase({ orderId, paymentId: "pay_m2", amountMinor: priceMinor("growth", "INR"), currency: "USD" }).reason, "currency_mismatch");
+  assert.equal(store.getPurchaseByOrderId(orderId).status, "created", "mismatch leaves the order payable");
+
+  const headers = { "Content-Type": "application/json", cookie: cookieFor(userId) };
+  await fetch(`${base}/api/billing/currency`, { method: "POST", headers, body: JSON.stringify({ currency: "EUR" }) });
+  const res = await fetch(`${base}/api/billing/order`, { method: "POST", headers, body: JSON.stringify({ kind: "pass", plan: "growth" }) });
+  assert.equal(res.status, 400, "EUR unpriced");
+});
+
+test("concurrent createOrderGuarded calls in a tight loop leave one open order", () => {
+  const userId = newUserId();
+  const results = [];
+  for (let i = 0; i < 6; i++) results.push(guardedOrder({ userId, key: `idemkey_loop_${String(i).padStart(12, "0")}` }));
+  const ids = new Set(results.map((r) => r.order.id));
+  assert.equal(ids.size, 1, "all six calls resolved to one order");
+  assert.equal(openCount(userId), 1);
+});
+
+test("Pro plan limits are 1000 replies per post (display regression)", () => {
+  assert.equal(P2.pro.repliesPerPost, 1000);
+  assert.equal(P2.growth.repliesPerPost, 400);
+  assert.equal(P2.starter.repliesPerPost, 150);
+  assert.equal(P2.free.repliesPerPost, 50);
+});
+
+test("Idempotency-Key validation on the route", async () => {
+  const userId = newUserId();
+  const headers = { "Content-Type": "application/json", cookie: cookieFor(userId) };
+  const okNoKey = await fetch(`${base}/api/billing/order`, {
+    method: "POST", headers, body: JSON.stringify({ kind: "pass", plan: "starter" }),
+  });
+  assert.equal(okNoKey.status, 200, "missing key is allowed");
+
+  const invalid = await fetch(`${base}/api/billing/order`, {
+    method: "POST", headers: { ...headers, "Idempotency-Key": "short" },
+    body: JSON.stringify({ kind: "pass", plan: "growth" }),
+  });
+  assert.equal(invalid.status, 400, "too-short key rejected");
+
+  const sneaky = await fetch(`${base}/api/billing/order`, {
+    method: "POST", headers: { ...headers, "Idempotency-Key": "has spaces and $ymbols!!" },
+    body: JSON.stringify({ kind: "pass", plan: "growth" }),
+  });
+  assert.equal(sneaky.status, 400, "bad characters rejected");
+});
+

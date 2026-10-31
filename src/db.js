@@ -331,8 +331,138 @@ for (const stmt of [
   "ALTER TABLE purchases ADD COLUMN provider TEXT",   // mock | razorpay | dodo
   // advanced analytics: delivery receipts from message_deliveries webhooks
   "ALTER TABLE conversations ADD COLUMN delivered INTEGER NOT NULL DEFAULT 0",
+  // transactional / duplicate-proof purchases
+  "ALTER TABLE purchases ADD COLUMN idempotency_key TEXT",  // client Idempotency-Key
+  "ALTER TABLE purchases ADD COLUMN order_expires_at TEXT", // 'created' rows TTL
+  "ALTER TABLE purchases ADD COLUMN duplicate_of TEXT",     // purchase id this paid twice
 ]) {
   try { db.exec(stmt); } catch { /* column already exists */ }
 }
 
-module.exports = { db, dbPath };
+// ------------------------------------------------- purchases status CHECK rebuild
+// Older databases declare status CHECK (status IN ('created','paid','failed')).
+// SQLite cannot ALTER a CHECK, so when the constraint is missing the newer
+// statuses we rebuild the table inside one transaction: create new -> copy ->
+// drop old -> rename, then recreate the indexes. A VACUUM INTO backup is taken
+// first. Idempotent: once the rebuilt schema is in place this never runs again.
+const PURCHASE_STATUSES = "'created','paid','failed','expired','duplicate'";
+function purchasesNeedRebuild() {
+  const row = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'purchases'").get();
+  const sql = String((row && row.sql) || "");
+  if (!sql) return false;
+  const m = sql.match(/status\s+TEXT[^,]*CHECK\s*\(([^)]*)\)/i);
+  if (!m) return false;                      // no CHECK -> nothing to widen
+  const allowed = m[1].toLowerCase();
+  return !allowed.includes("expired") || !allowed.includes("duplicate");
+}
+
+const BACKUP_DIR = path.resolve(__dirname, "..", process.env.BACKUP_DIR || path.join("data", "backups"));
+
+function rebuildPurchasesTable() {
+  const backupDir = BACKUP_DIR;
+  try {
+    fs.mkdirSync(backupDir, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const target = path.join(backupDir, `pre-migration-${stamp}.db`);
+    db.exec(`VACUUM INTO '${target.replace(/'/g, "''")}'`);
+    logger.info({ target }, "[db] backup taken before purchases rebuild");
+  } catch (err) {
+    logger.error({ err: err.message }, "[db] backup before purchases rebuild FAILED - aborting migration");
+    return false;
+  }
+
+  const cols = ["id", "user_id", "razorpay_order_id", "razorpay_payment_id", "kind", "plan",
+    "post_id", "amount_paise", "status", "created_at", "paid_at", "currency", "provider",
+    "idempotency_key", "order_expires_at", "duplicate_of"];
+  const colList = cols.join(", ");
+  try {
+    db.exec("BEGIN IMMEDIATE");
+    db.exec(`CREATE TABLE purchases_new (
+  id                  TEXT PRIMARY KEY,
+  user_id             TEXT NOT NULL,
+  razorpay_order_id   TEXT NOT NULL UNIQUE,
+  razorpay_payment_id TEXT UNIQUE,
+  kind                TEXT NOT NULL CHECK (kind IN ('pass','topup')),
+  plan                TEXT,
+  post_id             TEXT,
+  amount_paise        INTEGER NOT NULL,
+  status              TEXT NOT NULL DEFAULT 'created' CHECK (status IN (${PURCHASE_STATUSES})),
+  created_at          TEXT NOT NULL,
+  paid_at             TEXT,
+  currency            TEXT,
+  provider            TEXT,
+  idempotency_key     TEXT,
+  order_expires_at    TEXT,
+  duplicate_of        TEXT
+)`);
+    db.exec(`INSERT INTO purchases_new (${colList}) SELECT ${colList} FROM purchases`);
+    db.exec("DROP TABLE purchases");
+    db.exec("ALTER TABLE purchases_new RENAME TO purchases");
+    db.exec("COMMIT");
+    logger.info({}, "[db] purchases rebuilt with widened status CHECK");
+    return true;
+  } catch (err) {
+    try { db.exec("ROLLBACK"); } catch { /* already rolled back */ }
+    logger.error({ err: err.message }, "[db] purchases rebuild failed (rolled back)");
+    return false;
+  }
+}
+
+if (purchasesNeedRebuild()) rebuildPurchasesTable();
+
+// Purchases for provider callbacks (webhook idempotency) — one row per event id.
+db.exec(`
+CREATE TABLE IF NOT EXISTS webhook_events (
+  provider    TEXT NOT NULL,
+  event_id    TEXT NOT NULL,
+  received_at TEXT NOT NULL,
+  PRIMARY KEY (provider, event_id)
+);
+`);
+
+// Expire abandoned checkout orders before adding the "one open order" index,
+// so leftover 'created' rows from old builds cannot block new orders.
+try {
+  const ttlIso = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+  const stale = db.prepare(`UPDATE purchases SET status = 'expired'
+    WHERE status = 'created' AND created_at < ?`).run(ttlIso);
+  if (stale.changes) logger.info({ expired: stale.changes }, "[db] expired stale 'created' orders");
+  // Report (do not silently fix) any remaining open-order duplicates: the
+  // unique index below would fail on them.
+  const clashes = db.prepare(`SELECT user_id, kind, plan, COALESCE(post_id,'') pid, COUNT(*) c
+    FROM purchases WHERE status = 'created'
+    GROUP BY user_id, kind, plan, COALESCE(post_id,'') HAVING c > 1`).all();
+  for (const c of clashes) {
+    logger.warn({ user: c.user_id, kind: c.kind, plan: c.plan, post: c.pid, open: c.c },
+      "[db] multiple open orders for one plan - keeping the newest, expiring the rest");
+    db.prepare(`UPDATE purchases SET status = 'expired'
+      WHERE status = 'created' AND user_id = ? AND kind = ?
+        AND (plan = ? OR (plan IS NULL AND ? IS NULL))
+        AND COALESCE(post_id,'') = ?
+        AND id NOT IN (SELECT id FROM purchases WHERE status = 'created' AND user_id = ? AND kind = ?
+          AND (plan = ? OR (plan IS NULL AND ? IS NULL)) AND COALESCE(post_id,'') = ?
+          ORDER BY created_at DESC LIMIT 1)`)
+      .run(c.user_id, c.kind, c.plan, c.plan, c.pid, c.user_id, c.kind, c.plan, c.plan, c.pid);
+  }
+} catch (err) {
+  logger.error({ err: err.message }, "[db] could not tidy stale orders");
+}
+
+// One order per idempotency key per user, and at most ONE open ('created')
+// order per (user, kind, plan, post). Partial unique indexes keep paid/failed
+// history unlimited.
+db.exec(`
+CREATE UNIQUE INDEX IF NOT EXISTS ux_purchases_idem
+  ON purchases(user_id, idempotency_key) WHERE idempotency_key IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS ux_purchases_open
+  ON purchases(user_id, kind, plan, COALESCE(post_id,'')) WHERE status = 'created';
+CREATE INDEX IF NOT EXISTS idx_purchases_status ON purchases(status, order_expires_at);
+
+-- Analytics aggregates (dashboard card + /analytics page): per-user time-range
+-- scans of conversations / comment_events and click attribution via go_links.
+CREATE INDEX IF NOT EXISTS idx_conv_user_sent  ON conversations(user_id, sent_at);
+CREATE INDEX IF NOT EXISTS idx_ce_user_created ON comment_events(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_go_user         ON go_links(user_id, post_id);
+`);
+
+module.exports = { db, dbPath, BACKUP_DIR };
